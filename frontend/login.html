@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -69,7 +68,7 @@
             width: 100%;
             margin-top: 1rem;
         }
-
+        
         .back-link {
             display: inline-block;
             margin-top: 1.5rem;
@@ -78,13 +77,12 @@
             font-size: 0.875rem;
             transition: color 0.3s ease;
         }
-
+        
         .back-link:hover {
             color: var(--text-main);
         }
     </style>
 </head>
-
 <body>
     <div class="bg-glow-1"></div>
     <div class="bg-glow-2"></div>
@@ -95,10 +93,9 @@
                 <i class="fa-solid fa-layer-group" style="color: var(--primary);"></i>
                 ShnoorHR
             </a>
-
+            
             <h2 style="margin-bottom: 0.5rem;">Welcome Back</h2>
-            <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.875rem;">Sign in to your account to
-                continue</p>
+            <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.875rem;">Sign in to your account to continue</p>
 
             <form id="loginForm">
                 <div class="form-group">
@@ -109,12 +106,11 @@
                     <label>Password</label>
                     <input type="password" id="password" class="form-control" placeholder="••••••••" required>
                 </div>
-
+                
                 <button type="submit" class="btn btn-primary login-btn">Sign In</button>
             </form>
-
-            <a href="index.html" class="back-link"><i class="fa-solid fa-arrow-left" style="margin-right: 5px;"></i>
-                Back to Home</a>
+            
+            <a href="index.html" class="back-link"><i class="fa-solid fa-arrow-left" style="margin-right: 5px;"></i> Back to Home</a>
         </div>
     </div>
     <script>
@@ -138,7 +134,7 @@
                     localStorage.setItem('role', data.role);
                     localStorage.setItem('email', data.email);
                     localStorage.setItem('name', data.name);
-
+                    
                     // Redirect based on role
                     const t = new Date().getTime();
                     if (data.role === 'admin' || data.role === 'super_admin') {
@@ -162,5 +158,4 @@
         });
     </script>
 </body>
-
 </html>

@@ -19,33 +19,17 @@
 
         <div class="nav-item active" data-target="dashboard"><i class="fa-solid fa-chart-pie"></i> Dashboard</div>
         <div class="nav-item manager-only" data-target="employees"><i class="fa-solid fa-users"></i> Employees</div>
-        <div class="nav-item manager-only" data-target="manage-profiles-section"><i class="fa-solid fa-id-card"></i>
-            Manage Profiles</div>
+        <div class="nav-item manager-only" data-target="manage-profiles-section"><i class="fa-solid fa-id-card"></i> Manage Profiles</div>
         <div class="nav-item" data-target="attendance"><i class="fa-solid fa-calendar-check"></i> Attendance</div>
-        <div class="nav-item" data-target="leaves" id="nav-leaves">
-            <i class="fa-solid fa-umbrella-beach"></i> Leaves
-            <span id="leaves-badge"
-                style="display:none; background:#f43f5e; color:white; border-radius:10px; padding:2px 8px; font-size:11px; margin-left:8px; font-weight:bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">0</span>
-        </div>
+        <div class="nav-item" data-target="leaves"><i class="fa-solid fa-umbrella-beach"></i> Leaves</div>
         <div class="nav-item manager-only" data-target="tasks"><i class="fa-solid fa-list-check"></i> Tasks</div>
-        <div class="nav-item manager-only" data-target="appreciations"><i class="fa-solid fa-medal"></i> Appreciations
-        </div>
-        <div class="nav-item manager-only" data-target="offboardings"><i class="fa-solid fa-user-minus"></i>
-            Offboardings</div>
-        <div class="nav-item manager-only" data-target="expenses"><i class="fa-solid fa-wallet"></i> Expenses</div>
         <div class="nav-item self-only" data-target="documents"><i class="fa-solid fa-folder-open"></i> Documents</div>
         <div class="nav-item self-only" data-target="profile"><i class="fa-solid fa-user"></i> Profile</div>
         <div class="nav-item manager-only" data-target="payroll"><i class="fa-solid fa-file-invoice-dollar"></i> Payroll
         </div>
+        <div class="nav-item manager-only" data-target="expenses"><i class="fa-solid fa-wallet"></i> Expenses</div>
         <div class="nav-item" data-target="orgchart"><i class="fa-solid fa-sitemap"></i> Org Chart</div>
-        <div class="nav-item" data-target="queries" id="nav-queries">
-            <i class="fa-solid fa-question-circle"></i> Queries
-            <span id="query-badge"
-                style="display:none; background:#f43f5e; color:white; border-radius:10px; padding:2px 8px; font-size:11px; margin-left:8px; font-weight:bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">0</span>
-        </div>
-        <div class="nav-item" data-target="notifications" id="nav-notifications">
-            <i class="fa-solid fa-bell"></i> Notifications
-        </div>
+        <div class="nav-item" data-target="notifications"><i class="fa-solid fa-bell"></i> Notifications</div>
 
 
         <div style="flex:1;"></div>
@@ -68,11 +52,7 @@
         <section id="dashboard" class="view-section active">
             <!-- Manager Dashboard -->
             <div id="managerView" class="manager-only">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                    <h2 class="gradient-text">Team Dashboard</h2>
-                    <p style="color:var(--text-muted); font-size:0.8rem;">Last updated: <span
-                            id="dash-last-updated">-</span></p>
-                </div>
+                <h2 class="gradient-text" style="margin-bottom: 2rem;">Team Dashboard</h2>
                 <div class="dashboard-grid">
                     <div class="glass-panel" style="padding: 1.5rem;">
                         <h4 style="color:var(--text-muted); font-weight:500;">Total Team Members</h4>
@@ -85,11 +65,6 @@
                     <div class="glass-panel" style="padding: 1.5rem;">
                         <h4 style="color:var(--text-muted); font-weight:500;">On Leave</h4>
                         <h1 id="dash-team-leave" style="font-size:2.5rem; color:#f59e0b; margin-top:0.5rem;">0</h1>
-                    </div>
-                    <div class="glass-panel" style="padding: 1.5rem;">
-                        <h4 style="color:var(--text-muted); font-weight:500;">Total Hours Today</h4>
-                        <h1 id="dash-team-hours" style="font-size:2.5rem; color:var(--primary); margin-top:0.5rem;">0
-                        </h1>
                     </div>
                 </div>
                 <!-- Simple CSS Charts -->
@@ -165,8 +140,7 @@
                         </div>
                         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                             <div style="display: flex; justify-content: space-between;"><span>Attendance Rate</span>
-                                <span style="color:#10b981; font-weight:600;">98%</span>
-                            </div>
+                                <span style="color:#10b981; font-weight:600;">98%</span></div>
                             <div style="display: flex; justify-content: space-between;"><span>Tasks Done</span> <span
                                     style="color:var(--primary); font-weight:600;">45/48</span></div>
                             <div style="display: flex; justify-content: space-between;"><span>Avg Response</span> <span
@@ -200,39 +174,22 @@
         <!-- View: Attendance -->
         <section id="attendance" class="view-section">
             <div class="manager-only">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                    <h2 class="gradient-text">Team Attendance</h2>
-                    <div style="display: flex; gap: 0.75rem; align-items: center;">
-                        <select id="team-attendance-employee-select" style="padding: 0.3rem 0.5rem; border-radius: 8px; border: 1px solid var(--glass-border); background: #1e293b; color: #fff; width: 180px;">
-                            <option value="" style="background: #1e293b; color: #fff;">All Employees</option>
-                        </select>
-                        <input type="date" id="team-attendance-date"
-                            style="padding: 0.6rem 1rem; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: var(--text-main);">
-                        <button type="button" id="team-attendance-filter-btn" class="btn btn-primary"
-                            style="padding: 0.6rem 1.2rem;">
-                            Filter
-                        </button>
-                        <button type="button" id="team-attendance-analysis-btn" class="btn btn-ghost"
-                            style="padding: 0.6rem 1.2rem; border: 1px solid var(--primary); color: #fff; border-radius: 8px;">
-                            Analysis
-                        </button>
-                    </div>
-                </div>
-                
-                <div id="manager-attendance-calendar-container" class="glass-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h3 id="manager-calendar-month-year" style="color: var(--text-main);">May 2026</h3>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <button id="btn-manager-prev-month" class="btn btn-ghost" style="padding: 0.25rem 0.75rem;"><i class="fa-solid fa-chevron-left"></i></button>
-                            <button id="btn-manager-next-month" class="btn btn-ghost" style="padding: 0.25rem 0.75rem;"><i class="fa-solid fa-chevron-right"></i></button>
-                        </div>
-                    </div>
-                    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; text-align: center; font-weight: 600; color: var(--text-muted); padding-bottom: 0.5rem;">
-                        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-                    </div>
-                    <div id="manager-calendar-days-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem;">
-                        <!-- Populated dynamically -->
-                    </div>
+                <h2 class="gradient-text" style="margin-bottom: 2rem;">Team Attendance</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Date</th>
+                                <th>Clock In</th>
+                                <th>Clock Out</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teamAttendanceList">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -246,46 +203,21 @@
                             Out</button>
                     </div>
                 </div>
-                <div id="self-attendance-calendar-container" class="glass-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h3 id="self-calendar-month-year" style="color: var(--text-main);">May 2026</h3>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <button id="btn-self-prev-month" class="btn btn-ghost" style="padding: 0.5rem;"><i class="fa-solid fa-chevron-left"></i></button>
-                            <button id="btn-self-next-month" class="btn btn-ghost" style="padding: 0.5rem;"><i class="fa-solid fa-chevron-right"></i></button>
-                        </div>
-                    </div>
-                    <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 600; margin-bottom: 1rem; color: var(--text-main);">
-                        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-                    </div>
-                    <div id="self-calendar-days-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem;">
-                    </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Clock In</th>
+                                <th>Clock Out</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="selfAttendanceList">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
                 </div>
-            </div>
-        </section>
-
-
-        <section id="offboardings" class="view-section manager-only">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                <h2 class="gradient-text">Employee Offboardings</h2>
-                <button type="button" class="btn btn-primary" onclick="openOffboardingModal()">
-                    <i class="fa-solid fa-plus"></i> Create Record
-                </button>
-            </div>
-
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Employee</th>
-                            <th>Type</th>
-                            <th>Reason</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody id="offboardingList">
-                        <!-- Populated by JS -->
-                    </tbody>
-                </table>
             </div>
         </section>
 
@@ -1842,15 +1774,7 @@
 
         <!-- View: Payroll (Manager Only) -->
         <section id="payroll" class="view-section manager-only">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                <h2 class="gradient-text">Team Payroll</h2>
-                <div style="display: flex; gap: 1rem;">
-                    <button class="btn btn-primary" onclick="showAddPayrollModal()"><i class="fa-solid fa-plus"></i> Add
-                        Payroll</button>
-                    <button class="btn btn-ghost" onclick="showDetailedPayrollModal()"><i
-                            class="fa-solid fa-list-ul"></i> Detailed Payroll</button>
-                </div>
-            </div>
+            <h2 class="gradient-text" style="margin-bottom: 2rem;">Team Payroll</h2>
             <div class="table-container">
                 <table>
                     <thead>
@@ -1862,60 +1786,6 @@
                         </tr>
                     </thead>
                     <tbody id="teamPayrollList">
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <section id="appreciations" class="view-section manager-only">
-            <h2 class="gradient-text" style="margin-bottom: 2rem;">Employee Appreciations</h2>
-
-            <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
-                <h3 style="margin-bottom: 1.5rem; color: var(--text-main); font-weight: 500;">Give Appreciation</h3>
-                <form id="appreciationForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                    <div class="form-group">
-                        <label>Select Employee</label>
-                        <select id="appr-employee" class="form-control" required
-                            style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
-                            <option value="">Loading employees...</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Appreciation Title</label>
-                        <input type="text" id="appr-title" class="form-control" placeholder="e.g. Employee of the Month"
-                            required
-                            style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
-                    </div>
-                    <div class="form-group" style="grid-column: 1 / -1;">
-                        <label>Description</label>
-                        <textarea id="appr-description" class="form-control"
-                            placeholder="Write a small description about the appreciation..." required
-                            style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff; min-height: 100px;"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Amount / Prize (₹)</label>
-                        <input type="number" id="appr-amount" class="form-control" placeholder="0.00"
-                            style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
-                    </div>
-                    <div style="grid-column: 1 / -1; text-align: right;">
-                        <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem;">Send
-                            Appreciation</button>
-                    </div>
-                </form>
-            </div>
-
-            <h3 style="margin-bottom: 1.5rem; color: var(--text-main); font-weight: 500;">Appreciation History</h3>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Employee</th>
-                            <th>Title</th>
-                            <th>Amount</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody id="appreciationHistoryList">
                         <!-- Populated by JS -->
                     </tbody>
                 </table>
@@ -2005,7 +1875,7 @@
                             <input type="text" id="prof-address" class="form-control"
                                 style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
                         </div>
-
+                        
                         <!-- Added Fields -->
                         <div class="form-group">
                             <label>Aadhaar Number</label>
@@ -2043,7 +1913,7 @@
                             <input type="text" id="prof-perm-address" class="form-control"
                                 style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
                         </div>
-
+                        
                         <div style="grid-column: 1 / -1; margin-top: 1rem;">
                             <h4 style="color:var(--primary); font-weight: 500;">Emergency Contact</h4>
                         </div>
@@ -2129,18 +1999,17 @@
         <section id="manage-profiles-section" class="view-section manager-only">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                 <h2 class="gradient-text" style="margin: 0;">Team Member Profiles</h2>
-                <button id="exportProfilesBtn" class="btn btn-primary"
-                    style="padding: 0.75rem 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                <button id="exportProfilesBtn" class="btn btn-primary" style="padding: 0.75rem 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
                     <i class="fa-solid fa-file-excel"></i> Export to Excel
                 </button>
             </div>
-
+            
             <div class="glass-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
                 <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
-                    <input type="text" id="memberSearch" placeholder="Search by name or email..."
+                    <input type="text" id="memberSearch" placeholder="Search by name or email..." 
                         style="flex: 1; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--bg-navy); color: #fff;">
                 </div>
-
+                
                 <div class="table-container" style="max-height: 600px; overflow-y: auto;">
                     <table>
                         <thead>
@@ -2158,15 +2027,12 @@
                     </table>
                 </div>
             </div>
-
+            
             <!-- Modal for Detailed View -->
-            <div id="memberProfileModal" class="glass-panel"
-                style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:90%; max-width:800px; max-height:90vh; overflow-y:auto; z-index:1000; padding:2rem; border:1px solid var(--primary); box-shadow: 0 0 50px rgba(0,0,0,0.8);">
+            <div id="memberProfileModal" class="glass-panel" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:90%; max-width:800px; max-height:90vh; overflow-y:auto; z-index:1000; padding:2rem; border:1px solid var(--primary); box-shadow: 0 0 50px rgba(0,0,0,0.8);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                     <h3 class="gradient-text">Member Profile Details</h3>
-                    <button class="btn btn-ghost"
-                        onclick="document.getElementById('memberProfileModal').style.display='none'"
-                        style="font-size: 1.5rem;">&times;</button>
+                    <button class="btn btn-ghost" onclick="document.getElementById('memberProfileModal').style.display='none'" style="font-size: 1.5rem;">&times;</button>
                 </div>
                 <div id="modalProfileContent" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
                     <!-- Populated by JS -->
@@ -2229,32 +2095,6 @@
             <div class="org-chart-container">
                 <div id="orgChartTree" class="tree">
                     <!-- Recursive Tree Structure will be injected here -->
-                </div>
-            </div>
-        </section>
-
-        <!-- View: Queries -->
-        <section id="queries" class="view-section">
-            <h2 class="gradient-text" style="margin-bottom: 2rem;">Employee Queries</h2>
-
-            <div class="glass-panel" style="padding: 1.5rem;">
-                <h4 style="margin-bottom: 1rem;"><i class="fa-solid fa-inbox"></i> Received Queries</h4>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Sender</th>
-                                <th>Subject</th>
-                                <th>Message</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="receivedQueriesList">
-                            <!-- Populated by JS -->
-                        </tbody>
-                    </table>
                 </div>
             </div>
         </section>
@@ -2325,210 +2165,139 @@
         </section>
 
         <!-- View: Expenses -->
-        <section id="expenses" class="view-section manager-only">
+        <section id="expenses" class="view-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                <h2 class="gradient-text">Employee Expenses</h2>
+                <h2 class="gradient-text">Organizational Expense & Approvals</h2>
+                <button class="btn btn-primary" onclick="exportExpensesToExcel()" style="padding: 0.5rem 1rem;"><i class="fa-solid fa-file-excel"></i> Export Financial Log</button>
             </div>
+
+            <!-- Corporate Metrics -->
+            <div class="dashboard-grid" style="margin-bottom: 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
+                <div class="glass-panel" style="padding: 1.25rem; text-align: center;">
+                    <p style="color:var(--text-muted); font-size: 0.85rem; text-transform: uppercase; font-weight: 600;">Corporate Total Applied</p>
+                    <h2 id="mgr-exp-total" style="font-size:1.75rem; color:#fff; margin-top:0.5rem;">₹0.00</h2>
+                </div>
+                <div class="glass-panel" style="padding: 1.25rem; text-align: center;">
+                    <p style="color:#10b981; font-size: 0.85rem; text-transform: uppercase; font-weight: 600;">Total Cleared (Paid)</p>
+                    <h2 id="mgr-exp-paid" style="font-size:1.75rem; color:#10b981; margin-top:0.5rem;">₹0.00</h2>
+                </div>
+                <div class="glass-panel" style="padding: 1.25rem; text-align: center;">
+                    <p style="color:#f59e0b; font-size: 0.85rem; text-transform: uppercase; font-weight: 600;">Pending Actions</p>
+                    <h2 id="mgr-exp-pending" style="font-size:1.75rem; color:#f59e0b; margin-top:0.5rem;">₹0.00</h2>
+                </div>
+                <div class="glass-panel" style="padding: 1.25rem; text-align: center;">
+                    <p style="color:#f43f5e; font-size: 0.85rem; text-transform: uppercase; font-weight: 600;">Rejected Claims</p>
+                    <h2 id="mgr-exp-rejected" style="font-size:1.75rem; color:#f43f5e; margin-top:0.5rem;">₹0.00</h2>
+                </div>
+            </div>
+
+            <!-- Search and Filter Panel -->
+            <div class="glass-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
+                <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+                    <div style="flex: 2; min-width: 250px;">
+                        <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem; color:var(--text-muted);">Search Employee Name/Title</label>
+                        <div style="position:relative;">
+                            <input type="text" id="mgrExpenseSearch" class="form-control" placeholder="Search claims..." oninput="filterAllExpenses()" style="width:100%; padding:0.75rem 0.75rem 0.75rem 2.2rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                            <i class="fa-solid fa-search" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-muted);"></i>
+                        </div>
+                    </div>
+                    <div style="flex: 1; min-width: 150px;">
+                        <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem; color:var(--text-muted);">Status</label>
+                        <select id="mgrFilterStatus" class="form-control" onchange="filterAllExpenses()" style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                            <option value="ALL">All Statuses</option>
+                            <option value="PENDING">Pending</option>
+                            <option value="APPROVED">Approved</option>
+                            <option value="REJECTED">Rejected</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1; min-width: 150px;">
+                        <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem; color:var(--text-muted);">Payment</label>
+                        <select id="mgrFilterPayment" class="form-control" onchange="filterAllExpenses()" style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                            <option value="ALL">All Payments</option>
+                            <option value="PAID">Paid</option>
+                            <option value="UNPAID">Unpaid</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button class="btn btn-ghost" onclick="clearMgrExpenseFilters()" style="padding: 0.75rem 1.2rem; height: 44px;"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table of Expenses -->
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
                             <th>Employee</th>
+                            <th>Submitted Date</th>
+                            <th>Title/Merchant</th>
                             <th>Category</th>
                             <th>Amount</th>
-                            <th>Date</th>
                             <th>Status</th>
+                            <th>Payment</th>
+                            <th>Receipt</th>
                             <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody id="managerExpensesList">
-                        <!-- Populated by JS -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Detailed Payroll Modal -->
-    <div id="detailedPayrollModal" class="modal"
-        style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(8px);">
-        <div class="modal-content glass-panel"
-            style="max-width: 1000px; margin: 5% auto; padding: 2rem; position: relative; border: 1px solid var(--glass-border);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                <h3 class="gradient-text">Detailed Payroll Information</h3>
-                <button class="btn btn-ghost" onclick="closeDetailedPayrollModal()" style="font-size: 1.5rem;"><i
-                        class="fa-solid fa-times"></i></button>
-            </div>
-            <div class="table-container">
-                <table id="detailedPayrollTable">
-                    <thead>
-                        <tr>
-                            <th>Employee</th>
-                            <th>Bank Account</th>
-                            <th>IFSC</th>
-                            <th>PAN</th>
-                            <th>Shift</th>
-                            <th>Base Salary</th>
-                            <th>Final Amount</th>
-                            <th>Type</th>
-                        </tr>
-                    </thead>
-                    <tbody id="detailedPayrollList">
+                    <tbody id="mgrExpensesList">
                         <!-- Populated dynamically -->
                     </tbody>
                 </table>
             </div>
-        </div>
-    </div>
+        </section>
+    </main>
 
-    <!-- Add Payroll Modal -->
-    <div id="addPayrollModal" class="modal"
-        style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(8px);">
-        <div class="modal-content glass-panel"
-            style="max-width: 500px; margin: 10% auto; padding: 2rem; position: relative; border: 1px solid var(--glass-border);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                <h3 class="gradient-text">Add Payroll Record</h3>
-                <button class="btn btn-ghost" onclick="closeAddPayrollModal()" style="font-size: 1.5rem;"><i
-                        class="fa-solid fa-times"></i></button>
+    <!-- Modal: Manager Review Decision -->
+    <div id="mgrReviewModal" class="modal" style="display: none;">
+        <div class="modal-content glass-panel" style="max-width: 500px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+                <h3 class="gradient-text" style="font-weight: 600;">Manager Review</h3>
+                <span class="close-btn" onclick="closeMgrReviewModal()" style="cursor: pointer; font-size: 1.5rem;"><i class="fa-solid fa-xmark"></i></span>
             </div>
-            <form id="addPayrollForm">
+            <div id="mgr-review-info" style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px;">
+                <!-- Filled dynamically -->
+            </div>
+            <form id="mgrReviewForm" onsubmit="submitManagerDecision(event)">
+                <input type="hidden" id="mgrReviewExpenseId">
                 <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label>Select Employee</label>
-                    <select id="payrollEmployee" class="form-control" onchange="updatePayrollEmpDetails()" required
-                        style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
-                        <option value="">Loading employees...</option>
-                    </select>
+                    <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Review Remark</label>
+                    <textarea id="mgrReviewRemark" class="form-control" placeholder="Enter reason..." rows="3" required style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff; resize: vertical;"></textarea>
                 </div>
-
-                <!-- NEW: Employee Details Summary Panel -->
-                <div id="payrollEmpDetails" class="glass-panel"
-                    style="display:none; margin-bottom: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.03); font-size: 0.85rem; border: 1px solid var(--glass-border);">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; color: var(--text-muted);">
-                        <div><strong>Employee ID:</strong> <span id="pay-det-id">-</span></div>
-                        <div><strong>Shift:</strong> <span id="pay-det-shift">-</span></div>
-                        <div><strong>Bank:</strong> <span id="pay-det-bank">-</span></div>
-                        <div><strong>IFSC:</strong> <span id="pay-det-ifsc">-</span></div>
-                        <div><strong>Account:</strong> <span id="pay-det-acc">-</span></div>
-                        <div><strong>PAN:</strong> <span id="pay-det-pan">-</span></div>
-                        <div><strong>Type:</strong> <span id="pay-det-type">-</span></div>
-                        <div><strong>Base Salary:</strong> <span id="pay-det-salary">-</span></div>
-                    </div>
+                <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                    <button type="button" class="btn btn-ghost" onclick="closeMgrReviewModal()">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="submitManagerDecision(event, 'REJECTED')" style="background: #f43f5e; border-color: #f43f5e;"><i class="fa-solid fa-ban"></i> Reject</button>
+                    <button type="submit" class="btn btn-primary" onclick="submitManagerDecision(event, 'APPROVED')"><i class="fa-solid fa-check"></i> Approve</button>
                 </div>
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label>Month/Year (e.g. Oct 2023)</label>
-                    <input type="text" id="payrollMonthYear" class="form-control" placeholder="Oct 2023" required
-                        style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
-                </div>
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label>Amount (₹)</label>
-                    <input type="number" step="0.01" id="payrollAmount" class="form-control"
-                        placeholder="Leave empty to use base salary"
-                        style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
-                </div>
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label>Payment Date</label>
-                    <input type="date" id="payrollDate" class="form-control" required
-                        style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
-                </div>
-                <div class="form-group" style="margin-bottom: 2rem;">
-                    <label>Status</label>
-                    <select id="payrollStatus" class="form-control" required
-                        style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
-                        <option value="Pending">Pending</option>
-                        <option value="Paid">Paid</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem;">Create
-                    Payroll</button>
             </form>
         </div>
     </div>
 
-    <!-- Edit Attendance Modal -->
-    <div id="editAttendanceModal" class="modal"
-        style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(8px);">
-        <div class="modal-content glass-panel"
-            style="max-width: 500px; margin: 10% auto; padding: 2rem; position: relative; border: 1px solid var(--glass-border);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                <h3 class="gradient-text">Edit Attendance</h3>
-                <button class="btn btn-ghost" onclick="closeEditAttendanceModal()" style="font-size: 1.5rem;"><i
-                        class="fa-solid fa-times"></i></button>
+    <!-- Modal: Manager Pay Clear Settlement -->
+    <div id="mgrPayModal" class="modal" style="display: none;">
+        <div class="modal-content glass-panel" style="max-width: 500px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+                <h3 class="gradient-text" style="font-weight: 600;">Settle Payout</h3>
+                <span class="close-btn" onclick="closeMgrPayModal()" style="cursor: pointer; font-size: 1.5rem;"><i class="fa-solid fa-xmark"></i></span>
             </div>
-            <form id="editAttendanceForm">
-                <input type="hidden" id="editAttId">
-                <input type="hidden" id="editAttEmpId">
-                <input type="hidden" id="editAttDate">
-
+            <div id="mgr-pay-info" style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px;">
+                <!-- Filled dynamically -->
+            </div>
+            <form id="mgrPayForm" onsubmit="submitManagerPayment(event)">
+                <input type="hidden" id="mgrPayExpenseId">
                 <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label>Clock In Time (e.g. 10:10 AM)</label>
-                    <input type="text" id="editAttClockIn" class="form-control" placeholder="10:10 AM" required
-                        style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                    <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Disbursement Remark</label>
+                    <textarea id="mgrPayRemark" class="form-control" placeholder="Optional settlement remark..." rows="3" style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff; resize: vertical;"></textarea>
                 </div>
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label>Clock Out Time (e.g. 07:30 PM)</label>
-                    <input type="text" id="editAttClockOut" class="form-control" placeholder="07:30 PM"
-                        style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                    <button type="button" class="btn btn-ghost" onclick="closeMgrPayModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-wallet"></i> Settle & Mark Paid</button>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem;">Save Changes</button>
             </form>
         </div>
     </div>
 
-    <!-- Attendance Analysis Modal -->
-    <div id="attendanceAnalysisModal" class="modal"
-        style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(8px);">
-        <div class="modal-content glass-panel"
-            style="max-width: 600px; margin: 10% auto; padding: 2rem; position: relative; border: 1px solid var(--glass-border);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                <h3 class="gradient-text">Attendance Analysis</h3>
-                <button class="btn btn-ghost" onclick="closeAttendanceAnalysisModal()" style="font-size: 1.5rem;"><i
-                        class="fa-solid fa-times"></i></button>
-            </div>
-            <div id="analysisContent" style="color: #fff;">
-                <p>Loading analysis...</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Create Offboarding Modal -->
-    <div id="offboardingModal" class="modal"
-        style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(8px);">
-        <div class="modal-content glass-panel"
-            style="max-width: 500px; margin: 10% auto; padding: 2rem; position: relative; border: 1px solid var(--glass-border);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                <h3 class="gradient-text">Create Offboarding Record</h3>
-                <button class="btn btn-ghost" onclick="closeOffboardingModal()" style="font-size: 1.5rem;"><i
-                        class="fa-solid fa-times"></i></button>
-            </div>
-            <form id="offboardingForm">
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label>Select Employee</label>
-                    <select id="offboardEmployee" class="form-control" required
-                        style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
-                        <option value="">Loading employees...</option>
-                    </select>
-                </div>
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label>Type</label>
-                    <select id="offboardType" class="form-control" required
-                        style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
-                        <option value="complaint">Complaint</option>
-                        <option value="resignation">Resignation</option>
-                        <option value="termination">Termination</option>
-                        <option value="warning">Warning</option>
-                    </select>
-                </div>
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label>Reason / Description</label>
-                    <textarea id="offboardReason" class="form-control" rows="4" placeholder="Enter details..." required
-                        style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;"></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem;">Submit</button>
-            </form>
-        </div>
-    </div>
-
-    <script src="manager.js?v=13"></script>
+    <script src="manager.js?v=9"></script>
 </body>
+
 </html>

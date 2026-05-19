@@ -7,37 +7,26 @@
     <link rel="stylesheet" href="../styles.css?v=2">
     <link rel="stylesheet" href="employee.css?v=3">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 
 <body class="admin-layout">
     <div class="bg-glow-1"></div>
     <div class="bg-glow-2"></div>
 
+    <!-- Sidebar -->
     <aside class="sidebar">
         <a href="#" class="logo"><i class="fa-solid fa-user" style="color:var(--primary);"></i> ShnoorHR</a>
 
         <div class="nav-item active" data-target="dashboard"><i class="fa-solid fa-chart-pie"></i> Dashboard</div>
         <div class="nav-item" data-target="attendance"><i class="fa-solid fa-calendar-check"></i> Attendance</div>
-        <div class="nav-item" data-target="leaves" id="nav-leaves">
-            <i class="fa-solid fa-umbrella-beach"></i> Leaves
-            <span id="leaves-badge" class="badge-pulse" style="display:none; background:#f43f5e; color:white; border-radius:10px; padding:2px 8px; font-size:11px; margin-left:8px; font-weight:bold; box-shadow: 0 0 10px rgba(244, 63, 94, 0.5);">0</span>
-        </div>
+        <div class="nav-item" data-target="leaves"><i class="fa-solid fa-umbrella-beach"></i> Leaves</div>
         <div class="nav-item" data-target="tasks"><i class="fa-solid fa-list-check"></i> Tasks</div>
         <div class="nav-item" data-target="holidays"><i class="fa-solid fa-tree"></i> Holidays</div>
         <div class="nav-item" data-target="orgchart"><i class="fa-solid fa-sitemap"></i> Org Chart</div>
         <div class="nav-item" data-target="documents"><i class="fa-solid fa-folder-open"></i> Documents</div>
-        <div class="nav-item" data-target="appreciations"><i class="fa-solid fa-medal"></i> Appreciations <span id="appr-badge" style="display:none; background:#f43f5e; color:white; border-radius:10px; padding:2px 8px; font-size:11px; margin-left:8px; font-weight:bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">0</span></div>
         <div class="nav-item" data-target="expenses"><i class="fa-solid fa-wallet"></i> Expenses</div>
-        <div class="nav-item" data-target="payroll"><i class="fa-solid fa-money-check-dollar"></i> Payroll</div>
-        <div class="nav-item" data-target="offboardings"><i class="fa-solid fa-user-minus"></i> Offboardings</div>
         <div class="nav-item" data-target="profile"><i class="fa-solid fa-user"></i> Profile</div>
-        <div class="nav-item" data-target="queries"><i class="fa-solid fa-question-circle"></i> Queries <span id="query-badge" style="display:none; background:#f43f5e; color:white; border-radius:10px; padding:2px 8px; font-size:11px; margin-left:8px; font-weight:bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">0</span></div>
-        <div class="nav-item" data-target="reports"><i class="fa-solid fa-chart-line"></i> Reports</div>
-        <div class="nav-item" data-target="notifications" id="nav-notifications">
-            <i class="fa-solid fa-bell"></i> Notifications
-            <span id="notification-badge" style="display:none; background:#f43f5e; color:white; border-radius:10px; padding:2px 8px; font-size:11px; margin-left:8px; font-weight:bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">0</span>
-        </div>
+        <div class="nav-item" data-target="notifications"><i class="fa-solid fa-bell"></i> Notifications</div>
 
 
         <div style="flex:1;"></div>
@@ -51,61 +40,7 @@
         <!-- View: Dashboard Overview -->
         <section id="dashboard" class="view-section active">
             <h2 class="gradient-text" style="margin-bottom: 2rem;">My Dashboard</h2>
-            
-            <!-- Horizontal Profile Bar -->
-            <div class="profile-horizontal-bar glass-panel">
-                <div class="prof-bar-top">
-                    <div class="prof-bar-main">
-                        <img id="side-prof-img" src="../assets/default-avatar.png" alt="Profile" class="bar-avatar">
-                        <div class="prof-bar-info">
-                            <h3 id="side-prof-name" class="gradient-text">Loading...</h3>
-                            <p id="side-prof-designation" style="color:var(--text-muted); font-size:0.9rem;">---</p>
-                        </div>
-                    </div>
-                    
-                    <div class="prof-bar-badges">
-                        <span id="side-prof-mode" class="mini-badge">Office</span>
-                        <span id="side-prof-dept" class="mini-badge" style="background: rgba(139, 92, 246, 0.1); color: var(--secondary);">---</span>
-                    </div>
 
-                    <div class="prof-bar-details">
-                        <div class="bar-detail-item">
-                            <small>Employee ID</small>
-                            <p id="side-prof-id">---</p>
-                        </div>
-                        <div class="bar-detail-item">
-                            <small>Date Hired</small>
-                            <p id="side-prof-join">---</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Secondary Row for Extra Details -->
-                <div class="prof-bar-bottom">
-                    <div class="bar-detail-item">
-                        <small><i class="fa-solid fa-envelope"></i> Email</small>
-                        <p id="dash-prof-email" style="font-size:0.85rem;">---</p>
-                    </div>
-                    <div class="bar-detail-item">
-                        <small><i class="fa-solid fa-phone"></i> Phone</small>
-                        <p id="dash-prof-phone" style="font-size:0.85rem;">---</p>
-                    </div>
-                    <div class="bar-detail-item">
-                        <small><i class="fa-solid fa-droplet"></i> Blood Group</small>
-                        <p id="dash-prof-blood" style="font-size:0.85rem;">---</p>
-                    </div>
-                    <div class="bar-detail-item">
-                        <small><i class="fa-solid fa-id-card"></i> Aadhaar</small>
-                        <p id="dash-prof-aadhaar" style="font-size:0.85rem;">---</p>
-                    </div>
-                    <div class="bar-detail-item">
-                        <small><i class="fa-solid fa-truck-medical"></i> Emergency Contact</small>
-                        <p id="dash-prof-emergency" style="font-size:0.85rem;">---</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Features Grid Below -->
             <div class="dashboard-grid">
                 <div class="glass-panel" style="padding: 1.5rem;">
                     <h4 style="color:var(--text-muted); font-weight:500;">Status Today</h4>
@@ -113,27 +48,15 @@
                 </div>
                 <div class="glass-panel" style="padding: 1.5rem;">
                     <h4 style="color:var(--text-muted); font-weight:500;">Leave Balance</h4>
-                    <h1 id="dash-leave-bal" style="font-size:2.0rem; color:var(--primary); margin-top:0.5rem;">0 Days</h1>
+                    <h1 id="dash-leave-bal" style="font-size:2.0rem; color:var(--primary); margin-top:0.5rem;">3Days</h1>
                 </div>
                 <div class="glass-panel" style="padding: 1.5rem;">
                     <h4 style="color:var(--text-muted); font-weight:500;">Next Holiday</h4>
-                    <h1 id="dash-next-hol" style="font-size:1.5rem; color:#f59e0b; margin-top:0.5rem;">---</h1>
-                </div>
-                <div class="glass-panel" style="padding: 1.5rem;">
-                    <h4 style="color:var(--text-muted); font-weight:500;">Paid Leaves Taken</h4>
-                    <h1 id="leave-bal-paid-dash" style="font-size:2.0rem; color:#ef4444; margin-top:0.5rem;">0</h1>
+                    <h1 id="dash-next-hol" style="font-size:2.0rem; color:#f59e0b; margin-top:0.5rem;">Diwali</h1>
                 </div>
                 <div class="glass-panel" style="padding: 1.5rem;">
                     <h4 style="color:var(--text-muted); font-weight:500;">Pending Expenses</h4>
                     <h1 id="dash-expenses" style="font-size:2.0rem; color:#f43f5e; margin-top:0.5rem;">₹0</h1>
-                </div>
-                <div class="glass-panel" style="padding: 1.5rem;">
-                    <h4 style="color:var(--text-muted); font-weight:500;">Total Appreciations</h4>
-                    <h1 id="dash-appreciations" style="font-size:2.0rem; color:#10b981; margin-top:0.5rem;">0</h1>
-                </div>
-                <div class="glass-panel" style="padding: 1.5rem;">
-                    <h4 style="color:var(--text-muted); font-weight:500;">Offboardings / Notices</h4>
-                    <h1 id="dash-offboardings" style="font-size:2.0rem; color:#f43f5e; margin-top:0.5rem;">0</h1>
                 </div>
             </div>
         </section>
@@ -148,20 +71,20 @@
                     <button id="clock-out-btn" class="btn btn-ghost" style="padding: 0.5rem 1rem;">Clock Out</button>
                 </div>
             </div>
-            <div id="attendance-calendar-container" class="glass-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                    <h3 id="calendar-month-year" style="color: var(--text-main);">May 2026</h3>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <button id="btn-prev-month" class="btn btn-ghost" style="padding: 0.25rem 0.75rem;"><i class="fa-solid fa-chevron-left"></i></button>
-                        <button id="btn-next-month" class="btn btn-ghost" style="padding: 0.25rem 0.75rem;"><i class="fa-solid fa-chevron-right"></i></button>
-                    </div>
-                </div>
-                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; text-align: center; font-weight: 600; color: var(--text-muted); padding-bottom: 0.5rem;">
-                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-                </div>
-                <div id="calendar-days-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem;">
-                    <!-- Populated dynamically -->
-                </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Check In</th>
+                            <th>Check Out</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceList">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
             </div>
         </section>
 
@@ -202,20 +125,16 @@
 
             <div class="dashboard-grid" style="margin-bottom: 2rem;">
                 <div class="glass-panel" style="padding: 1.5rem; text-align: center;">
-                    <h4 style="color:var(--text-muted);">Balance</h4>
+                    <h4 style="color:var(--text-muted);">Total Leaves</h4>
                     <h1 id="leave-bal-total" style="font-size:2rem; color:var(--primary);">0</h1>
                 </div>
                 <div class="glass-panel" style="padding: 1.5rem; text-align: center;">
-                    <h4 style="color:var(--text-muted);">Used Days</h4>
+                    <h4 style="color:var(--text-muted);">Approved</h4>
                     <h1 id="leave-bal-approved" style="font-size:2rem; color:#10b981;">0</h1>
                 </div>
                 <div class="glass-panel" style="padding: 1.5rem; text-align: center;">
-                    <h4 style="color:var(--text-muted);">Sick / Casual / Vacation</h4>
-                    <h1 id="leave-bal-pending" style="font-size:1.5rem; color:#f59e0b;">0</h1>
-                </div>
-                <div class="glass-panel" style="padding: 1.5rem; text-align: center;">
-                    <h4 style="color:var(--text-muted);">Paid Leaves Taken</h4>
-                    <h1 id="leave-bal-paid" style="font-size:2rem; color:#ef4444;">0</h1>
+                    <h4 style="color:var(--text-muted);">Pending</h4>
+                    <h1 id="leave-bal-pending" style="font-size:2rem; color:#f59e0b;">0</h1>
                 </div>
             </div>
 
@@ -280,7 +199,7 @@
             </div>
         </section>
 
-                <!-- View: Holidays -->
+        <!-- View: Holidays -->
         <section id="holidays" class="view-section">
             <h2 class="gradient-text" style="margin-bottom: 2rem;">Company Holidays</h2>
 
@@ -1685,58 +1604,92 @@
             </div>
         </section>
 
-        <!-- View: Appreciations -->
-        <section id="appreciations" class="view-section">
-            <h2 class="gradient-text" style="margin-bottom: 2rem;">My Appreciations</h2>
-            <div id="appreciations-list" class="dashboard-grid">
-                <!-- Populated by JS -->
-            </div>
-        </section>
-
         <!-- View: Expenses -->
         <section id="expenses" class="view-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                 <h2 class="gradient-text">My Expenses</h2>
-                <button class="btn btn-primary" style="padding: 0.5rem 1rem;" onclick="document.getElementById('expense-form-container').style.display='block'">Claim Expense</button>
+                <button class="btn btn-primary" style="padding: 0.5rem 1rem;" onclick="openAddExpenseModal()"><i class="fa-solid fa-plus"></i> Claim Expense</button>
             </div>
 
-            <div id="expense-form-container" class="glass-panel" style="display:none; margin-bottom: 2rem; padding: 1.5rem;">
-                <h4 style="margin-bottom: 1rem;">Submit Expense Claim</h4>
-                <form id="applyExpenseForm" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
-                    <div class="form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
-                        <label>Category</label>
-                        <select id="expenseCategory" class="form-control" required style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
-                            <option value="Travel">Travel</option>
-                            <option value="Meals">Meals</option>
-                            <option value="Supplies">Supplies</option>
-                            <option value="Other">Other</option>
+            <!-- Top Summary Cards -->
+            <div class="dashboard-grid" style="margin-bottom: 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem;">
+                <div class="glass-panel" style="padding: 1.25rem; text-align: center;">
+                    <p style="color:var(--text-muted); font-size: 0.85rem; text-transform: uppercase; font-weight: 600;">Total Applied</p>
+                    <h2 id="exp-total-applied" style="font-size:1.75rem; color:#fff; margin-top:0.5rem;">₹0.00</h2>
+                </div>
+                <div class="glass-panel" style="padding: 1.25rem; text-align: center;">
+                    <p style="color:#10b981; font-size: 0.85rem; text-transform: uppercase; font-weight: 600;">Total Approved</p>
+                    <h2 id="exp-total-approved" style="font-size:1.75rem; color:#10b981; margin-top:0.5rem;">₹0.00</h2>
+                </div>
+                <div class="glass-panel" style="padding: 1.25rem; text-align: center;">
+                    <p style="color:#f43f5e; font-size: 0.85rem; text-transform: uppercase; font-weight: 600;">Total Rejected</p>
+                    <h2 id="exp-total-rejected" style="font-size:1.75rem; color:#f43f5e; margin-top:0.5rem;">₹0.00</h2>
+                </div>
+                <div class="glass-panel" style="padding: 1.25rem; text-align: center;">
+                    <p style="color:#f59e0b; font-size: 0.85rem; text-transform: uppercase; font-weight: 600;">Total Pending</p>
+                    <h2 id="exp-total-pending" style="font-size:1.75rem; color:#f59e0b; margin-top:0.5rem;">₹0.00</h2>
+                </div>
+                <div class="glass-panel" style="padding: 1.25rem; text-align: center;">
+                    <p style="color:var(--primary); font-size: 0.85rem; text-transform: uppercase; font-weight: 600;">Available Balance</p>
+                    <h2 id="exp-avail-balance" style="font-size:1.75rem; color:var(--primary); margin-top:0.5rem;">₹50,000.00</h2>
+                </div>
+            </div>
+
+            <!-- Search and Filter Panel -->
+            <div class="glass-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
+                <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+                    <div style="flex: 2; min-width: 200px;">
+                        <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem; color:var(--text-muted);">Search title/description</label>
+                        <div style="position:relative;">
+                            <input type="text" id="expenseSearch" class="form-control" placeholder="Search claims..." oninput="filterExpenses()" style="width:100%; padding:0.75rem 0.75rem 0.75rem 2.2rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                            <i class="fa-solid fa-search" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-muted);"></i>
+                        </div>
+                    </div>
+                    <div style="flex: 1; min-width: 120px;">
+                        <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem; color:var(--text-muted);">Status</label>
+                        <select id="filterStatus" class="form-control" onchange="filterExpenses()" style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                            <option value="ALL">All Statuses</option>
+                            <option value="PENDING">Pending</option>
+                            <option value="APPROVED">Approved</option>
+                            <option value="REJECTED">Rejected</option>
+                            <option value="DRAFT">Draft</option>
                         </select>
                     </div>
-                    <div class="form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
-                        <label>Date</label>
-                        <input type="date" id="expenseDate" class="form-control" required style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                    <div style="flex: 1; min-width: 120px;">
+                        <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem; color:var(--text-muted);">Payment</label>
+                        <select id="filterPayment" class="form-control" onchange="filterExpenses()" style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                            <option value="ALL">All Payments</option>
+                            <option value="PAID">Paid</option>
+                            <option value="UNPAID">Unpaid</option>
+                        </select>
                     </div>
-                    <div class="form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
-                        <label>Amount (₹)</label>
-                        <input type="number" step="0.01" id="expenseAmount" class="form-control" required style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;" placeholder="0.00">
+                    <div style="flex: 1.2; min-width: 140px;">
+                        <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem; color:var(--text-muted);">Start Date</label>
+                        <input type="date" id="filterStartDate" class="form-control" onchange="filterExpenses()" style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
                     </div>
-                    <div class="form-group" style="flex: 2; min-width: 250px; margin-bottom: 0;">
-                        <label>Description</label>
-                        <input type="text" id="expenseDesc" class="form-control" required style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;" placeholder="Brief details">
+                    <div style="flex: 1.2; min-width: 140px;">
+                        <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem; color:var(--text-muted);">End Date</label>
+                        <input type="date" id="filterEndDate" class="form-control" onchange="filterExpenses()" style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
                     </div>
-                    <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1.5rem;">Submit</button>
-                    <button type="button" class="btn btn-ghost" style="padding: 0.75rem 1.5rem;" onclick="document.getElementById('expense-form-container').style.display='none'">Cancel</button>
-                </form>
+                    <div>
+                        <button class="btn btn-ghost" onclick="clearExpenseFilters()" style="padding: 0.75rem 1.2rem; height: 44px;"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+                    </div>
+                </div>
             </div>
 
+            <!-- Table Section -->
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
                             <th>Date</th>
+                            <th>Title</th>
                             <th>Category</th>
                             <th>Amount</th>
                             <th>Status</th>
+                            <th>Payment</th>
+                            <th>Remarks</th>
+                            <th>Receipt</th>
                         </tr>
                     </thead>
                     <tbody id="expensesList">
@@ -1744,46 +1697,52 @@
                     </tbody>
                 </table>
             </div>
-        </section>
 
-        <!-- View: Payroll -->
-        <section id="payroll" class="view-section">
-            <h2 class="gradient-text" style="margin-bottom: 2rem;">My Payroll</h2>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Month/Year</th>
-                            <th>Base Salary</th>
-                            <th>Shift Bonus</th>
-                            <th>Total Amount</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="selfPayrollList">
-                        <!-- Populated dynamically -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- View: Offboardings -->
-        <section id="offboardings" class="view-section">
-            <h2 class="gradient-text" style="margin-bottom: 2rem;">Offboardings & Complaints</h2>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Action Type</th>
-                            <th>Reason / Message</th>
-                        </tr>
-                    </thead>
-                    <tbody id="offboardingList">
-                        <!-- Populated dynamically -->
-                    </tbody>
-                </table>
+            <!-- Custom Modal: Add Expense Claim -->
+            <div id="add-expense-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 1000; align-items: center; justify-content: center;">
+                <div class="glass-panel" style="width: 100%; max-width: 600px; padding: 2rem; position: relative;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3 class="gradient-text"><i class="fa-solid fa-receipt"></i> Submit Expense Claim</h3>
+                        <button onclick="closeAddExpenseModal()" style="background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;"><i class="fa-solid fa-times"></i></button>
+                    </div>
+                    <form id="applyExpenseForm" onsubmit="submitExpenseClaim(event)">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+                            <div class="form-group">
+                                <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Title/Merchant</label>
+                                <input type="text" id="expenseTitle" class="form-control" placeholder="e.g., Uber Ride" required style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                            </div>
+                            <div class="form-group">
+                                <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Category</label>
+                                <select id="expenseCategory" class="form-control" required style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                                    <option value="Travel">Travel</option>
+                                    <option value="Meals">Meals</option>
+                                    <option value="Supplies">Supplies</option>
+                                    <option value="Software">Software</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+                            <div class="form-group">
+                                <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Amount (₹)</label>
+                                <input type="number" step="0.01" id="expenseAmount" class="form-control" placeholder="0.00" required style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                            </div>
+                            <div class="form-group">
+                                <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Receipt File (Bill)</label>
+                                <input type="file" id="expenseReceipt" class="form-control" style="width:100%; padding:0.5rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Description / Remarks</label>
+                            <textarea id="expenseDesc" class="form-control" placeholder="Provide extra details..." rows="3" style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff; resize: vertical;"></textarea>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                            <button type="button" class="btn btn-ghost" onclick="closeAddExpenseModal()">Cancel</button>
+                            <button type="button" class="btn btn-ghost" onclick="submitExpenseClaim(event, true)" style="border-color: var(--text-muted); color: var(--text-muted);"><i class="fa-solid fa-floppy-disk"></i> Save Draft</button>
+                            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Submit Claim</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </section>
 
@@ -1954,25 +1913,10 @@
                         <input type="text" id="prof-empid" class="profile-input" readonly
                             style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
                     </div>
-                    <div class="form-group" style="margin-bottom: 1rem;">
+                    <div class="form-group">
                         <label>Joining Date</label>
                         <input type="date" id="prof-joining" class="profile-input" readonly
                             style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
-                    </div>
-                    <div class="form-group">
-                        <label>Shift</label>
-                        <select id="prof-shift" class="profile-input" disabled
-                            style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
-                            <option value="day">Day Shift</option>
-                            <option value="night">Night Shift</option>
-                        </select>
-                    <div class="form-group" style="margin-top: 1rem;">
-                        <label>Work Mode</label>
-                        <select id="prof-work-mode" class="profile-input" disabled
-                            style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
-                            <option value="Office">Office</option>
-                            <option value="Remote">Remote</option>
-                        </select>
                     </div>
                 </div>
 
@@ -2012,92 +1956,6 @@
             </div>
         </section>
 
-        <!-- View: Queries -->
-        <section id="queries" class="view-section">
-            <h2 class="gradient-text" style="margin-bottom: 2rem;">My Queries</h2>
-            
-            <div class="glass-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
-                <h4 style="margin-bottom: 1.5rem;"><i class="fa-solid fa-pen"></i> Write a New Query</h4>
-                <div class="form-group" style="margin-bottom: 1rem;">
-                    <label>Subject</label>
-                    <input type="text" id="query-subject" class="form-control" style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;" placeholder="Enter subject...">
-                </div>
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label>Message</label>
-                    <textarea id="query-message" class="form-control" rows="4" style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;" placeholder="Describe your query..."></textarea>
-                </div>
-                <div style="display: flex; gap: 1rem;">
-                    <button class="btn btn-primary" onclick="sendQuery('manager')"><i class="fa-solid fa-user-tie"></i> Send to Manager</button>
-                    <button class="btn btn-ghost" onclick="sendQuery('team_leader')"><i class="fa-solid fa-users-gear"></i> Send to Team Leader</button>
-                </div>
-            </div>
-
-            <div class="glass-panel" style="padding: 1.5rem;">
-                <h4 style="margin-bottom: 1rem;"><i class="fa-solid fa-clock-rotate-left"></i> Query History</h4>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Target</th>
-                                <th>Subject</th>
-                                <th>Message</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="myQueriesList">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- View: Reports -->
-        <section id="reports" class="view-section">
-            <h2 class="gradient-text" style="margin-bottom: 2rem;">Weekly Performance Report</h2>
-            
-            <div class="report-grid">
-                <div class="report-card">
-                    <div class="report-icon" style="background: rgba(59, 130, 246, 0.1); color: var(--primary);"><i class="fa-solid fa-tasks"></i></div>
-                    <div class="report-info">
-                        <p>Tasks Assigned</p>
-                        <h4 id="report-total-tasks">0</h4>
-                    </div>
-                </div>
-                <div class="report-card">
-                    <div class="report-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;"><i class="fa-solid fa-check-double"></i></div>
-                    <div class="report-info">
-                        <p>Done On Time</p>
-                        <h4 id="report-on-time-tasks">0</h4>
-                    </div>
-                </div>
-                <div class="report-card">
-                    <div class="report-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;"><i class="fa-solid fa-clock"></i></div>
-                    <div class="report-info">
-                        <p>Hours Worked</p>
-                        <h4 id="report-monthly-hours">0h</h4>
-                    </div>
-                </div>
-                <div class="report-card">
-                    <div class="report-icon" style="background: rgba(244, 63, 94, 0.1); color: #f43f5e;"><i class="fa-solid fa-calendar-minus"></i></div>
-                    <div class="report-info">
-                        <p>Used Leaves</p>
-                        <h4 id="report-monthly-leaves">0</h4>
-                    </div>
-                </div>
-            </div>
-
-            <div class="report-summary-box">
-                <h4 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 10px;">
-                    <i class="fa-solid fa-circle-info" style="color: var(--primary);"></i> 
-                    Summary Insights
-                </h4>
-                <div id="report-summary-text" style="color: var(--text-muted); line-height: 1.7; font-size: 0.95rem;">
-                    Loading your weekly performance insights...
-                </div>
-            </div>
-        </section>
-
         <!-- View: Notifications -->
         <section id="notifications" class="view-section">
             <h2 class="gradient-text" style="margin-bottom: 2rem;">Company Announcements</h2>
@@ -2124,6 +1982,6 @@
 
     </main>
 
-    <script src="employee.js?v=8"></script>
+    <script src="employee.js?v=7"></script>
 </body>
 </html>

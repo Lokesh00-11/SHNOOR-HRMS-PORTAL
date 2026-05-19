@@ -28,10 +28,12 @@ from .views import (
     NotificationView, 
     AllEmployeeProfilesView,
     TeamLeaderProfileView, TeamLeaderProfileUpdateView, TeamLeaderStatsView,
-    TeamLeaderTeamMembersView, TeamLeaderTasksView, TeamLeaderPerformanceView,
+    TeamLeaderTeamMembersView, TeamLeaderAttendanceView, TeamLeaderTasksView, TeamLeaderPerformanceView,
     SystemDataSetupView, 
     PendingLeavesCountView, MarkNotificationsReadView,
-    AdminCompanyCreateView, EmployeeLeaveApplyView, EmployeeNotificationView, EmployeeExpenseView
+    AdminCompanyCreateView, EmployeeLeaveApplyView, EmployeeNotificationView,
+    EmployeeExpenseListView, TeamLeaderExpenseListView, TeamLeaderExpenseUpdateView,
+    ManagerExpenseListView, ManagerExpenseApproveView, ManagerExpensePayView
 )
 
 urlpatterns = [
@@ -68,13 +70,11 @@ urlpatterns = [
     path('api/manager/letterheads/<int:pk>/', LetterHeadDetailView.as_view(), name='letterhead_detail'),
     path('api/manager/policies/<int:pk>/', CompanyPolicyDetailView.as_view(), name='manager_policy_detail'),
     path('api/manager/payroll/', PayrollView.as_view(), name='payroll'),
-    path('api/manager/expenses/', ManagerExpenseView.as_view(), name='manager_expenses'),
     path('api/manager/leaves/<int:pk>/', LeaveRequestDetailView.as_view(), name='manager_leave_detail'),
     path('api/manager/leaves/pending-count/', PendingLeavesCountView.as_view(), name='pending_leaves_count'),
     path('api/manager/policies/', CompanyPolicyView.as_view(), name='manager_policies'),
     path('api/assets/',AssetView.as_view(),name='assets'),
     path('api/employee/stats/', EmployeeStatsView.as_view(), name='employee_stats'),
-    path('api/assets/',AssetView.as_view(),name='assets'),
     path('api/employee/holidays/', HolidayView.as_view(), name='employee_holidays'),
     path('api/employee/appreciations/', AppreciationView.as_view(), name='employee_appreciations'),
     path('api/employee/leaves/', EmployeeLeaveApplyView.as_view(), name='employee_leaves'),
@@ -102,7 +102,13 @@ urlpatterns = [
     path('api/employee/attendance/clock-out/', EmployeeClockOutView.as_view(), name='employee_clock_out'),
     path('api/employee/attendance/today/', EmployeeAttendanceTodayView.as_view(), name='employee_attendance_today'),
     path('api/employee/leaves/apply/', EmployeeLeaveApplyView.as_view(), name='employee_leave_apply'),
-    path('api/employee/expenses/', EmployeeExpenseView.as_view(), name='employee_expenses'),
+    path('api/employee/expenses/', EmployeeExpenseListView.as_view(), name='employee_expenses_list'),
+    path('api/employee/expenses/create/', EmployeeExpenseListView.as_view(), name='employee_expense_create'),
+    path('api/teamleader/expenses/', TeamLeaderExpenseListView.as_view(), name='tl_expenses_list'),
+    path('api/teamleader/expenses/update/', TeamLeaderExpenseUpdateView.as_view(), name='tl_expense_update'),
+    path('api/manager/expenses/', ManagerExpenseListView.as_view(), name='manager_expenses_list'),
+    path('api/manager/expenses/approve/', ManagerExpenseApproveView.as_view(), name='manager_expense_approve'),
+    path('api/manager/expenses/pay/', ManagerExpensePayView.as_view(), name='manager_expense_pay'),
     path('api/manager/leaves/update-status/', ManagerLeaveApprovalView.as_view(), name='manager_leave_approval'),
     path('api/manager/tasks/create/', ManagerTaskCreateView.as_view(), name='manager_task_create'),
     path('api/manager/tasks/', ManagerTaskListView.as_view(), name='manager_tasks'),

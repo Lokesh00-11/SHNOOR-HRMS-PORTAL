@@ -87,7 +87,7 @@ class ManagerExpenseView(APIView):
     def get(self, request):
         if request.user.role.lower() not in ['manager', 'admin', 'super_admin']:
             return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
-        expenses = Expense.objects.all().order_by('-created_at')
+        expenses = Expense.objects.all().order_by('-submitted_at')
         serializer = ExpenseSerializer(expenses, many=True)
         return Response(serializer.data)
 

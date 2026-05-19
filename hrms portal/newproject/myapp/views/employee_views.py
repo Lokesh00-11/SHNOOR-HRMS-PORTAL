@@ -103,12 +103,12 @@ class EmployeeAppreciationView(APIView):
 class EmployeeExpenseView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
-        expenses = Expense.objects.filter(employee=request.user.employee_profile).order_by('-created_at')
+        expenses = Expense.objects.filter(employee=request.user).order_by('-submitted_at')
         serializer = ExpenseSerializer(expenses, many=True)
         return Response(serializer.data)
     def post(self, request):
         data = request.data.copy()
-        data['employee'] = request.user.employee_profile.id
+        data['employee'] = request.user.id
         if 'date' not in data: data['date'] = str(timezone.now().date())
         serializer = ExpenseSerializer(data=data)
         if serializer.is_valid():

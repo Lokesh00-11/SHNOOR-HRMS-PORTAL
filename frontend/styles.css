@@ -32,12 +32,10 @@ body {
     position: relative;
 }
 
-/* Background Glow Effects - Disabled */
 .bg-glow-1, .bg-glow-2 {
     display: none;
 }
 
-/* Utilities */
 .container {
     max-width: 1280px;
     margin: 0 auto;
@@ -100,7 +98,6 @@ body {
     color: var(--primary);
 }
 
-/* Navbar */
 .navbar {
     position: fixed;
     top: 0;
@@ -156,7 +153,6 @@ body {
     align-items: center;
 }
 
-/* Hero Section */
 .hero {
     padding: 12rem 0 6rem;
     min-height: 100vh;
@@ -360,7 +356,9 @@ body {
 .contact-item h4 { color: var(--primary); margin-bottom: 0.5rem; }
 
 /* Dashboard Layout */
-.dashboard-grid { display: grid; gap: 2rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); padding: 2rem 0; }
+.dashboard-grid { display: grid; gap: 2rem; grid-template-columns: repeat(4, 1fr); padding: 2rem 0; }
+@media(max-width: 1200px) { .dashboard-grid { grid-template-columns: repeat(2, 1fr); } }
+@media(max-width: 600px) { .dashboard-grid { grid-template-columns: 1fr; } }
 .dual-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
 @media(max-width: 768px) { .dual-panel { grid-template-columns: 1fr; } }
 

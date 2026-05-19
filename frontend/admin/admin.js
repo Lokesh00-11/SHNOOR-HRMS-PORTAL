@@ -18,6 +18,7 @@ navItems.forEach(item => {
             // Load data based on target
             if (targetId === 'notifications') loadNotifications();
             if (targetId === 'companies') loadCompanies();
+            if (targetId === 'subscriptions') loadSubscriptions();
             if (targetId === 'orgchart') loadOrgChart();
         } else {
             // Fallback for empty views
@@ -36,6 +37,48 @@ const getHeaders = () => {
         'Authorization': `Token ${getToken()}`
     };
 };
+
+function parseDate(dateStr) {
+    if (!dateStr) return null;
+    try {
+        const cleanStr = dateStr.split(' ')[0].split('T')[0].trim();
+        const parts = cleanStr.split(/[-/]/);
+        if (parts.length === 3) {
+            let day, month, year;
+            if (parts[0].length === 4) { // YYYY-MM-DD
+                year = parseInt(parts[0]);
+                month = parseInt(parts[1]) - 1;
+                day = parseInt(parts[2]);
+            } else if (parts[2].length === 4) { // DD-MM-YYYY
+                day = parseInt(parts[0]);
+                month = parseInt(parts[1]) - 1;
+                year = parseInt(parts[2]);
+            }
+            if (year && month !== undefined && day) {
+                const d = new Date(year, month, day);
+                if (!isNaN(d.getTime())) return d;
+            }
+        }
+    } catch (e) {}
+    const fallback = new Date(dateStr);
+    return isNaN(fallback.getTime()) ? null : fallback;
+}
+
+function formatDateDisplay(dateObj, includeTime = false) {
+    if (!dateObj || isNaN(dateObj.getTime())) return '-';
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const date = `${months[dateObj.getMonth()]} ${dateObj.getDate()}, ${dateObj.getFullYear()}`;
+    if (!includeTime) return date;
+    const time = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `${date} ${time}`;
+}
+
+function setTodayAsDefault() {
+    const today = new Date().toISOString().split('T')[0];
+    document.querySelectorAll('input[type="date"]').forEach(input => {
+        if (!input.value) input.value = today;
+    });
+}
 
 async function loadCompanies() {
     try {
@@ -97,6 +140,75 @@ function updateDashboardCounts(companies) {
     inactiveEl.innerText = inactiveCount;
 }
 
+// Subscriptions Logic
+async function loadSubscriptions() {
+    try {
+        const res = await fetch(`${API_BASE}/admin/subscriptions/`, {
+            headers: getHeaders()
+        });
+        if (!res.ok) throw new Error('Failed to fetch plans');
+        const plans = await res.json();
+        renderPlansList(plans);
+    } catch (err) {
+        console.error('Error loading plans:', err);
+    }
+}
+
+function renderPlansList(plans) {
+    const list = document.getElementById('plansList');
+    if (!list) return;
+    list.innerHTML = '';
+    plans.forEach(plan => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="font-weight:600;">${plan.name}</td>
+            <td>$${plan.price}</td>
+            <td>${plan.duration_months} Months</td>
+            <td>${plan.trial_period_days} Days</td>
+            <td style="color:var(--text-muted); font-size:0.85rem;">${plan.features || 'Standard Features'}</td>
+        `;
+        list.appendChild(tr);
+    });
+}
+
+const addPlanForm = document.getElementById('addPlanForm');
+if (addPlanForm) {
+    addPlanForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+            name: document.getElementById('planName').value,
+            price: parseFloat(document.getElementById('planPrice').value),
+            duration_months: parseInt(document.getElementById('planDuration').value),
+            trial_period_days: parseInt(document.getElementById('planTrial').value),
+            features: "Standard features set"
+        };
+        
+        try {
+            const res = await fetch(`${API_BASE}/admin/subscriptions/`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify(payload)
+            });
+            
+            if (!res.ok) {
+                const data = await res.json();
+                let errorMsg = 'Failed to create plan';
+                if (data) {
+                    errorMsg = Object.entries(data).map(([field, errors]) => `${field}: ${errors.join(', ')}`).join('\n');
+                }
+                throw new Error(errorMsg);
+            }
+            
+            addPlanForm.reset();
+            loadSubscriptions();
+            alert('Subscription plan created successfully!');
+        } catch (err) {
+            console.error('Error creating plan:', err);
+            alert(err.message);
+        }
+    });
+}
+
 // Add Company
 const addCompanyForm = document.getElementById('addCompanyForm');
 if (addCompanyForm) {
@@ -104,17 +216,22 @@ if (addCompanyForm) {
         e.preventDefault();
         const name = document.getElementById('newCompanyName').value;
         const email = document.getElementById('newCompanyEmail').value;
+        const members_count = parseInt(document.getElementById('newCompanyMembers').value) || 0;
         
         try {
             const res = await fetch(`${API_BASE}/admin/companies/`, {
                 method: 'POST',
                 headers: getHeaders(),
-                body: JSON.stringify({ name, email, is_active: true })
+                body: JSON.stringify({ name, email, members_count, is_active: true })
             });
             
             if (!res.ok) {
                 const data = await res.json();
-                throw new Error(data.message || 'Failed to add company');
+                let errorMsg = 'Failed to add company';
+                if (data) {
+                    errorMsg = Object.entries(data).map(([field, errors]) => `${field}: ${errors.join(', ')}`).join('\n');
+                }
+                throw new Error(errorMsg);
             }
             
             addCompanyForm.reset();
@@ -166,6 +283,7 @@ window.deleteCompany = async function(id) {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    setTodayAsDefault();
     loadCompanies();
     loadOrgChart();
 });
@@ -351,9 +469,8 @@ async function loadNotifications() {
         
         list.innerHTML = '';
         data.sent.forEach(notif => {
-            const date = new Date(notif.created_at).toLocaleDateString('en-US', {
-                year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-            });
+            const nDateObj = parseDate(notif.created_at);
+            const date = formatDateDisplay(nDateObj, true) || notif.created_at;
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${date}</td>

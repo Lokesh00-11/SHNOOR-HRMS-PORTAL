@@ -20,6 +20,48 @@ function formatDateForInput(dateStr) {
     return dateStr;
 }
 
+function parseDate(dateStr) {
+    if (!dateStr) return null;
+    try {
+        const cleanStr = dateStr.split(' ')[0].split('T')[0].trim();
+        const parts = cleanStr.split(/[-/]/);
+        if (parts.length === 3) {
+            let day, month, year;
+            if (parts[0].length === 4) { // YYYY-MM-DD
+                year = parseInt(parts[0], 10);
+                month = parseInt(parts[1], 10) - 1;
+                day = parseInt(parts[2], 10);
+            } else if (parts[2].length === 4) { // DD-MM-YYYY
+                day = parseInt(parts[0], 10);
+                month = parseInt(parts[1], 10) - 1;
+                year = parseInt(parts[2], 10);
+            }
+            if (year && month !== undefined && day) {
+                const d = new Date(year, month, day);
+                if (!isNaN(d.getTime())) return d;
+            }
+        }
+    } catch (e) {}
+    const fallback = new Date(dateStr);
+    return isNaN(fallback.getTime()) ? null : fallback;
+}
+
+function formatDateDisplay(dateObj, includeTime = false) {
+    if (!dateObj || isNaN(dateObj.getTime())) return '-';
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const date = `${months[dateObj.getMonth()]} ${dateObj.getDate()}, ${dateObj.getFullYear()}`;
+    if (!includeTime) return date;
+    const time = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `${date} ${time}`;
+}
+
+function setTodayAsDefault() {
+    const today = new Date().toISOString().split('T')[0];
+    document.querySelectorAll('input[type="date"]').forEach(input => {
+        if (!input.value) input.value = today;
+    });
+}
+
 async function fetchData(endpoint, options = {}) {
     const token = getToken();
     const defaultHeaders = {
@@ -62,10 +104,13 @@ async function fetchData(endpoint, options = {}) {
 // --- DOM Initialization ---
 document.addEventListener('DOMContentLoaded', async () => {
     getToken();
+    setTodayAsDefault();
     await loadTopBarProfile();
     initNavigation();
     loadDashboardStats(); // Load overview initially
     setupEventListeners();
+    setInterval(updateQueryBadge, 2000);
+    updateQueryBadge();
 });
 
 // Load basic profile info for the top-bar and initial display
@@ -112,6 +157,7 @@ function initNavigation() {
                 'tasks': 'Team Tasks & Delegation',
                 'performance': 'Team Performance Metrics',
                 'notifications': 'Notifications & Broadcasts',
+                'queries': 'Employee Queries',
                 'profile': 'My Personal Profile'
             };
             document.getElementById('topbar-title').innerText = titleMapping[target] || 'Dashboard';
@@ -135,6 +181,13 @@ function initNavigation() {
                     break;
                 case 'notifications':
                     loadNotifications();
+                    break;
+                case 'queries':
+                    loadQueries();
+                    const badge = document.getElementById('query-badge');
+                    if (badge) {
+                        setTimeout(() => { badge.style.display = 'none'; }, 2000);
+                    }
                     break;
                 case 'profile':
                     loadProfile();
@@ -253,10 +306,12 @@ async function loadAttendance() {
     tbody.innerHTML = '';
     logs.forEach(log => {
         const statClass = log.status.toLowerCase() === 'present' ? 'present' : 'absent';
+        const dateObj = parseDate(log.date);
+        const dateStr = formatDateDisplay(dateObj) || (log.date || 'Today');
         tbody.innerHTML += `
             <tr>
                 <td style="font-weight: 500;">${log.employee_name}</td>
-                <td>${log.date || 'Today'}</td>
+                <td>${dateStr}</td>
                 <td>${log.check_in || '-'}</td>
                 <td>${log.check_out || '-'}</td>
                 <td><span class="status ${statClass}">${log.status}</span></td>
@@ -522,7 +577,8 @@ async function loadNotifications() {
 
     container.innerHTML = '';
     msgs.forEach(m => {
-        const dateStr = new Date(m.created_at).toLocaleDateString() + ' ' + new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const nDateObj = parseDate(m.created_at);
+        const dateStr = formatDateDisplay(nDateObj, true) || m.created_at;
         container.innerHTML += `
             <div class="notification-card glass-panel">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.25rem;">
@@ -595,6 +651,24 @@ function setupEventListeners() {
                 el.style.display = 'none';
             }
         });
+        const addEmpModal = document.getElementById('addEmployeeModal');
+        if (e.target === addEmpModal) {
+            addEmpModal.style.display = 'none';
+        }
+    });
+
+    // Add Employee Modal Trigger
+    document.getElementById('btn-add-employee').addEventListener('click', () => {
+        openAddEmployeeModal();
+    });
+
+    document.getElementById('closeAddEmpModalBtn').addEventListener('click', () => {
+        document.getElementById('addEmployeeModal').style.display = 'none';
+    });
+
+    // Search Filtering
+    document.getElementById('employeeSearchInput').addEventListener('input', (e) => {
+        filterAvailableEmployees(e.target.value);
     });
 
     // Task View Sub-Tabs switcher
@@ -704,4 +778,138 @@ function setupEventListeners() {
     document.getElementById('logoutBtn').addEventListener('click', () => {
         localStorage.removeItem('token');
     });
+}
+
+async function updateQueryBadge() {
+    const badge = document.getElementById('query-badge');
+    if (!badge) return;
+    try {
+        const data = await fetchData('/queries/unread-count/');
+        if (data && data.unread_count > 0) {
+            badge.innerText = data.unread_count;
+            badge.style.display = 'inline-block';
+        } else {
+            badge.style.display = 'none';
+        }
+    } catch (err) {
+        console.error("Error updating query badge:", err);
+    }
+}
+
+// --- Queries Module ---
+async function loadQueries() {
+    const list = document.getElementById('receivedQueriesList');
+    if (!list) return;
+    list.innerHTML = '<tr><td colspan="6" style="text-align:center;">Loading...</td></tr>';
+
+    const data = await fetchData('/admin/queries/'); // Backend filters by role
+    if (!data || data.length === 0) {
+        list.innerHTML = '<tr><td colspan="6" style="text-align:center;">No queries found.</td></tr>';
+        return;
+    }
+
+    list.innerHTML = '';
+    data.forEach(q => {
+        const qDateObj = parseDate(q.created_at);
+        const date = formatDateDisplay(qDateObj) || q.created_at;
+        const statusCls = q.status === 'resolved' ? 'active' : (q.status === 'in_progress' ? 'pending' : 'expired');
+        
+        list.innerHTML += `
+            <tr>
+                <td>${date}</td>
+                <td><strong>${q.sender_username}</strong></td>
+                <td>${q.subject}</td>
+                <td style="font-size:0.85rem; color:var(--text-muted); max-width:300px;">${q.message}</td>
+                <td><span class="status ${statusCls}">${q.status}</span></td>
+                <td>
+                    <select onchange="updateQueryStatus(${q.id}, this.value)" style="padding:0.25rem; border-radius:4px; background:var(--bg-navy); color:#fff; border:1px solid var(--glass-border);">
+                        <option value="pending" ${q.status === 'pending' ? 'selected' : ''}>Pending</option>
+                        <option value="in_progress" ${q.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                        <option value="resolved" ${q.status === 'resolved' ? 'selected' : ''}>Resolved</option>
+                    </select>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+async function updateQueryStatus(queryId, newStatus) {
+    const res = await fetchData(`/admin/queries/${queryId}/`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus })
+    });
+
+    if (res) {
+        alert('Query status updated successfully.');
+        loadQueries();
+    } else {
+        alert('Failed to update status.');
+    }
+}
+
+// --- Add Employee to Team Module ---
+let allAvailableEmployees = [];
+
+async function openAddEmployeeModal() {
+    document.getElementById('addEmployeeModal').style.display = 'block';
+    const list = document.getElementById('availableEmployeesList');
+    list.innerHTML = '<tr><td colspan="3" style="text-align:center;">Loading employees...</td></tr>';
+
+    const data = await fetchData('/manager/all-employee-profiles/');
+    if (data) {
+        // Filter out employees already in the team
+        const teamIds = teamMembersList.map(m => m.id);
+        allAvailableEmployees = data.filter(emp => !teamIds.includes(emp.id));
+        renderAvailableEmployees(allAvailableEmployees);
+    }
+}
+
+function renderAvailableEmployees(employees) {
+    const list = document.getElementById('availableEmployeesList');
+    if (employees.length === 0) {
+        list.innerHTML = '<tr><td colspan="3" style="text-align:center;">No other employees available to add.</td></tr>';
+        return;
+    }
+
+    list.innerHTML = '';
+    employees.forEach(emp => {
+        const name = `${emp.first_name || ''} ${emp.last_name || ''}`.trim() || emp.email;
+        list.innerHTML += `
+            <tr>
+                <td><strong>${name}</strong><br><small style="color:var(--text-muted);">${emp.email}</small></td>
+                <td>${emp.designation || '-'}</td>
+                <td>
+                    <button class="btn btn-primary" onclick="addEmployeeToTeam(${emp.id})" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;"><i class="fa-solid fa-plus"></i> Add</button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+function filterAvailableEmployees(query) {
+    const q = query.toLowerCase();
+    const filtered = allAvailableEmployees.filter(emp => {
+        const name = `${emp.first_name || ''} ${emp.last_name || ''}`.toLowerCase();
+        const email = (emp.email || '').toLowerCase();
+        return name.includes(q) || email.includes(q);
+    });
+    renderAvailableEmployees(filtered);
+}
+
+async function addEmployeeToTeam(empId) {
+    if (!confirm('Are you sure you want to add this employee to your team?')) return;
+
+    const res = await fetchData('/teamleader/team-members/', {
+        method: 'POST',
+        body: JSON.stringify({ employee_id: empId })
+    });
+
+    if (res) {
+        alert(res.message || 'Employee added successfully!');
+        document.getElementById('addEmployeeModal').style.display = 'none';
+        loadTeamMembers(); // Refresh the list
+        loadDashboardStats(); // Refresh the stats
+    } else {
+        alert('Failed to add employee.');
+    }
 }

@@ -1,0 +1,1114 @@
+/**
+ * Shnoor HRM - Employee Dashboard Logic
+ * Handles section navigation, profile management, and API communication.
+ */
+
+// --- Configuration ---
+const API_BASE = "http://127.0.0.1:8000/api";
+const BASE_URL = API_BASE;
+
+function formatDateForInput(dateStr) {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length === 3 && parts[0].length === 2 && parts[2].length === 4) {
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    return dateStr;
+}
+
+// --- Core Initialization ---
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize sidebar navigation
+    initNavigation();
+    
+    // Perform initial data sync
+    loadProfile();
+    loadDashboardStats();
+});
+
+/**
+ * Sidebar Navigation Controller
+ * Manages view switching based on data-target attributes.
+ */
+
+
+
+function initNavigation() {
+    console.log("Navigation initialized");
+
+    document.addEventListener('click', function (e) {
+        const item = e.target.closest('.nav-item[data-target]');
+        if (!item) return;
+
+        const targetId = item.getAttribute('data-target');
+        console.log("NAV CLICK:", targetId);
+
+        const targetView = document.getElementById(targetId);
+        if (!targetView) {
+            console.error("Section not found:", targetId);
+            return;
+        }
+
+        // remove all active
+        document.querySelectorAll('.view-section').forEach(sec => {
+            sec.classList.remove('active');
+        });
+
+        document.querySelectorAll('.nav-item').forEach(nav => {
+            nav.classList.remove('active');
+        });
+
+        // activate current
+        targetView.classList.add('active');
+        item.classList.add('active');
+
+        console.log("Section activated:", targetId);
+
+        // 🔥 CRITICAL
+        if (targetId === 'dashboard') loadDashboardStats();
+        if (targetId === 'attendance') loadAttendance();
+        if (targetId === 'leaves') loadLeaves();
+        if (targetId === 'tasks') loadTasks();
+        if (targetId === 'holidays') loadHolidays();
+        if (targetId === 'orgchart') loadOrgChart();
+        if (targetId === 'expenses') loadExpenses();
+        if (targetId === 'documents') loadDocuments();
+        if (targetId === 'profile') loadProfile();
+        if (targetId === 'notifications') loadNotifications();
+        if (targetId === 'offboarding-section') loadOffboarding();
+    });
+}
+
+/**
+ * Utility: Authenticated Fetch
+ * Standardizes API communication with token management.
+ */
+async function fetchData(endpoint, options = {}) {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        console.warn("Authentication token missing.");
+        return null;
+    }
+
+    const headers = {
+        'Authorization': `Token ${token}`,
+        'Content-Type': 'application/json',
+        ...options.headers
+    };
+
+    try {
+        const response = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+        
+        // Handle session expiration
+        if (response.status === 401) {
+            localStorage.removeItem('token');
+            window.location.href = "../login.html";
+            return null;
+        }
+
+        if (!response.ok) return null;
+        return await response.json();
+    } catch (error) {
+        console.error("API Fetch Error:", error);
+        return null;
+    }
+}
+
+/**
+ * Profile Module
+ * Handles fetching and rendering of employee profile data.
+ */
+async function loadProfile() {
+    const data = await fetchData('/employee/profile/');
+    if (!data) return;
+
+    // Log for debugging (optional)
+    console.log("PROFILE DATA:", data);
+
+    // Helpers for safe DOM updates
+    const setT = (id, text) => { 
+        const el = document.getElementById(id); 
+        if (el) el.innerText = text || "-"; 
+    };
+    const setV = (id, val) => { 
+        const el = document.getElementById(id); 
+        if (el) el.value = val || ""; 
+    };
+
+    // Summary Header Mapping
+    const fullName = (data.first_name || "") + " " + (data.last_name || "");
+    setT('emp_name', fullName);
+    setT('emp_designation', data.designation);
+    setT('emp_department', data.department || "N/A");
+    setT('emp_email', data.email);
+    setT('emp_phone', data.phone_number || "N/A");
+    setT('emp_joining', data.date_of_joining || "N/A");
+
+    // Detailed Form Mapping
+    setV('prof-fname', data.first_name);
+    setV('prof-lname', data.last_name);
+    setV('prof-email', data.email);
+    setV('prof-phone', data.phone_number);
+    setV('prof-gender', data.gender);
+    setV('prof-dob', formatDateForInput(data.date_of_birth));
+    setV('prof-address', data.address);
+    setV('prof-designation', data.designation);
+    setV('prof-department', data.department || "N/A");
+    setV('prof-empid', data.employee_id);
+    setV('prof-joining', formatDateForInput(data.date_of_joining));
+    setV('prof-bank', data.bank_name);
+    setV('prof-acc', data.account_number);
+    setV('prof-ifsc', data.ifsc_code);
+    setV('prof-branch', data.branch_name);
+
+    // Added Fields Mapping
+    setV('prof-aadhaar', data.aadhaar_number);
+    setV('prof-pan', data.pan_number);
+    setV('prof-marital', data.marital_status);
+    setV('prof-nationality', data.nationality);
+    setV('prof-blood', data.blood_group);
+    setV('prof-perm-address', data.permanent_address);
+    setV('prof-emg-name', data.emergency_contact_name);
+    setV('prof-emg-phone', data.emergency_contact_phone);
+    setV('prof-emg-relation', data.emergency_contact_relation);
+}
+
+/**
+ * Toggle Profile Mode
+ * Switches between view-only and editable form states.
+ */
+/**
+ * Enable Profile Editing
+ * Removes readonly/disabled attributes from profile inputs.
+ */
+function enableEdit() {
+    const inputs = document.querySelectorAll('.profile-input');
+    inputs.forEach(input => {
+        if (input.id === 'prof-email') return; // Email remains locked
+        
+        input.removeAttribute('readonly');
+        input.removeAttribute('disabled');
+        input.style.background = 'rgba(255,255,255,0.05)';
+    });
+
+    // Toggle buttons
+    document.getElementById('edit-profile-btn').style.display = 'none';
+    document.getElementById('save-profile-btn').style.display = 'inline-block';
+}
+
+/**
+ * Lock Profile Fields
+ * Re-applies readonly/disabled attributes to profile inputs.
+ */
+function lockFields() {
+    const inputs = document.querySelectorAll('.profile-input');
+    inputs.forEach(input => {
+        input.setAttribute('readonly', true);
+        if (input.tagName === 'SELECT') input.setAttribute('disabled', true);
+        input.style.background = 'var(--bg-navy)';
+    });
+
+    // Toggle buttons
+    document.getElementById('edit-profile-btn').style.display = 'inline-block';
+    document.getElementById('save-profile-btn').style.display = 'none';
+}
+
+
+/**
+ * Save Profile
+ * Submits form data to the update endpoint.
+ */
+/**
+ * Save Profile
+ * Submits form data to the update endpoint.
+ */
+async function saveProfile() {
+    const payload = {
+        first_name: document.getElementById('prof-fname')?.value,
+        last_name: document.getElementById('prof-lname')?.value,
+        phone_number: document.getElementById('prof-phone')?.value,
+        gender: document.getElementById('prof-gender')?.value,
+        date_of_birth: document.getElementById('prof-dob')?.value || null,
+        address: document.getElementById('prof-address')?.value,
+        designation: document.getElementById('prof-designation')?.value,
+        department: document.getElementById('prof-department')?.value,
+        employee_id: document.getElementById('prof-empid')?.value,
+        date_of_joining: document.getElementById('prof-joining')?.value || null,
+        bank_name: document.getElementById('prof-bank')?.value,
+        account_number: document.getElementById('prof-acc')?.value,
+        ifsc_code: document.getElementById('prof-ifsc')?.value,
+        branch_name: document.getElementById('prof-branch')?.value,
+        
+        // Added Fields
+        aadhaar_number: document.getElementById('prof-aadhaar')?.value,
+        pan_number: document.getElementById('prof-pan')?.value,
+        marital_status: document.getElementById('prof-marital')?.value,
+        nationality: document.getElementById('prof-nationality')?.value,
+        blood_group: document.getElementById('prof-blood')?.value,
+        permanent_address: document.getElementById('prof-perm-address')?.value,
+        emergency_contact_name: document.getElementById('prof-emg-name')?.value,
+        emergency_contact_phone: document.getElementById('prof-emg-phone')?.value,
+        emergency_contact_relation: document.getElementById('prof-emg-relation')?.value
+    };
+
+    console.log('SAVE_PROFILE_PAYLOAD:', payload);
+
+    const data = await fetchData('/employee/profile/update/', {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+    });
+
+    console.log('SAVE_PROFILE_RESPONSE:', data);
+
+    if (data) {
+        alert('Profile updated successfully!');
+        lockFields();
+        loadProfile(); // Reload data to reflect changes
+    } else {
+        alert('Failed to save profile. Please check the console for details.');
+    }
+}
+
+
+/**
+ * Documents Module
+ * Handles fetching and rendering of company documents.
+ */
+async function loadDocuments() {
+    console.log("Fetching documents...");
+    const list = document.getElementById('documents-list');
+    if (!list) return;
+
+    // Clear table before rendering
+    list.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:2rem;">Loading documents...</td></tr>';
+
+    try {
+        const data = await fetchData('/employee/documents/');
+        console.log("Documents Data:", data);
+
+        let docsArray = [];
+        if (Array.isArray(data)) {
+            docsArray = data;
+        } else if (data && typeof data === 'object') {
+            // In case the API returns { documents: [...] }
+            docsArray = data.documents || data.data || Object.values(data);
+        }
+
+        if (!docsArray || docsArray.length === 0) {
+            list.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:2rem; color:var(--text-muted);">No documents available.</td></tr>';
+            return;
+        }
+
+        list.innerHTML = '';
+        docsArray.forEach(doc => {
+            const dateStr = doc.uploaded_at || doc.created_at;
+            const date = dateStr ? new Date(dateStr).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            }) : 'Unknown Date';
+            
+            const fileUrl = doc.file || doc.file_url || '#';
+            const title = doc.title || 'Untitled Document';
+            const downloadUrl = (fileUrl && fileUrl.startsWith('http')) 
+                ? `${BASE_URL}/download-file/?url=${encodeURIComponent(fileUrl)}&name=${encodeURIComponent(title)}` 
+                : fileUrl;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="font-weight: 500;">${title}</td>
+                <td>${date}</td>
+                <td style="text-align: right;">
+                    <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                        <a href="${downloadUrl}" target="_blank" class="btn btn-ghost" style="padding: 0.25rem 0.75rem; font-size:0.75rem; text-decoration: none;">
+                            <i class="fa-solid fa-eye"></i> View
+                        </a>
+                        <a href="${downloadUrl}" download class="btn btn-primary" style="padding: 0.25rem 0.75rem; font-size:0.75rem; text-decoration: none;">
+                            <i class="fa-solid fa-download"></i> Download
+                        </a>
+                    </div>
+                </td>
+            `;
+            list.appendChild(tr);
+        });
+    } catch (error) {
+        console.error("Error loading documents:", error);
+        list.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:2rem; color:var(--text-muted);">Failed to load documents.</td></tr>';
+    }
+}
+
+// --- Dashboard Module ---
+async function loadDashboardStats() {
+    const stats = await fetchData('/employee/stats/');
+    const today = await fetchData('/employee/attendance/today/');
+
+    if (stats) {
+        document.getElementById('dash-leave-bal').innerText = `${stats.total_leaves || 0} Days`;
+    }
+    
+    if (today && today.length > 0) {
+        const lastRec = today[today.length - 1];
+        if (!lastRec.check_out) {
+            document.getElementById('dash-status').innerText = 'Clocked In';
+            document.getElementById('dash-status').style.color = '#10b981';
+        } else {
+            document.getElementById('dash-status').innerText = 'Clocked Out';
+            document.getElementById('dash-status').style.color = 'var(--primary)';
+        }
+    } else {
+        document.getElementById('dash-status').innerText = 'Not Clocked In';
+        document.getElementById('dash-status').style.color = '#f59e0b';
+    }
+
+    const holidays = await fetchData('/employee/holidays/');
+    if (holidays && holidays.length > 0) {
+        const futureHolidays = holidays.filter(h => new Date(h.date) >= new Date());
+        if (futureHolidays.length > 0) {
+            document.getElementById('dash-next-hol').innerText = futureHolidays[0].name;
+        }
+    }
+
+    const expenses = await fetchData('/employee/expenses/');
+    if (expenses) {
+        const pending = expenses.filter(e => e.status.toLowerCase() === 'pending');
+        const totalPending = pending.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+        document.getElementById('dash-expenses').innerText = `₹${totalPending.toFixed(2)}`;
+    }
+}
+
+// --- Attendance Module ---
+async function loadAttendance() {
+    const list = document.getElementById('attendanceList');
+    if (!list) return;
+    list.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading...</td></tr>';
+    
+    const data = await fetchData('/employee/attendance/');
+    if (!data || data.length === 0) {
+        list.innerHTML = '<tr><td colspan="4" style="text-align:center;">No attendance records found.</td></tr>';
+        return;
+    }
+
+    list.innerHTML = '';
+    data.forEach(rec => {
+        const date = new Date(rec.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        const checkIn = rec.check_in ? new Date(rec.check_in).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '-';
+        const checkOut = rec.check_out ? new Date(rec.check_out).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '-';
+        const status = rec.check_out ? '<span class="status active">Present</span>' : '<span class="status inactive">Clocked In</span>';
+        
+        list.innerHTML += `<tr><td>${date}</td><td>${checkIn}</td><td>${checkOut}</td><td>${status}</td></tr>`;
+    });
+}
+
+document.getElementById('clock-in-btn')?.addEventListener('click', async () => {
+    const res = await fetchData('/employee/attendance/clock-in/', { method: 'POST' });
+    if (res) { alert('Clocked In successfully'); loadDashboardStats(); loadAttendance(); }
+});
+
+document.getElementById('clock-out-btn')?.addEventListener('click', async () => {
+    const res = await fetchData('/employee/attendance/clock-out/', { method: 'POST' });
+    if (res) { alert('Clocked Out successfully'); loadDashboardStats(); loadAttendance(); }
+});
+
+// --- Leaves Module ---
+async function loadLeaves() {
+    const list = document.getElementById('leavesList');
+    if (!list) return;
+    list.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading...</td></tr>';
+
+    const data = await fetchData('/employee/leaves/');
+    if (!data || data.length === 0) {
+        list.innerHTML = '<tr><td colspan="4" style="text-align:center;">No leaves found.</td></tr>';
+        return;
+    }
+
+    let approved = 0, pending = 0;
+    list.innerHTML = '';
+    data.forEach(l => {
+        if (l.status.toLowerCase() === 'approved') approved++;
+        if (l.status.toLowerCase() === 'pending') pending++;
+        
+        const sDate = new Date(l.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const eDate = new Date(l.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        let statusCls = l.status.toLowerCase() === 'approved' ? 'active' : (l.status.toLowerCase() === 'rejected' ? 'inactive' : '');
+        if (!statusCls) statusCls = 'status'; // default for pending
+        
+        list.innerHTML += `<tr><td>${l.leave_type}</td><td>${sDate} - ${eDate}</td><td>${l.reason}</td><td><span class="status ${statusCls}">${l.status}</span></td></tr>`;
+    });
+
+    document.getElementById('leave-bal-total').innerText = data.length;
+    document.getElementById('leave-bal-approved').innerText = approved;
+    document.getElementById('leave-bal-pending').innerText = pending;
+}
+
+document.getElementById('applyLeaveForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = {
+        leave_type: document.getElementById('leaveType').value,
+        start_date: document.getElementById('leaveStart').value,
+        end_date: document.getElementById('leaveEnd').value,
+        reason: document.getElementById('leaveReason').value
+    };
+    const res = await fetchData('/employee/leaves/apply/', { method: 'POST', body: JSON.stringify(payload) });
+    if (res) {
+        alert('Leave request submitted successfully! An email has been sent to your manager.');
+        document.getElementById('leave-form-container').style.display = 'none';
+        document.getElementById('applyLeaveForm').reset();
+        loadLeaves();
+    }
+});
+
+// --- Holidays Module ---
+async function loadHolidays() {
+    const list = document.getElementById('holidaysList');
+    if (!list) return;
+    list.innerHTML = '<tr><td colspan="2" style="text-align:center;">Loading...</td></tr>';
+    const data = await fetchData('/employee/holidays/');
+    if (!data || data.length === 0) {
+        list.innerHTML = '<tr><td colspan="2" style="text-align:center;">No upcoming holidays.</td></tr>';
+        return;
+    }
+    list.innerHTML = '';
+    data.forEach(h => {
+        const date = new Date(h.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        list.innerHTML += `<tr><td><strong>${h.name}</strong></td><td>${date}</td></tr>`;
+    });
+}
+
+// --- Expenses Module ---
+async function loadExpenses() {
+    const list = document.getElementById('expensesList');
+    if (!list) return;
+    list.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading...</td></tr>';
+    const data = await fetchData('/employee/expenses/');
+    if (!data || data.length === 0) {
+        list.innerHTML = '<tr><td colspan="4" style="text-align:center;">No expenses claimed.</td></tr>';
+        return;
+    }
+    list.innerHTML = '';
+    data.forEach(e => {
+        const date = new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const statusCls = e.status.toLowerCase() === 'approved' ? 'active' : (e.status.toLowerCase() === 'rejected' ? 'inactive' : '');
+        list.innerHTML += `<tr><td>${date}</td><td>${e.category}</td><td>₹${parseFloat(e.amount).toFixed(2)}</td><td><span class="status ${statusCls}">${e.status}</span></td></tr>`;
+    });
+}
+
+document.getElementById('applyExpenseForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = {
+        category: document.getElementById('expenseCategory').value,
+        date: document.getElementById('expenseDate').value,
+        amount: document.getElementById('expenseAmount').value,
+        description: document.getElementById('expenseDesc').value
+    };
+    const res = await fetchData('/employee/expenses/', { method: 'POST', body: JSON.stringify(payload) });
+    if (res) {
+        alert('Expense claimed successfully!');
+        document.getElementById('expense-form-container').style.display = 'none';
+        document.getElementById('applyExpenseForm').reset();
+        loadExpenses();
+        loadDashboardStats();
+    }
+});
+
+// --- Tasks Module ---
+let cachedTasks = [];
+
+async function loadTasks() {
+    const list = document.getElementById('tasksList');
+    if (!list) return;
+    list.innerHTML = '<tr><td colspan="5" style="text-align:center;">Loading...</td></tr>';
+
+    const data = await fetchData('/employee/tasks/');
+    cachedTasks = data || [];
+    applyTaskFilters();
+}
+
+function applyTaskFilters() {
+    const statusFilter = document.getElementById('taskStatusFilter')?.value || 'all';
+    const priorityFilter = document.getElementById('taskPriorityFilter')?.value || 'all';
+
+    const filtered = cachedTasks.filter(task => {
+        const matchStatus = statusFilter === 'all' || task.status === statusFilter;
+        const matchPriority = priorityFilter === 'all' || task.priority === priorityFilter;
+        return matchStatus && matchPriority;
+    });
+
+    renderFilteredTasks(filtered);
+}
+
+function renderFilteredTasks(tasks) {
+    const list = document.getElementById('tasksList');
+    if (!list) return;
+
+    if (!tasks || tasks.length === 0) {
+        list.innerHTML = '<tr><td colspan="7" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">No tasks match the filter criteria.</td></tr>';
+        return;
+    }
+
+    list.innerHTML = '';
+    tasks.forEach(task => {
+        const deadline = task.deadline || '-';
+        const priorityColor = task.priority === 'High' ? '#f43f5e' : (task.priority === 'Medium' ? '#f59e0b' : '#10b981');
+        const statusCls = task.status === 'Completed' ? 'active' : (task.status === 'In Progress' ? 'pending' : 'expired');
+        
+        list.innerHTML += `
+            <tr>
+                <td style="font-weight: 500;">${task.title}</td>
+                <td style="font-size:0.85rem; color:var(--text-muted); max-width:250px;">${task.description || '-'}</td>
+                <td style="font-size:0.85rem; color:var(--primary); max-width:200px;"><i>${task.employee_note || '-'}</i></td>
+                <td>${deadline}</td>
+                <td><span style="color:${priorityColor}">${task.priority}</span></td>
+                <td><span class="status ${statusCls}">${task.status}</span></td>
+                <td>
+                    <div style="display:flex; gap:0.5rem;">
+                        ${task.status !== 'Completed' ? `<button class="btn btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.75rem;" onclick="updateTask(${task.id})">Update</button>` : '<span style="color:#10b981;"><i class="fa-solid fa-check"></i> Finished</span>'}
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+async function updateTask(taskId) {
+    const note = prompt('Add a note or update task status (leave blank if none):');
+    if (note === null) return;
+
+    const markDone = confirm('Mark this task as completed?');
+    
+    const payload = { task_id: taskId };
+    if (note) payload.employee_note = note;
+    if (markDone) payload.status = 'Completed';
+
+    const res = await fetchData('/employee/tasks/update/', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+    });
+    
+    if (res) {
+        alert('Task updated!');
+        loadTasks();
+    }
+}
+
+// --- Org Chart Module ---
+async function loadOrgChart() {
+    const container = document.getElementById('orgChartTree');
+    if (!container) return;
+    container.innerHTML = '<div style="color:var(--text-muted); text-align:center;">Loading hierarchy...</div>';
+
+    const data = await fetchData('/org-chart/');
+    if (!data || data.length === 0) {
+        container.innerHTML = '<div style="color:var(--text-muted); text-align:center;">No organization data found.</div>';
+        return;
+    }
+
+    container.innerHTML = '';
+    const treeRoot = document.createElement('ul');
+    
+    // Find top-level nodes (those whose manager is null)
+    const topLevelNodes = data.filter(node => !node.manager);
+    
+    topLevelNodes.forEach(node => {
+        treeRoot.appendChild(buildTreeNode(node, data));
+    });
+    
+    container.appendChild(treeRoot);
+}
+
+function buildTreeNode(node, allData) {
+    const li = document.createElement('li');
+    
+    // Node's content
+    const nodeDiv = document.createElement('div');
+    nodeDiv.className = 'tree-node';
+    
+    // extra content 
+    if (node.work_mode) {
+        const modeBadge = document.createElement('span');
+        modeBadge.className = 'node-mode';
+        modeBadge.innerText = node.work_mode;
+        nodeDiv.appendChild(modeBadge);
+    }
+    
+    // Profile picture
+    if (node.profile_picture) {
+        const img = document.createElement('img');
+        img.src = node.profile_picture;
+        img.className = 'node-img';
+        nodeDiv.appendChild(img);
+    } else {
+        const icon = document.createElement('div');
+        icon.className = 'node-img';
+        icon.innerHTML = '<i class="fa-solid fa-user" style="margin-top:12px; font-size:1.5rem; color:var(--text-muted);"></i>';
+        icon.style.display = 'flex';
+        icon.style.justifyContent = 'center';
+        nodeDiv.appendChild(icon);
+    }
+    
+    // ID Badge
+    const idBadge = document.createElement('span');
+    idBadge.innerText = `#${node.id}`;
+    idBadge.style = 'position:absolute; top:5px; right:5px; font-size:0.6rem; color:var(--text-muted); font-weight:bold;';
+    nodeDiv.appendChild(idBadge);
+    
+    const name = document.createElement('span');
+    name.className = 'node-name';
+    name.innerText = node.name;
+    
+    const role = document.createElement('span');
+    role.className = 'node-role';
+    role.innerText = node.role;
+    
+    const dept = document.createElement('span');
+    dept.className = 'node-dept';
+    dept.innerText = node.department;
+    
+    nodeDiv.appendChild(name);
+    nodeDiv.appendChild(role);
+    nodeDiv.appendChild(dept);
+    
+    li.appendChild(nodeDiv);
+    
+    // children
+    const children = allData.filter(item => item.manager === node.id);
+    if (children.length > 0) {
+        const ul = document.createElement('ul');
+        children.forEach(child => {
+            ul.appendChild(buildTreeNode(child, allData));
+        });
+        li.appendChild(ul);
+    }
+    
+    return li;
+}
+
+// --- Notifications Module ---
+async function loadNotifications() {
+    const list = document.getElementById('receivedNotificationsList');
+    if (!list) return;
+    list.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading announcements...</td></tr>';
+
+    const data = await fetchData('/notifications/');
+    if (!data) return;
+
+    list.innerHTML = '';
+    if (data.received.length === 0) {
+        list.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No announcements from management.</td></tr>';
+        return;
+    }
+
+    data.received.forEach(notif => {
+        const date = new Date(notif.created_at).toLocaleDateString('en-US', {
+            year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+        list.innerHTML += `
+            <tr>
+                <td>${date}</td>
+                <td style="font-weight:600; color:var(--primary);">${notif.title}</td>
+                <td>${notif.message}</td>
+                <td>${notif.sender_name} (${notif.sender_role})</td>
+            </tr>
+        `;
+    });
+}
+
+
+// --- Expenses Module ---
+let localExpensesData = [];
+
+function openAddExpenseModal() {
+    const modal = document.getElementById('add-expense-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.getElementById('applyExpenseForm').reset();
+    }
+}
+
+function closeAddExpenseModal() {
+    const modal = document.getElementById('add-expense-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function loadExpenses() {
+    const tbody = document.getElementById('expensesList');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Loading expenses...</td></tr>';
+
+    const res = await fetchData('/employee/expenses/');
+    if (!res) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted);">Failed to load expense records.</td></tr>';
+        return;
+    }
+
+    localExpensesData = res;
+    renderExpenses(res);
+    loadExpenseStats(res);
+}
+
+function renderExpenses(data) {
+    const tbody = document.getElementById('expensesList');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding: 2rem;">No expense claims found matching filters.</td></tr>';
+        return;
+    }
+
+    data.forEach(exp => {
+        let statusBadge = '';
+        const statusVal = exp.status.toUpperCase();
+        if (statusVal === 'APPROVED') statusBadge = '<span class="status-badge status-present" style="background: rgba(16,185,129,0.15); color: #10b981; padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">Approved</span>';
+        else if (statusVal === 'REJECTED') statusBadge = '<span class="status-badge status-absent" style="background: rgba(244,63,94,0.15); color: #f43f5e; padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">Rejected</span>';
+        else if (statusVal === 'DRAFT') statusBadge = '<span class="status-badge status-draft" style="background: rgba(255,255,255,0.1); color: #9ca3af; padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">Draft</span>';
+        else statusBadge = '<span class="status-badge status-pending" style="background: rgba(245,158,11,0.15); color: #f59e0b; padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">Pending</span>';
+
+        let payBadge = '';
+        const payVal = exp.payment_status.toUpperCase();
+        if (payVal === 'PAID') payBadge = '<span style="color: #10b981; font-weight: 600; font-size: 0.75rem;"><i class="fa-solid fa-circle-check"></i> Paid</span>';
+        else payBadge = '<span style="color: #9ca3af; font-weight: 600; font-size: 0.75rem;"><i class="fa-solid fa-circle-dot"></i> Unpaid</span>';
+
+        let remarks = exp.description || '-';
+        if (exp.manager_remark) remarks += ` (Manager: ${exp.manager_remark})`;
+        else if (exp.team_leader_remark) remarks += ` (TL: ${exp.team_leader_remark})`;
+
+        let receiptLink = '<span style="color:var(--text-muted); font-size:0.85rem;"><i class="fa-solid fa-ban"></i> None</span>';
+        if (exp.receipt) {
+            const fileUrl = exp.receipt.startsWith('http') ? exp.receipt : `http://127.0.0.1:8000${exp.receipt}`;
+            receiptLink = `<a href="${fileUrl}" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 500; font-size: 0.85rem;"><i class="fa-solid fa-arrow-up-right-from-square"></i> View</a>`;
+        }
+
+        tbody.innerHTML += `
+            <tr>
+                <td>${exp.submitted_at_str || '-'}</td>
+                <td style="font-weight: 600; color:#fff;">${escapeHTML(exp.title)}</td>
+                <td>${escapeHTML(exp.category)}</td>
+                <td style="font-weight: 600;">₹${parseFloat(exp.amount).toFixed(2)}</td>
+                <td>${statusBadge}</td>
+                <td>${payBadge}</td>
+                <td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHTML(remarks)}</td>
+                <td>${receiptLink}</td>
+            </tr>
+        `;
+    });
+}
+
+function loadExpenseStats(data) {
+    let applied = 0;
+    let approved = 0;
+    let rejected = 0;
+    let pending = 0;
+
+    data.forEach(exp => {
+        const amt = parseFloat(exp.amount) || 0;
+        const stat = exp.status.toUpperCase();
+        if (stat !== 'DRAFT') {
+            applied += amt;
+        }
+        if (stat === 'APPROVED') approved += amt;
+        else if (stat === 'REJECTED') rejected += amt;
+        else if (stat === 'PENDING') pending += amt;
+    });
+
+    const avail = Math.max(0, 50000 - approved);
+
+    document.getElementById('exp-total-applied').innerText = `₹${applied.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    document.getElementById('exp-total-approved').innerText = `₹${approved.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    document.getElementById('exp-total-rejected').innerText = `₹${rejected.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    document.getElementById('exp-total-pending').innerText = `₹${pending.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    document.getElementById('exp-avail-balance').innerText = `₹${avail.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+async function filterExpenses() {
+    const searchVal = document.getElementById('expenseSearch').value.toLowerCase();
+    const statusVal = document.getElementById('filterStatus').value;
+    const paymentVal = document.getElementById('filterPayment').value;
+    const startVal = document.getElementById('filterStartDate').value;
+    const endVal = document.getElementById('filterEndDate').value;
+
+    let query = `?search=${encodeURIComponent(searchVal)}`;
+    if (statusVal !== 'ALL') query += `&status=${statusVal}`;
+    if (paymentVal !== 'ALL') query += `&payment_status=${paymentVal}`;
+    if (startVal) query += `&start_date=${startVal}`;
+    if (endVal) query += `&end_date=${endVal}`;
+
+    const res = await fetchData(`/employee/expenses/${query}`);
+    if (res) {
+        renderExpenses(res);
+    }
+}
+
+function clearExpenseFilters() {
+    document.getElementById('expenseSearch').value = '';
+    document.getElementById('filterStatus').value = 'ALL';
+    document.getElementById('filterPayment').value = 'ALL';
+    document.getElementById('filterStartDate').value = '';
+    document.getElementById('filterEndDate').value = '';
+    loadExpenses();
+}
+
+async function submitExpenseClaim(event, isDraft = false) {
+    if (event) event.preventDefault();
+
+    const title = document.getElementById('expenseTitle').value;
+    const category = document.getElementById('expenseCategory').value;
+    const amount = document.getElementById('expenseAmount').value;
+    const description = document.getElementById('expenseDesc').value;
+    const fileInput = document.getElementById('expenseReceipt');
+
+    if (!category || !amount) {
+        alert('Please fill out all required fields.');
+        return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    // Build FormData for receipt upload
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('category', category);
+    formData.append('amount', amount);
+    formData.append('description', description);
+    formData.append('status', isDraft ? 'DRAFT' : 'PENDING');
+    if (fileInput.files.length > 0) {
+        formData.append('receipt', fileInput.files[0]);
+    }
+
+    try {
+        const res = await fetch(`${API_BASE}/employee/expenses/create/`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Token ${token}`
+            },
+            body: formData
+        });
+
+        if (res.ok) {
+            alert(isDraft ? 'Draft saved successfully!' : 'Expense claim submitted successfully!');
+            closeAddExpenseModal();
+            loadExpenses();
+        } else {
+            const data = await res.json();
+            alert(`Error: ${data.message || 'Failed to submit'}`);
+        }
+    } catch (e) {
+        console.error("Submit claim error:", e);
+        alert('Network error submitting claim.');
+    }
+}
+
+// Simple HTML escaping helper to prevent cross-site scripting (XSS)
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+
+
+// --- Offboarding Module ---
+let localOffboardingData = [];
+let currentOffboardSubtab = 'warnings';
+
+async function loadOffboarding() {
+    const tableBody = document.getElementById('offboardTableBody');
+    if (!tableBody) return;
+    tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem;">Loading files...</td></tr>';
+
+    try {
+        const data = await fetchData('/employee/offboardings/');
+        if (!data) {
+            tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem; color:var(--text-muted);">Failed to load offboarding details.</td></tr>';
+            return;
+        }
+
+        localOffboardingData = data;
+        setupOffboardTabs();
+        setupOffboardForm();
+        renderOffboardingSubtab();
+    } catch (err) {
+        console.error(err);
+        tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem; color:var(--text-muted);">Error fetching offboarding details.</td></tr>';
+    }
+}
+
+function renderOffboardingSubtab() {
+    if (currentOffboardSubtab === 'warnings') renderWarnings();
+    else if (currentOffboardSubtab === 'resignations') renderResignations();
+    else if (currentOffboardSubtab === 'complaints') renderComplaints();
+}
+
+function renderWarnings() {
+    const header = document.getElementById('offboardTableHeader');
+    const body = document.getElementById('offboardTableBody');
+    if (!header || !body) return;
+
+    header.innerHTML = `
+        <th>Warning Letter Title</th>
+        <th>Issued Date</th>
+        <th>Exhaustive Details / Remarks</th>
+        <th>Download / View</th>
+    `;
+
+    const warnings = localOffboardingData.filter(o => o.action_type === 'warning');
+    if (warnings.length === 0) {
+        body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2.5rem; color: var(--text-muted);">No warning letters issued. Congratulations!</td></tr>';
+        return;
+    }
+
+    body.innerHTML = '';
+    warnings.forEach(w => {
+        const date = w.created_at ? new Date(w.created_at).toLocaleDateString() : '-';
+        const docLink = w.file ? `<a href="${w.file}" target="_blank" style="color:var(--primary); text-decoration:none;"><i class="fa-solid fa-file-pdf"></i> View Warning Letter</a>` : '<span style="color:var(--text-muted);">No Document</span>';
+
+        body.innerHTML += `
+            <tr>
+                <td style="font-weight: 600; color:#fff;">Warning / Corrective Action</td>
+                <td>${date}</td>
+                <td style="max-width: 400px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="${w.reason}">${w.reason}</td>
+                <td>${docLink}</td>
+            </tr>
+        `;
+    });
+}
+
+function renderResignations() {
+    const header = document.getElementById('offboardTableHeader');
+    const body = document.getElementById('offboardTableBody');
+    if (!header || !body) return;
+
+    header.innerHTML = `
+        <th>Resignation Request</th>
+        <th>Submission Date</th>
+        <th>Statement / Comments</th>
+        <th>Document Attachment</th>
+    `;
+
+    const resignations = localOffboardingData.filter(o => o.action_type === 'resignation');
+    if (resignations.length === 0) {
+        body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2.5rem; color: var(--text-muted);">No resignation letters submitted.</td></tr>';
+        return;
+    }
+
+    body.innerHTML = '';
+    resignations.forEach(r => {
+        const date = r.created_at ? new Date(r.created_at).toLocaleDateString() : '-';
+        const docLink = r.file ? `<a href="${r.file}" target="_blank" style="color:var(--primary); text-decoration:none;"><i class="fa-solid fa-file-pdf"></i> View Attachment</a>` : '<span style="color:var(--text-muted);">No Document</span>';
+
+        body.innerHTML += `
+            <tr>
+                <td style="font-weight: 600; color:#fff;">Resignation Processing</td>
+                <td>${date}</td>
+                <td style="max-width: 400px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="${r.reason}">${r.reason}</td>
+                <td>${docLink}</td>
+            </tr>
+        `;
+    });
+}
+
+function renderComplaints() {
+    const header = document.getElementById('offboardTableHeader');
+    const body = document.getElementById('offboardTableBody');
+    if (!header || !body) return;
+
+    header.innerHTML = `
+        <th>Grievance Summary</th>
+        <th>Submission Date</th>
+        <th>Complaint Description</th>
+        <th>Document Supporting</th>
+    `;
+
+    const complaints = localOffboardingData.filter(o => o.action_type === 'complaint');
+    if (complaints.length === 0) {
+        body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2.5rem; color: var(--text-muted);">No official complaints filed.</td></tr>';
+        return;
+    }
+
+    body.innerHTML = '';
+    complaints.forEach(c => {
+        const date = c.created_at ? new Date(c.created_at).toLocaleDateString() : '-';
+        const docLink = c.file ? `<a href="${c.file}" target="_blank" style="color:var(--primary); text-decoration:none;"><i class="fa-solid fa-file-pdf"></i> View Attachment</a>` : '<span style="color:var(--text-muted);">No Document</span>';
+
+        body.innerHTML += `
+            <tr>
+                <td style="font-weight: 600; color:#fff;">Grievance Filed</td>
+                <td>${date}</td>
+                <td style="max-width: 400px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="${c.reason}">${c.reason}</td>
+                <td>${docLink}</td>
+            </tr>
+        `;
+    });
+}
+
+let offboardTabsBound = false;
+function setupOffboardTabs() {
+    if (offboardTabsBound) return;
+    const buttons = document.querySelectorAll('.offboard-subtab-btn');
+    buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            buttons.forEach(b => {
+                b.classList.remove('active', 'btn-primary');
+                b.classList.add('btn-ghost');
+            });
+            btn.classList.add('active', 'btn-primary');
+            btn.classList.remove('btn-ghost');
+
+            currentOffboardSubtab = btn.getAttribute('data-tab');
+            renderOffboardingSubtab();
+        });
+    });
+    offboardTabsBound = true;
+}
+
+let offboardFormBound = false;
+function setupOffboardForm() {
+    if (offboardFormBound) return;
+    const form = document.getElementById('createOffboardingForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const action_type = document.getElementById('offboardActionType').value;
+        const reason = document.getElementById('offboardReason').value;
+        const fileInput = document.getElementById('offboardFile');
+
+        const formData = new FormData();
+        formData.append('action_type', action_type);
+        formData.append('reason', reason);
+
+        if (fileInput.files && fileInput.files.length > 0) {
+            formData.append('file', fileInput.files[0]);
+        }
+
+        const token = localStorage.getItem('token');
+        const headers = {};
+        if (token) headers['Authorization'] = `Token ${token}`;
+
+        try {
+            const res = await fetch(`${API_BASE}/employee/offboardings/`, {
+                method: 'POST',
+                headers,
+                body: formData
+            });
+
+            if (res.ok) {
+                alert('Request submitted successfully directly to Google Drive!');
+                form.reset();
+                loadOffboarding();
+            } else {
+                const errData = await res.json();
+                alert(`Submission failed: ${errData.message || 'Server error'}`);
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Error submitting offboarding/grievance request.');
+        }
+    });
+    offboardFormBound = true;
+}

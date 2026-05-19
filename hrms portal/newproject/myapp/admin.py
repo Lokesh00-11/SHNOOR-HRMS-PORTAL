@@ -2,7 +2,8 @@ from django.contrib import admin
 from .models import (
     User, Company, SubscriptionPlan, Transactions, 
     Employee, SupportQuery, Holiday, Appreciation, 
-    LeaveRequest, CompanyPolicy, Payroll, Offboarding, LetterHead, AdminProfile
+    LeaveRequest, CompanyPolicy, Payroll, Offboarding, LetterHead, AdminProfile,
+    Attendance, Task
 )
 
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
@@ -75,3 +76,15 @@ class LetterHeadAdmin(admin.ModelAdmin):
 @admin.register(AdminProfile)
 class AdminProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'created_at', 'updated_at')
+
+@admin.register(Attendance)
+class AttendanceAdmin(admin.ModelAdmin):
+    list_display = ('employee', 'date', 'check_in', 'check_out', 'hours_worked')
+    list_filter = ('date', 'employee')
+    search_fields = ('employee__user__username', 'employee__user__first_name')
+
+@admin.register(Task)
+class TaskAdmin(admin.ModelAdmin):
+    list_display = ('title', 'assigned_to', 'priority', 'status', 'deadline')
+    list_filter = ('status', 'priority', 'assigned_to')
+    search_fields = ('title', 'description')

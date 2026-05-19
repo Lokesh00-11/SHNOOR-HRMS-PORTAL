@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils import timezone
 
 class User(AbstractUser):
     ROLE_CHOICES = (
@@ -62,10 +63,10 @@ class Employee(models.Model):
     team_leader = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='team_members')
     designation = models.CharField(max_length=100)
     department = models.CharField(max_length=100)
-    salary = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    casual_leaves = models.IntegerField(default=6)
-    sick_leaves = models.IntegerField(default=6)
-    vacation_leaves = models.IntegerField(default=6)
+    salary = models.DecimalField(max_digits=10, decimal_places=2, default=10000.00)
+    casual_leaves = models.IntegerField(default=7)
+    sick_leaves = models.IntegerField(default=7)
+    vacation_leaves = models.IntegerField(default=7)
     
     # Personal Details
     phone = models.CharField(max_length=15, blank=True, null=True)
@@ -88,12 +89,25 @@ class Employee(models.Model):
     pan_number = models.CharField(max_length=10, blank=True, null=True)
     marital_status = models.CharField(max_length=20, blank=True, null=True)
     nationality = models.CharField(max_length=100, blank=True, null=True)
+    blood_group = models.CharField(max_length=10, blank=True, null=True)
     permanent_address = models.TextField(blank=True, null=True)
     emergency_contact_name = models.CharField(max_length=100, blank=True, null=True)
     emergency_contact_phone = models.CharField(max_length=15, blank=True, null=True)
     emergency_contact_relation = models.CharField(max_length=100, blank=True, null=True)
-    blood_group = models.CharField(max_length=10, blank=True, null=True)
-    
+    # Shift and Type
+    SHIFT_CHOICES = (
+        ('day', 'Day Shift'),
+        ('night', 'Night Shift'),
+    )
+    TYPE_CHOICES = (
+        ('employee', 'Employee'),
+        ('intern', 'Intern'),
+    )
+    shift = models.CharField(max_length=20, choices=SHIFT_CHOICES, default='day')
+    employment_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='employee')
+    profile_picture = models.FileField(upload_to='profiles/', blank=True, null=True)
+    work_mode = models.CharField(max_length=50, default='Office')
+
     def __str__(self):
         return self.user.username
 
@@ -105,9 +119,13 @@ class SupportQuery(models.Model):
     ]
     
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_queries')
+    recipient = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='received_queries')
+    target_role = models.CharField(max_length=20, null=True, blank=True) # 'manager' or 'team_leader'
     subject = models.CharField(max_length=255)
     message = models.TextField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    sender_read = models.BooleanField(default=True)
+    recipient_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -170,6 +188,16 @@ class Payroll(models.Model):
     month_year = models.CharField(max_length=20) 
     status = models.CharField(max_length=20, default='paid')
 
+    def save(self, *args, **kwargs):
+        if not self.amount or self.amount == 0:
+            base_salary = self.employee.salary or 0
+            bonus = 0
+            if self.employee.shift.lower() == 'night':
+                bonus = float(base_salary) * 0.1
+            self.amount = float(base_salary) + bonus
+            
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.employee.user.username} - {self.amount} - {self.month_year}"
 
@@ -216,7 +244,7 @@ class AdminProfile(models.Model):
 
 class Attendance(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='attendance_records')
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField(default=timezone.now)
     check_in = models.DateTimeField(null=True, blank=True)
     check_out = models.DateTimeField(null=True, blank=True)
     hours_worked = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
@@ -262,6 +290,7 @@ class Expense(models.Model):
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
         ('reimbursed', 'Reimbursed'),
+        ('claimed', 'Claimed'),
     ]
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='expenses')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -403,13 +432,15 @@ class Notification(models.Model):
     ROLE_CHOICES = [
         ('manager', 'Manager'),
         ('employee', 'Employee'),
+        ('admin', 'Admin'),
     ]
     title = models.CharField(max_length=255)
     message = models.TextField()
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_notifications')
-    target_role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
+    target_role = models.CharField(max_length=20, choices=ROLE_CHOICES, null=True, blank=True)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.title} - {self.target_role}"
+        return f"{self.title} - {self.recipient.username if self.recipient else self.target_role}"

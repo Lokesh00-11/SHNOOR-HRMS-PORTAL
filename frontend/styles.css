@@ -1,9 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
-:root {
+:root, [data-theme="dark"] {
     --bg-dark: #070B14;
     --bg-navy: #0B1120;
-    --primary: #3b82f6;
+    --primary: #1e3a8a;
     --primary-glow: transparent;
     --secondary: #8b5cf6;
     --text-main: #ffffff;
@@ -11,6 +11,69 @@
     --glass-bg: #1e293b;
     --glass-border: #334155;
     --glass-hover: #334155;
+
+    /* for(Dark Theme) */
+    --primary-bg: #070B14;
+    --secondary-bg: #0B1120;
+    --card-bg: rgba(30, 41, 59, 0.45);
+    --sidebar-bg: #0B1120;
+    --navbar-bg: rgba(11, 17, 32, 0.85);
+    --glass-overlay: rgba(255, 255, 255, 0.03);
+    --border-color: #334155;
+    --text-primary: #ffffff;
+    --text-secondary: #94a3b8;
+    --text-dark-override: #ffffff; 
+    --btn-primary-bg: #1e3a8a;
+    --btn-ghost-bg: #1e293b;
+    --btn-ghost-border: #334155;
+    --hover-color: #334155;
+    --table-bg: rgba(15, 23, 42, 0.3);
+    --modal-bg: #0f172a;
+    --form-bg: #0f172a;
+    --input-bg: #1e293b;
+    --input-text: #ffffff;
+    --placeholder-color: #64748b;
+    --shadow-color: rgba(0, 0, 0, 0.5);
+    --notification-bg: #1e293b;
+    --icon-glow: rgba(30, 58, 138, 0.25);
+}
+
+[data-theme="light"] {
+    --bg-dark: #f8fafc;
+    --bg-navy: #f1f5f9;
+    --primary: #1e3a8a;
+    --primary-glow: transparent;
+    --secondary: #7c3aed;
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --glass-bg: rgba(255, 255, 255, 0.75);
+    --glass-border: rgba(15, 23, 42, 0.08);
+    --glass-hover: rgba(15, 23, 42, 0.04);
+
+    /* for (Light Theme) */
+    --primary-bg: #f8fafc;
+    --secondary-bg: #f1f5f9;
+    --card-bg: rgba(255, 255, 255, 0.75);
+    --sidebar-bg: #ffffff;
+    --navbar-bg: rgba(248, 250, 252, 0.85);
+    --glass-overlay: rgba(15, 23, 42, 0.02);
+    --border-color: rgba(15, 23, 42, 0.08);
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-dark-override: #0f172a; 
+    --btn-primary-bg: #1e3a8a;
+    --btn-ghost-bg: #e2e8f0;
+    --btn-ghost-border: rgba(15, 23, 42, 0.1);
+    --hover-color: rgba(15, 23, 42, 0.04);
+    --table-bg: rgba(255, 255, 255, 0.65);
+    --modal-bg: #ffffff;
+    --form-bg: #ffffff;
+    --input-bg: #f8fafc;
+    --input-text: #0f172a;
+    --placeholder-color: #94a3b8;
+    --shadow-color: rgba(15, 23, 42, 0.05);
+    --notification-bg: #ffffff;
+    --icon-glow: rgba(30, 58, 138, 0.1);
 }
 
 * {
@@ -75,14 +138,14 @@ body {
 }
 
 .btn-ghost {
-    background: #1e293b;
+    background: var(--btn-ghost-bg);
     color: var(--text-main);
-    border: 1px solid #334155;
+    border: 1px solid var(--btn-ghost-border);
 }
 
 .btn-ghost:hover {
-    background: #334155;
-    border-color: #475569;
+    background: var(--hover-color);
+    border-color: var(--glass-border);
     transform: translateY(-2px);
 }
 
@@ -593,4 +656,220 @@ body {
     padding: 2px 8px;
     border-radius: 4px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* ==================================================
+   GLOBAL THEME TOGGLE & ADAPTIVE COMPATIBILITY OVERRIDES
+   ================================================== */
+
+/* Smooth Transitions for Theme Switching */
+body, aside, main, .glass-panel, .table-container, table, th, td, tr, .btn, .nav-item, input, select, textarea {
+    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                background 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                color 0.3s ease,
+                box-shadow 0.4s ease !important;
+}
+
+/* Interactive Theme Toggle Button Styling */
+.theme-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 10px var(--shadow-color);
+    outline: none;
+}
+
+.theme-toggle-btn:hover {
+    transform: rotate(15deg) scale(1.08);
+    background: var(--glass-hover);
+    border-color: var(--primary);
+    box-shadow: 0 0 12px var(--icon-glow);
+}
+
+.theme-toggle-btn i {
+    font-size: 1rem;
+    transition: transform 0.3s ease;
+}
+
+/* Sidebar Theme Container Placement */
+.sidebar-theme-item {
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--glass-overlay);
+    border: 1px solid var(--glass-border);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: auto;
+    margin-bottom: 0.75rem;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.sidebar-theme-item span {
+    font-weight: 600;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Table Enhancements in Light Mode */
+[data-theme="light"] th {
+    background: rgba(15, 23, 42, 0.03);
+    color: var(--text-secondary);
+}
+
+[data-theme="light"] tr:hover {
+    background: rgba(15, 23, 42, 0.02);
+}
+
+[data-theme="light"] th, [data-theme="light"] td {
+    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+/* Adaptive Glassmorphism Panels in Light Mode */
+[data-theme="light"] .glass-panel,
+[data-theme="light"] .table-container,
+[data-theme="light"] .org-chart-container,
+[data-theme="light"] .settings-container {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 4px 20px var(--shadow-color);
+}
+
+/* Dynamic Interactive Controls & Form Inputs in Light Mode */
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea,
+[data-theme="light"] .form-control {
+    background-color: var(--bg-navy) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--glass-border) !important;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
+}
+
+[data-theme="light"] input:focus,
+[data-theme="light"] select:focus,
+[data-theme="light"] textarea:focus,
+[data-theme="light"] .form-control:focus {
+    border-color: var(--primary) !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+}
+
+/* Bulletproof Inline Color Override filters */
+[data-theme="light"] [style*="color:#fff"],
+[data-theme="light"] [style*="color: #fff"],
+[data-theme="light"] [style*="color:white"],
+[data-theme="light"] [style*="color: white"],
+[data-theme="light"] [style*="color: #ffffff"] {
+    color: var(--text-dark-override) !important;
+}
+
+/* Avoid changing white text inside specific state badges or primary buttons */
+[data-theme="light"] .btn-primary,
+[data-theme="light"] .btn-primary *,
+[data-theme="light"] .badge,
+[data-theme="light"] .badge *,
+[data-theme="light"] .status-badge,
+[data-theme="light"] .status-badge *,
+[data-theme="light"] .node-mode,
+[data-theme="light"] #avatar-initials {
+    color: #ffffff !important;
+}
+
+[data-theme="light"] .btn-ghost {
+    background: #e2e8f0 !important;
+    background-color: #e2e8f0 !important;
+    color: var(--text-primary) !important;
+    border: 1px solid rgba(15, 23, 42, 0.1) !important;
+}
+
+[data-theme="light"] .btn-ghost:hover {
+    background: #cbd5e1 !important;
+    background-color: #cbd5e1 !important;
+    color: var(--text-primary) !important;
+}
+
+/* Sidebar Specific Logo Override & Light Theme Adaptation */
+[data-theme="light"] .sidebar {
+    background: #ffffff !important;
+    border-right: 1px solid rgba(15, 23, 42, 0.08) !important;
+    box-shadow: 4px 0 20px rgba(15, 23, 42, 0.02) !important;
+}
+
+[data-theme="light"] .sidebar .logo {
+    color: var(--text-main) !important;
+}
+
+[data-theme="light"] .sidebar .nav-item {
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="light"] .sidebar .nav-item i {
+    color: var(--text-muted) !important;
+}
+
+[data-theme="light"] .sidebar .nav-item:hover,
+[data-theme="light"] .sidebar .nav-item.active {
+    background: rgba(37, 99, 235, 0.08) !important;
+    color: var(--primary) !important;
+}
+
+[data-theme="light"] .sidebar .nav-item:hover i,
+[data-theme="light"] .sidebar .nav-item.active i {
+    color: var(--primary) !important;
+}
+
+[data-theme="light"] .sidebar .sidebar-theme-item {
+    background: rgba(15, 23, 42, 0.03) !important;
+    border-color: rgba(15, 23, 42, 0.06) !important;
+}
+
+[data-theme="light"] .sidebar .sidebar-theme-item span {
+    color: var(--text-main) !important;
+}
+
+/* Scrollbar Tweaks in Light Mode */
+[data-theme="light"] ::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.02);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+    background: rgba(15, 23, 42, 0.12);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+    background: rgba(15, 23, 42, 0.22);
+}
+
+/* Org Chart Node adaptation */
+[data-theme="light"] .tree-node {
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+[data-theme="light"] .tree-node:hover {
+    background: var(--bg-navy);
+}
+
+/* Modals adaptation in light mode */
+[data-theme="light"] .modal {
+    background-color: rgba(15, 23, 42, 0.3);
+}
+
+[data-theme="light"] .modal-content {
+    background: #ffffff;
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
 }

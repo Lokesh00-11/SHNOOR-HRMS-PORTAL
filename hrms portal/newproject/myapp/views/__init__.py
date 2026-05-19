@@ -31,7 +31,7 @@ from .leave_views import LeaveRequestView, EmployeeLeaveApplyView, LeaveRequestD
 from .payroll_views import PayrollView
 from .document_views import (
     CompanyPolicyView, CompanyPolicyDetailView, DocumentUploadView, 
-    EmployeeDocumentsView, LetterHeadView, LetterHeadDetailView
+    EmployeeDocumentsView, LetterHeadView, LetterHeadDetailView, DownloadFileView
 )
 from .notification_views import (
     NotificationView, MarkNotificationsReadView, UnreadNotificationCountView,

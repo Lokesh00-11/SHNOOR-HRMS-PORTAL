@@ -5,6 +5,7 @@
 
 // --- Configuration ---
 const API_BASE = "http://127.0.0.1:8000/api";
+const BASE_URL = API_BASE;
 
 function formatDateForInput(dateStr) {
     if (!dateStr) return '';
@@ -74,6 +75,7 @@ function initNavigation() {
         if (targetId === 'documents') loadDocuments();
         if (targetId === 'profile') loadProfile();
         if (targetId === 'notifications') loadNotifications();
+        if (targetId === 'offboarding-section') loadOffboarding();
     });
 }
 
@@ -308,6 +310,9 @@ async function loadDocuments() {
             
             const fileUrl = doc.file || doc.file_url || '#';
             const title = doc.title || 'Untitled Document';
+            const downloadUrl = (fileUrl && fileUrl.startsWith('http')) 
+                ? `${BASE_URL}/download-file/?url=${encodeURIComponent(fileUrl)}&name=${encodeURIComponent(title)}` 
+                : fileUrl;
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -315,10 +320,10 @@ async function loadDocuments() {
                 <td>${date}</td>
                 <td style="text-align: right;">
                     <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                        <a href="${fileUrl}" target="_blank" class="btn btn-ghost" style="padding: 0.25rem 0.75rem; font-size:0.75rem; text-decoration: none;">
+                        <a href="${downloadUrl}" target="_blank" class="btn btn-ghost" style="padding: 0.25rem 0.75rem; font-size:0.75rem; text-decoration: none;">
                             <i class="fa-solid fa-eye"></i> View
                         </a>
-                        <a href="${fileUrl}" download class="btn btn-primary" style="padding: 0.25rem 0.75rem; font-size:0.75rem; text-decoration: none;">
+                        <a href="${downloadUrl}" download class="btn btn-primary" style="padding: 0.25rem 0.75rem; font-size:0.75rem; text-decoration: none;">
                             <i class="fa-solid fa-download"></i> Download
                         </a>
                     </div>
@@ -506,19 +511,42 @@ document.getElementById('applyExpenseForm')?.addEventListener('submit', async (e
 });
 
 // --- Tasks Module ---
+let cachedTasks = [];
+
 async function loadTasks() {
     const list = document.getElementById('tasksList');
     if (!list) return;
     list.innerHTML = '<tr><td colspan="5" style="text-align:center;">Loading...</td></tr>';
 
     const data = await fetchData('/employee/tasks/');
-    if (!data || data.length === 0) {
-        list.innerHTML = '<tr><td colspan="5" style="text-align:center;">No tasks assigned.</td></tr>';
+    cachedTasks = data || [];
+    applyTaskFilters();
+}
+
+function applyTaskFilters() {
+    const statusFilter = document.getElementById('taskStatusFilter')?.value || 'all';
+    const priorityFilter = document.getElementById('taskPriorityFilter')?.value || 'all';
+
+    const filtered = cachedTasks.filter(task => {
+        const matchStatus = statusFilter === 'all' || task.status === statusFilter;
+        const matchPriority = priorityFilter === 'all' || task.priority === priorityFilter;
+        return matchStatus && matchPriority;
+    });
+
+    renderFilteredTasks(filtered);
+}
+
+function renderFilteredTasks(tasks) {
+    const list = document.getElementById('tasksList');
+    if (!list) return;
+
+    if (!tasks || tasks.length === 0) {
+        list.innerHTML = '<tr><td colspan="7" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">No tasks match the filter criteria.</td></tr>';
         return;
     }
 
     list.innerHTML = '';
-    data.forEach(task => {
+    tasks.forEach(task => {
         const deadline = task.deadline || '-';
         const priorityColor = task.priority === 'High' ? '#f43f5e' : (task.priority === 'Medium' ? '#f59e0b' : '#10b981');
         const statusCls = task.status === 'Completed' ? 'active' : (task.status === 'In Progress' ? 'pending' : 'expired');
@@ -879,4 +907,208 @@ function escapeHTML(str) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
+
+
+
+// --- Offboarding Module ---
+let localOffboardingData = [];
+let currentOffboardSubtab = 'warnings';
+
+async function loadOffboarding() {
+    const tableBody = document.getElementById('offboardTableBody');
+    if (!tableBody) return;
+    tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem;">Loading files...</td></tr>';
+
+    try {
+        const data = await fetchData('/employee/offboardings/');
+        if (!data) {
+            tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem; color:var(--text-muted);">Failed to load offboarding details.</td></tr>';
+            return;
+        }
+
+        localOffboardingData = data;
+        setupOffboardTabs();
+        setupOffboardForm();
+        renderOffboardingSubtab();
+    } catch (err) {
+        console.error(err);
+        tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem; color:var(--text-muted);">Error fetching offboarding details.</td></tr>';
+    }
+}
+
+function renderOffboardingSubtab() {
+    if (currentOffboardSubtab === 'warnings') renderWarnings();
+    else if (currentOffboardSubtab === 'resignations') renderResignations();
+    else if (currentOffboardSubtab === 'complaints') renderComplaints();
+}
+
+function renderWarnings() {
+    const header = document.getElementById('offboardTableHeader');
+    const body = document.getElementById('offboardTableBody');
+    if (!header || !body) return;
+
+    header.innerHTML = `
+        <th>Warning Letter Title</th>
+        <th>Issued Date</th>
+        <th>Exhaustive Details / Remarks</th>
+        <th>Download / View</th>
+    `;
+
+    const warnings = localOffboardingData.filter(o => o.action_type === 'warning');
+    if (warnings.length === 0) {
+        body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2.5rem; color: var(--text-muted);">No warning letters issued. Congratulations!</td></tr>';
+        return;
+    }
+
+    body.innerHTML = '';
+    warnings.forEach(w => {
+        const date = w.created_at ? new Date(w.created_at).toLocaleDateString() : '-';
+        const docLink = w.file ? `<a href="${w.file}" target="_blank" style="color:var(--primary); text-decoration:none;"><i class="fa-solid fa-file-pdf"></i> View Warning Letter</a>` : '<span style="color:var(--text-muted);">No Document</span>';
+
+        body.innerHTML += `
+            <tr>
+                <td style="font-weight: 600; color:#fff;">Warning / Corrective Action</td>
+                <td>${date}</td>
+                <td style="max-width: 400px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="${w.reason}">${w.reason}</td>
+                <td>${docLink}</td>
+            </tr>
+        `;
+    });
+}
+
+function renderResignations() {
+    const header = document.getElementById('offboardTableHeader');
+    const body = document.getElementById('offboardTableBody');
+    if (!header || !body) return;
+
+    header.innerHTML = `
+        <th>Resignation Request</th>
+        <th>Submission Date</th>
+        <th>Statement / Comments</th>
+        <th>Document Attachment</th>
+    `;
+
+    const resignations = localOffboardingData.filter(o => o.action_type === 'resignation');
+    if (resignations.length === 0) {
+        body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2.5rem; color: var(--text-muted);">No resignation letters submitted.</td></tr>';
+        return;
+    }
+
+    body.innerHTML = '';
+    resignations.forEach(r => {
+        const date = r.created_at ? new Date(r.created_at).toLocaleDateString() : '-';
+        const docLink = r.file ? `<a href="${r.file}" target="_blank" style="color:var(--primary); text-decoration:none;"><i class="fa-solid fa-file-pdf"></i> View Attachment</a>` : '<span style="color:var(--text-muted);">No Document</span>';
+
+        body.innerHTML += `
+            <tr>
+                <td style="font-weight: 600; color:#fff;">Resignation Processing</td>
+                <td>${date}</td>
+                <td style="max-width: 400px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="${r.reason}">${r.reason}</td>
+                <td>${docLink}</td>
+            </tr>
+        `;
+    });
+}
+
+function renderComplaints() {
+    const header = document.getElementById('offboardTableHeader');
+    const body = document.getElementById('offboardTableBody');
+    if (!header || !body) return;
+
+    header.innerHTML = `
+        <th>Grievance Summary</th>
+        <th>Submission Date</th>
+        <th>Complaint Description</th>
+        <th>Document Supporting</th>
+    `;
+
+    const complaints = localOffboardingData.filter(o => o.action_type === 'complaint');
+    if (complaints.length === 0) {
+        body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2.5rem; color: var(--text-muted);">No official complaints filed.</td></tr>';
+        return;
+    }
+
+    body.innerHTML = '';
+    complaints.forEach(c => {
+        const date = c.created_at ? new Date(c.created_at).toLocaleDateString() : '-';
+        const docLink = c.file ? `<a href="${c.file}" target="_blank" style="color:var(--primary); text-decoration:none;"><i class="fa-solid fa-file-pdf"></i> View Attachment</a>` : '<span style="color:var(--text-muted);">No Document</span>';
+
+        body.innerHTML += `
+            <tr>
+                <td style="font-weight: 600; color:#fff;">Grievance Filed</td>
+                <td>${date}</td>
+                <td style="max-width: 400px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="${c.reason}">${c.reason}</td>
+                <td>${docLink}</td>
+            </tr>
+        `;
+    });
+}
+
+let offboardTabsBound = false;
+function setupOffboardTabs() {
+    if (offboardTabsBound) return;
+    const buttons = document.querySelectorAll('.offboard-subtab-btn');
+    buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            buttons.forEach(b => {
+                b.classList.remove('active', 'btn-primary');
+                b.classList.add('btn-ghost');
+            });
+            btn.classList.add('active', 'btn-primary');
+            btn.classList.remove('btn-ghost');
+
+            currentOffboardSubtab = btn.getAttribute('data-tab');
+            renderOffboardingSubtab();
+        });
+    });
+    offboardTabsBound = true;
+}
+
+let offboardFormBound = false;
+function setupOffboardForm() {
+    if (offboardFormBound) return;
+    const form = document.getElementById('createOffboardingForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const action_type = document.getElementById('offboardActionType').value;
+        const reason = document.getElementById('offboardReason').value;
+        const fileInput = document.getElementById('offboardFile');
+
+        const formData = new FormData();
+        formData.append('action_type', action_type);
+        formData.append('reason', reason);
+
+        if (fileInput.files && fileInput.files.length > 0) {
+            formData.append('file', fileInput.files[0]);
+        }
+
+        const token = localStorage.getItem('token');
+        const headers = {};
+        if (token) headers['Authorization'] = `Token ${token}`;
+
+        try {
+            const res = await fetch(`${API_BASE}/employee/offboardings/`, {
+                method: 'POST',
+                headers,
+                body: formData
+            });
+
+            if (res.ok) {
+                alert('Request submitted successfully directly to Google Drive!');
+                form.reset();
+                loadOffboarding();
+            } else {
+                const errData = await res.json();
+                alert(`Submission failed: ${errData.message || 'Server error'}`);
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Error submitting offboarding/grievance request.');
+        }
+    });
+    offboardFormBound = true;
 }

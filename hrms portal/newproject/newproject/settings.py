@@ -132,6 +132,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'myapp.User'
 
 CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_PRIVATE_NETWORK = True
 
 REST_FRAMEWORK = {
     'DATETIME_FORMAT': "%d-%m-%Y %H:%M:%S",
@@ -154,3 +155,10 @@ EMAIL_HOST_USER = 'chowduvadalokesh11@gmail.com'
 EMAIL_HOST_PASSWORD = 'aygv vwmh mhel tdwo'  
 DEFAULT_FROM_EMAIL = 'HRMS Portal <chowduvadalokesh11@gmail.com>'
 MANAGER_EMAIL = 'chowduvadalokesh11@gmail.com'
+
+# Google Drive Settings (OAuth 2.0)
+OAUTH_CREDENTIALS_FILE = BASE_DIR / "credentials" / "credentials.json"
+OAUTH_TOKEN_FILE = BASE_DIR / "credentials" / "token.json"
+GOOGLE_DRIVE_FOLDER_ID = "1i5-3rpIYPCw7A9GizcDCVVTrFKR1Nl5u"
+
+

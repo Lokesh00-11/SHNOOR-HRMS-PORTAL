@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Manager Dashboard | ShnoorHR</title>
-    <link rel="stylesheet" href="../styles.css">
+    <script src="../theme.js"></script>
+    <link rel="stylesheet" href="../styles.css?v=3">
     <link rel="stylesheet" href="manager.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -28,6 +29,9 @@
         <div class="nav-item manager-only" data-target="payroll"><i class="fa-solid fa-file-invoice-dollar"></i> Payroll
         </div>
         <div class="nav-item manager-only" data-target="expenses"><i class="fa-solid fa-wallet"></i> Expenses</div>
+        <div class="nav-item" data-target="policies-section"><i class="fa-solid fa-file-shield"></i> Company Policies</div>
+        <div class="nav-item manager-only" data-target="offboarding-section"><i class="fa-solid fa-user-xmark"></i> Offboarding</div>
+        <div class="nav-item manager-only" data-target="letterheads-section"><i class="fa-solid fa-file-signature"></i> Letter Heads</div>
         <div class="nav-item" data-target="orgchart"><i class="fa-solid fa-sitemap"></i> Org Chart</div>
         <div class="nav-item" data-target="notifications"><i class="fa-solid fa-bell"></i> Notifications</div>
 
@@ -1682,6 +1686,32 @@
                 </div>
 
 
+                <!-- Tasks Filter Bar (Team Tasks) -->
+                <div class="filters-bar glass-panel" style="display: flex; gap: 1rem; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; margin-top: 18px; flex-wrap: wrap; align-items: center; background: rgba(10, 25, 50, 0.5); border: 1px solid var(--glass-border);">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-filter" style="color: var(--primary);"></i>
+                        <span style="font-weight: 500; color: #fff;">Filters (Team Tasks):</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1 rem;">
+                        <label for="mgrTeamTaskStatusFilter" style="font-size: 0.9rem; color: var(--text-muted);">Status:</label>
+                        <select id="mgrTeamTaskStatusFilter" class="form-control" style="width: auto; padding: 0.3rem 1.5rem 0.3rem 0.5rem; background: var(--bg-navy); color: #fff; border: 1px solid var(--glass-border); border-radius: 8px; cursor: pointer;" onchange="renderTeamTasksList()">
+                            <option value="all">All Statuses</option>
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <label for="mgrTeamTaskPriorityFilter" style="font-size: 0.9rem; color: var(--text-muted);">Priority:</label>
+                        <select id="mgrTeamTaskPriorityFilter" class="form-control" style="width: auto; padding: 0.3rem 1.5rem 0.3rem 0.5rem; background: var(--bg-navy); color: #fff; border: 1px solid var(--glass-border); border-radius: 8px; cursor: pointer;" onchange="renderTeamTasksList()">
+                            <option value="all">All Priorities</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="table-container"
                     style="width: 100%; max-width: 100%; background: transparent; border: none; box-shadow: none; margin-top: 1rem;">
                     <table
@@ -1710,6 +1740,33 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                     <h2 class="gradient-text">My Tasks</h2>
                 </div>
+
+                <!-- Tasks Filter Bar (My Tasks) -->
+                <div class="filters-bar glass-panel" style="display: flex; gap: 1rem; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center; background: rgba(10, 25, 50, 0.5); border: 1px solid var(--glass-border);">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-filter" style="color: var(--primary);"></i>
+                        <span style="font-weight: 500; color: #fff;">Filters (My Tasks):</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <label for="mgrSelfTaskStatusFilter" style="font-size: 0.9rem; color: var(--text-muted);">Status:</label>
+                        <select id="mgrSelfTaskStatusFilter" class="form-control" style="width: auto; padding: 0.3rem 1.5rem 0.3rem 0.5rem; background: var(--bg-navy); color: #fff; border: 1px solid var(--glass-border); border-radius: 8px; cursor: pointer;" onchange="renderSelfTasksList()">
+                            <option value="all">All Statuses</option>
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <label for="mgrSelfTaskPriorityFilter" style="font-size: 0.9rem; color: var(--text-muted);">Priority:</label>
+                        <select id="mgrSelfTaskPriorityFilter" class="form-control" style="width: auto; padding: 0.3rem 1.5rem 0.3rem 0.5rem; background: var(--bg-navy); color: #fff; border: 1px solid var(--glass-border); border-radius: 8px; cursor: pointer;" onchange="renderSelfTasksList()">
+                            <option value="all">All Priorities</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="table-container">
                     <table>
                         <thead>
@@ -1792,31 +1849,265 @@
             </div>
         </section>
 
-        <!-- View: Policies (Manager Only) -->
-        <section id="policies" class="view-section manager-only">
-            <h2 class="gradient-text" style="margin-bottom: 2rem;">Manage Company Policies</h2>
+        <!-- View: Policies (Shared: Managed by Manager, Viewed by Employee/Self) -->
+        <section id="policies-section" class="view-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 class="gradient-text" style="margin: 0;">Company Policies & Guidelines</h2>
+            </div>
 
-            <div class="glass-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
-                <h4 style="margin-bottom: 1rem;">Add New Policy</h4>
-                <div style="display: flex; gap: 1rem; align-items: flex-start;">
-                    <input type="text" placeholder="Policy Title"
-                        style="flex:1; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;" />
-                    <input type="text" placeholder="Short Description / Link"
-                        style="flex:2; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;" />
-                    <button class="btn btn-primary" style="padding: 0.75rem 1.5rem;">Add Policy</button>
+            <!-- Manager Only: Add New Policy -->
+            <div class="glass-panel manager-only" style="padding: 1.5rem; margin-bottom: 2rem; border: 1px solid var(--glass-border);">
+                <h4 style="margin-bottom: 1.25rem; color: var(--primary); font-weight: 600;"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Corporate Policy</h4>
+                <form id="uploadPolicyForm" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; align-items: flex-end;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Policy Title</label>
+                        <input type="text" id="policyTitle" class="form-control" required placeholder="e.g. Remote Work Policy"
+                            style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Category</label>
+                        <select id="policyCategory" class="form-control"
+                            style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                            <option value="General">General</option>
+                            <option value="Leave & Attendance">Leave & Attendance</option>
+                            <option value="IT & Security">IT & Security</option>
+                            <option value="Code of Conduct">Code of Conduct</option>
+                            <option value="Finance & Reimbursement">Finance & Reimbursement</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Workplace Applicability</label>
+                        <select id="policyLocation" class="form-control"
+                            style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                            <option value="All Offices">All Offices</option>
+                            <option value="Remote Employees">Remote Employees</option>
+                            <option value="Onsite Staff">Onsite Staff</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="grid-column: span 2; margin-bottom: 0;">
+                        <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Brief Summary / Description</label>
+                        <input type="text" id="policyDesc" class="form-control" required placeholder="Provide a brief summary of guidelines..."
+                            style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Policy Document (PDF)</label>
+                        <input type="file" id="policyFile" class="form-control" required accept="application/pdf"
+                            style="width:100%; padding:0.6rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1.5rem; height: 44px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-upload"></i> Publish Policy
+                    </button>
+                </form>
+            </div>
+
+            <!-- Client Filter System -->
+            <div class="glass-panel" style="padding: 1.25rem; margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                <div style="flex: 2; min-width: 200px;">
+                    <input type="text" id="policySearch" placeholder="Search policies by title or description..." oninput="filterPolicies()"
+                        style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <select id="filterCategory" onchange="filterPolicies()" class="form-control"
+                        style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                        <option value="ALL">All Categories</option>
+                        <option value="General">General</option>
+                        <option value="Leave & Attendance">Leave & Attendance</option>
+                        <option value="IT & Security">IT & Security</option>
+                        <option value="Code of Conduct">Code of Conduct</option>
+                        <option value="Finance & Reimbursement">Finance & Reimbursement</option>
+                    </select>
+                </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <select id="filterLocation" onchange="filterPolicies()" class="form-control"
+                        style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                        <option value="ALL">All Applicability</option>
+                        <option value="All Offices">All Offices</option>
+                        <option value="Remote Employees">Remote Employees</option>
+                        <option value="Onsite Staff">Onsite Staff</option>
+                    </select>
                 </div>
             </div>
 
+            <!-- Policies Directory Table -->
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
-                            <th>Policy</th>
+                            <th>Policy Name</th>
                             <th>Description</th>
-                            <th>Action</th>
+                            <th>Category</th>
+                            <th>Workplace</th>
+                            <th>Published Date</th>
+                            <th style="text-align: right;">Action</th>
                         </tr>
                     </thead>
-                    <tbody id="policiesList">
+                    <tbody id="policiesTableBody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- View: Offboarding Module -->
+        <section id="offboarding-section" class="view-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 class="gradient-text" style="margin: 0;">Employee Actions & Offboarding</h2>
+            </div>
+
+            <!-- Manager Only: Issue Action Form -->
+            <div class="glass-panel manager-only" style="padding: 1.5rem; margin-bottom: 2rem; border: 1px solid var(--glass-border);">
+                <h4 style="margin-bottom: 1.25rem; color: var(--primary); font-weight: 600;"><i class="fa-solid fa-user-pen"></i> Issue Warning, Resignation or Separation</h4>
+                <form id="createOffboardingForm" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; align-items: flex-end;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Select Employee</label>
+                        <select id="offboardEmployee" class="form-control" required
+                            style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                            <option value="">-- Choose Employee --</option>
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Action Type</label>
+                        <select id="offboardActionType" class="form-control" required
+                            style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                            <option value="warning">Warning Letter</option>
+                            <option value="resignation">Resignation Processing</option>
+                            <option value="termination">Termination Separation</option>
+                            <option value="complaint">Official Grievance / Complaint</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Supporting Document (Optional)</label>
+                        <input type="file" id="offboardFile" class="form-control"
+                            style="width:100%; padding:0.6rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2; margin-bottom: 0;">
+                        <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Details & Reasons</label>
+                        <input type="text" id="offboardReason" class="form-control" required placeholder="Provide exhaustive reasoning, context and metadata..."
+                            style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1.5rem; height: 44px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-circle-check"></i> Submit Record
+                    </button>
+                </form>
+            </div>
+
+            <!-- Subtabs Navigation (Warnings, Resignations, Terminations, Complaints) -->
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.03); padding: 0.4rem; border-radius: 10px; width: fit-content; border: 1px solid var(--glass-border);">
+                <button class="btn btn-primary offboard-subtab-btn active" data-tab="warnings" style="padding: 0.5rem 1.25rem; font-size: 0.85rem;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Warnings
+                </button>
+                <button class="btn btn-ghost offboard-subtab-btn" data-tab="resignations" style="padding: 0.5rem 1.25rem; font-size: 0.85rem;">
+                    <i class="fa-solid fa-door-open"></i> Resignations
+                </button>
+                <button class="btn btn-ghost offboard-subtab-btn" data-tab="terminations" style="padding: 0.5rem 1.25rem; font-size: 0.85rem;">
+                    <i class="fa-solid fa-user-minus"></i> Terminations
+                </button>
+                <button class="btn btn-ghost offboard-subtab-btn" data-tab="complaints" style="padding: 0.5rem 1.25rem; font-size: 0.85rem;">
+                    <i class="fa-solid fa-circle-info"></i> Complaints
+                </button>
+            </div>
+
+            <!-- Dynamic Lists Tables -->
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr id="offboardTableHeader">
+                            <!-- Dynamic headers based on chosen subtab -->
+                        </tr>
+                    </thead>
+                    <tbody id="offboardTableBody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- View: Letter Heads & Auto PDF Generator -->
+        <section id="letterheads-section" class="view-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 class="gradient-text" style="margin: 0;">Official Documents & Letter Heads</h2>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 2rem; margin-bottom: 2.5rem;">
+                <!-- Left panel: Templates Grid -->
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <h4 style="color:var(--text-main); font-weight: 600; margin-bottom: 0.5rem;"><i class="fa-solid fa-scroll"></i> Select Document Template</h4>
+                    
+                    <div id="offerLetterTemplate" class="glass-panel template-card active" style="padding:1.25rem; cursor:pointer; border:1px solid var(--primary); transition:all 0.3s; border-radius: 12px; background: rgba(37,99,235,0.05);">
+                        <h5 style="color:#fff; margin-bottom:0.25rem; font-size: 1rem;"><i class="fa-solid fa-briefcase" style="color: var(--primary);"></i> Corporate Offer Letter</h5>
+                        <p style="color:var(--text-muted); font-size:0.8rem; margin: 0;">Generate official corporate offers with pre-compiled packages.</p>
+                    </div>
+
+                    <div id="ndaTemplate" class="glass-panel template-card" style="padding:1.25rem; cursor:pointer; border:1px solid var(--glass-border); transition:all 0.3s; border-radius: 12px;">
+                        <h5 style="color:#fff; margin-bottom:0.25rem; font-size: 1rem;"><i class="fa-solid fa-shield-halved" style="color: #10b981;"></i> Non-Disclosure Agreement</h5>
+                        <p style="color:var(--text-muted); font-size:0.8rem; margin: 0;">Formal NDA confidentiality agreement standard.</p>
+                    </div>
+
+                    <div id="payslipTemplate" class="glass-panel template-card" style="padding:1.25rem; cursor:pointer; border:1px solid var(--glass-border); transition:all 0.3s; border-radius: 12px;">
+                        <h5 style="color:#fff; margin-bottom:0.25rem; font-size: 1rem;"><i class="fa-solid fa-file-invoice" style="color: #f59e0b;"></i> Certified Payslip</h5>
+                        <p style="color:var(--text-muted); font-size:0.8rem; margin: 0;">Generate formal certified monthly salary statements.</p>
+                    </div>
+
+                    <div id="recommendTemplate" class="glass-panel template-card" style="padding:1.25rem; cursor:pointer; border:1px solid var(--glass-border); transition:all 0.3s; border-radius: 12px;">
+                        <h5 style="color:#fff; margin-bottom:0.25rem; font-size: 1rem;"><i class="fa-solid fa-award" style="color: #e11d48;"></i> Recommendation Letter</h5>
+                        <p style="color:var(--text-muted); font-size:0.8rem; margin: 0;">Official letter of recommendation and experience clearance.</p>
+                    </div>
+                </div>
+
+                <!-- Right panel: Document Compiler Form -->
+                <div class="glass-panel" style="padding: 1.5rem; border: 1px solid var(--glass-border);">
+                    <h4 style="margin-bottom: 1.25rem; color: var(--primary); font-weight: 600;"><i class="fa-solid fa-pen-nib"></i> Dynamic Compiler Console</h4>
+                    <form id="compileLetterForm" style="display: flex; flex-direction: column; gap: 1.25rem;">
+                        <input type="hidden" id="letterDocType" value="offer_letter">
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Document Title</label>
+                                <input type="text" id="letterTitle" class="form-control" required placeholder="e.g. Offer Letter - John Doe"
+                                    style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Select Employee</label>
+                                <select id="letterEmployee" class="form-control" required
+                                    style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                                    <option value="">-- Choose Employee / Candidate --</option>
+                                    <!-- Populated dynamically -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Fields Area based on template selection -->
+                        <div id="letterDynamicFields" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <!-- Injected dynamically by JS -->
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Custom Paragraph Content (Appended)</label>
+                            <textarea id="letterContent" class="form-control" placeholder="Add custom terms or modifications here..." rows="4"
+                                style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff; resize: vertical;"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1.5rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 600; font-size: 1rem;">
+                            <i class="fa-solid fa-gears"></i> Compile & Generate PDF
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Table of Generated Letterheads -->
+            <div class="table-container">
+                <h4 style="color:var(--text-main); font-weight: 600; margin-bottom: 1rem;"><i class="fa-solid fa-list"></i> Digital Document Archives</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Document Name</th>
+                            <th>Category Type</th>
+                            <th>Compiled Date</th>
+                            <th style="text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="letterHeadsTableBody">
                         <!-- Populated by JS -->
                     </tbody>
                 </table>

@@ -107,7 +107,6 @@ class Employee(models.Model):
     employment_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='employee')
     profile_picture = models.FileField(upload_to='profiles/', blank=True, null=True)
     work_mode = models.CharField(max_length=50, default='Office')
-
     def __str__(self):
         return self.user.username
 
@@ -211,6 +210,7 @@ class Offboarding(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='offboardings')
     action_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
     reason = models.TextField()
+    file = models.FileField(upload_to='offboarding/', null=True, blank=True)
     date = models.DateField(auto_now_add=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -284,6 +284,19 @@ class Asset(models.Model):
     def __str__(self): 
         return f"{self.name}({self.serial_number})"
 
+def expense_receipt_upload_path(instance, filename):
+    import os
+    import uuid
+    from django.utils import timezone
+    name, ext = os.path.splitext(filename)
+    unique_filename = f"{uuid.uuid4().hex}{ext.lower()}"
+    today = timezone.now()
+    year = today.strftime('%Y')
+    month = today.strftime('%m')
+    day = today.strftime('%d')
+    username = instance.employee.username if (instance.employee and instance.employee.username) else "anonymous"
+    return os.path.join('expense_receipts', year, month, day, username, unique_filename)
+
 class Expense(models.Model):
     STATUS_CHOICES = [
         ('PENDING', 'Pending'),
@@ -304,7 +317,8 @@ class Expense(models.Model):
     category = models.CharField(max_length=100)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.TextField(blank=True, null=True)
-    receipt = models.FileField(upload_to='expense_receipts/', blank=True, null=True)
+    receipt = models.FileField(upload_to=expense_receipt_upload_path, blank=True, null=True)
+    receipt_url = models.URLField(max_length=1000, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     payment_status = models.CharField(max_length=20, choices=PAYMENT_CHOICES, default='UNPAID')
     
@@ -313,6 +327,76 @@ class Expense(models.Model):
     
     submitted_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def rotate_image_if_needed(self, img):
+        try:
+            if hasattr(img, '_getexif'):
+                exif = img._getexif()
+                if exif:
+                    orientation = exif.get(274)  # 274: EXIF Orientation tag
+                    if orientation == 3:
+                        img = img.rotate(180, expand=True)
+                    elif orientation == 6:
+                        img = img.rotate(270, expand=True)
+                    elif orientation == 8:
+                        img = img.rotate(90, expand=True)
+        except Exception:
+            pass
+        return img
+
+    def save(self, *args, **kwargs):
+        import os
+        from io import BytesIO
+        from PIL import Image
+        from django.core.files.uploadedfile import InMemoryUploadedFile
+
+        is_new_upload = False
+        if self.receipt and not getattr(self, '_already_saved_receipt', False):
+            try:
+                from django.core.files.uploadedfile import UploadedFile
+                if hasattr(self.receipt, 'file') and isinstance(self.receipt.file, UploadedFile):
+                    is_new_upload = True
+            except Exception:
+                is_new_upload = False
+
+        if is_new_upload:
+            try:
+                img = Image.open(self.receipt)
+                if img.format in ['JPEG', 'PNG', 'GIF', 'BMP', 'WEBP', 'JPG']:
+                    img = self.rotate_image_if_needed(img)
+                    
+                    if img.mode in ('RGBA', 'LA') or (img.mode == 'P' and 'transparency' in img.info):
+                        background = Image.new('RGB', img.size, (255, 255, 255))
+                        background.paste(img, mask=img.split()[3] if img.mode == 'RGBA' else None)
+                        img = background
+                    elif img.mode != 'RGB':
+                        img = img.convert('RGB')
+                    
+                    max_dimension = 1600
+                    if max(img.size) > max_dimension:
+                        img.thumbnail((max_dimension, max_dimension), Image.Resampling.LANCZOS)
+                    
+                    output = BytesIO()
+                    img.save(output, format='JPEG', quality=80, optimize=True)
+                    output.seek(0)
+                    
+                    original_name = self.receipt.name.replace('\\', '/').split('/')[-1]
+                    name_without_ext = os.path.splitext(original_name)[0]
+                    new_filename = f"{name_without_ext}.jpg"
+                    
+                    self.receipt = InMemoryUploadedFile(
+                        output,
+                        'FileField',
+                        new_filename,
+                        'image/jpeg',
+                        output.getbuffer().nbytes,
+                        None
+                    )
+                    self._already_saved_receipt = True
+            except Exception as e:
+                print(f"Fallback warning: Could not compress receipt: {e}")
+                
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.employee.username} - {self.category} - ₹{self.amount}"

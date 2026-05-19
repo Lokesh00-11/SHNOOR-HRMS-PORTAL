@@ -107,3 +107,66 @@ class LetterHeadDetailView(APIView):
         except LetterHead.DoesNotExist:
             return Response({'message': 'Record not found'}, status=status.HTTP_404_NOT_FOUND)
 
+from django.http import StreamingHttpResponse
+import requests
+import re
+
+class DownloadFileView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        file_url = request.query_params.get('url')
+        custom_name = request.query_params.get('name')
+        
+        if not file_url:
+            return Response({'message': 'URL parameter is required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if not custom_name:
+            custom_name = "document"
+            
+        clean_name = re.sub(r'[^a-zA-Z0-9_\- ]', '', custom_name).strip().replace(' ', '_')
+        if not clean_name:
+            clean_name = "downloaded_file"
+        
+        ext = ".pdf"
+        lower_url = file_url.lower()
+        if '.pdf' in lower_url:
+            ext = '.pdf'
+        elif '.jpg' in lower_url or '.jpeg' in lower_url:
+            ext = '.jpg'
+        elif '.png' in lower_url:
+            ext = '.png'
+        elif '.webp' in lower_url:
+            ext = '.webp'
+        elif '.docx' in lower_url:
+            ext = '.docx'
+        elif '.doc' in lower_url:
+            ext = '.doc'
+        elif '.xlsx' in lower_url:
+            ext = '.xlsx'
+        elif '.xls' in lower_url:
+            ext = '.xls'
+            
+        if not clean_name.lower().endswith(ext):
+            clean_name = f"{clean_name}{ext}"
+
+        try:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+            response = requests.get(file_url, headers=headers, stream=True, timeout=15)
+            if response.status_code != 200:
+                return Response({'message': 'Failed to fetch resource from source URL'}, status=status.HTTP_404_NOT_FOUND)
+                
+            content_type = response.headers.get('Content-Type', 'application/octet-stream')
+            
+            django_response = StreamingHttpResponse(
+                response.iter_content(chunk_size=4096),
+                content_type=content_type
+            )
+            django_response['Content-Disposition'] = f'attachment; filename="{clean_name}"'
+            return django_response
+            
+        except Exception as e:
+            return Response({'message': f"Error downloading file: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

@@ -33,3 +33,4 @@ body.mode-manager .self-only { display: none !important; }
 .modal-content::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 8px; }
 .modal-content::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
 .close-btn:hover { color: #f43f5e; }
+

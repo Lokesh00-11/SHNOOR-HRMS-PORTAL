@@ -1,4 +1,5 @@
 const BASE_URL = 'http://127.0.0.1:8000/api';
+const API_BASE = BASE_URL;
 let currentMode = 'manager'; // 'manager' or 'self'
 
 // --- Auth & API Fetch ---
@@ -138,8 +139,12 @@ function loadDataForTab(tabId) {
         loadPayroll();
     } else if (tabId === 'expenses') {
         loadAllExpenses();
-    } else if (tabId === 'policies') {
+    } else if (tabId === 'policies-section') {
         loadPolicies();
+    } else if (tabId === 'offboarding-section') {
+        loadOffboarding();
+    } else if (tabId === 'letterheads-section') {
+        loadLetterHeads();
     } else if (tabId === 'orgchart') {
         loadOrgChart();
     } else if (tabId === 'notifications') {
@@ -334,44 +339,88 @@ async function loadTasks() {
         const data = await fetchData('/manager/tasks/');
         if (!data) return;
         window.allTeamTasks = data; // Store globally to avoid passing complex strings in onclick
-        const tbody = document.getElementById('teamTasksList');
-        tbody.innerHTML = '';
-        data.forEach(task => {
-            const statClass = task.status === 'Completed' ? 'active' : (task.status === 'In Progress' ? 'pending' : 'expired');
-            tbody.innerHTML += `
-                <tr>
-                    <td style="font-weight:600; padding: 0.75rem; word-break: break-word;">${task.title}</td>
-                    <td style="color:var(--text-muted); padding: 0.75rem; word-break: break-word; white-space: normal;">${task.description || '-'}</td>
-                    <td style="padding: 0.75rem; word-break: break-all;">${task.assigned_to_email}</td>
-                    <td style="padding: 0.75rem;">${task.deadline || '-'}</td>
-                    <td style="padding: 0.75rem;"><span style="color:${task.priority === 'High' ? '#f43f5e' : (task.priority === 'Medium' ? '#f59e0b' : '#10b981')}">${task.priority}</span></td>
-                    <td style="padding: 0.75rem;"><span class="status ${statClass}" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;">${task.status}</span></td>
-                    <td style="color:var(--primary); padding: 0.75rem; word-break: break-word; white-space: normal;"><i>${task.employee_note || '-'}</i></td>
-                    <td style="padding: 0.75rem;">
-                        <button class="btn btn-ghost" style="padding: 0.2rem 0.4rem; font-size:0.7rem;" onclick="editTask(${task.id})">
-                            <i class="fa-solid fa-edit"></i>
-                        </button>
-                    </td>
-                </tr>
-            `;
-        });
+        renderTeamTasksList();
     } else {
         const data = await fetchData('/employee/tasks/');
         if (!data) return;
-        const tbody = document.getElementById('selfTasksList');
-        tbody.innerHTML = '';
-        data.forEach(task => {
-            const statClass = task.status === 'Completed' ? 'active' : (task.status === 'In Progress' ? 'pending' : 'expired');
-            tbody.innerHTML += `
-                <tr>
-                    <td>${task.title}</td>
-                    <td>${task.deadline || '-'}</td>
-                    <td><span style="color:${task.priority==='High'?'#f43f5e':(task.priority==='Medium'?'#f59e0b':'#10b981')}">${task.priority}</span></td>
-                    <td><span class="status ${statClass}">${task.status}</span></td>
-                </tr>
-            `;
-        });
+        window.allSelfTasks = data;
+        renderSelfTasksList();
     }
+}
+
+function renderTeamTasksList() {
+    const tbody = document.getElementById('teamTasksList');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    
+    const statusFilter = document.getElementById('mgrTeamTaskStatusFilter')?.value || 'all';
+    const priorityFilter = document.getElementById('mgrTeamTaskPriorityFilter')?.value || 'all';
+    
+    const tasks = window.allTeamTasks || [];
+    const filteredTasks = tasks.filter(task => {
+        const matchStatus = statusFilter === 'all' || task.status === statusFilter;
+        const matchPriority = priorityFilter === 'all' || task.priority === priorityFilter;
+        return matchStatus && matchPriority;
+    });
+    
+    if (filteredTasks.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:1.5rem;">No tasks match the filter criteria.</td></tr>';
+        return;
+    }
+    
+    filteredTasks.forEach(task => {
+        const statClass = task.status === 'Completed' ? 'active' : (task.status === 'In Progress' ? 'pending' : 'expired');
+        tbody.innerHTML += `
+            <tr>
+                <td style="font-weight:600; padding: 0.75rem; word-break: break-word;">${task.title}</td>
+                <td style="color:var(--text-muted); padding: 0.75rem; word-break: break-word; white-space: normal;">${task.description || '-'}</td>
+                <td style="padding: 0.75rem; word-break: break-all;">${task.assigned_to_email}</td>
+                <td style="padding: 0.75rem;">${task.deadline || '-'}</td>
+                <td style="padding: 0.75rem;"><span style="color:${task.priority === 'High' ? '#f43f5e' : (task.priority === 'Medium' ? '#f59e0b' : '#10b981')}">${task.priority}</span></td>
+                <td style="padding: 0.75rem;"><span class="status ${statClass}" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;">${task.status}</span></td>
+                <td style="color:var(--primary); padding: 0.75rem; word-break: break-word; white-space: normal;"><i>${task.employee_note || '-'}</i></td>
+                <td style="padding: 0.75rem;">
+                    <button class="btn btn-ghost" style="padding: 0.2rem 0.4rem; font-size:0.7rem;" onclick="editTask(${task.id})">
+                        <i class="fa-solid fa-edit"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+function renderSelfTasksList() {
+    const tbody = document.getElementById('selfTasksList');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    
+    const statusFilter = document.getElementById('mgrSelfTaskStatusFilter')?.value || 'all';
+    const priorityFilter = document.getElementById('mgrSelfTaskPriorityFilter')?.value || 'all';
+    
+    const tasks = window.allSelfTasks || [];
+    const filteredTasks = tasks.filter(task => {
+        const matchStatus = statusFilter === 'all' || task.status === statusFilter;
+        const matchPriority = priorityFilter === 'all' || task.priority === priorityFilter;
+        return matchStatus && matchPriority;
+    });
+    
+    if (filteredTasks.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:1.5rem;">No tasks match the filter criteria.</td></tr>';
+        return;
+    }
+    
+    filteredTasks.forEach(task => {
+        const statClass = task.status === 'Completed' ? 'active' : (task.status === 'In Progress' ? 'pending' : 'expired');
+        tbody.innerHTML += `
+            <tr>
+                <td>${task.title}</td>
+                <td>${task.deadline || '-'}</td>
+                <td><span style="color:${task.priority==='High'?'#f43f5e':(task.priority==='Medium'?'#f59e0b':'#10b981')}">${task.priority}</span></td>
+                <td><span class="status ${statClass}">${task.status}</span></td>
+                <td>-</td>
+            </tr>
+        `;
+    });
 }
 
 async function loadDocuments() {
@@ -417,29 +466,767 @@ async function loadPayroll() {
     });
 }
 
-async function loadPolicies() {
-    const list = document.getElementById('policiesList');
-    if (!list) return;
-    list.innerHTML = '<tr><td colspan="3" style="text-align:center;">Loading...</td></tr>';
+// --- Company Policies Module ---
+let localPoliciesData = [];
 
-    const data = await fetchData('/manager/policies/');
+async function loadPolicies() {
+    const list = document.getElementById('policiesTableBody');
+    if (!list) return;
+    list.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem;">Loading policies...</td></tr>';
+
+    try {
+        const data = await fetchData('/policies/');
+        if (!data) {
+            list.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color:var(--text-muted);">Failed to retrieve policies.</td></tr>';
+            return;
+        }
+
+        localPoliciesData = data;
+        renderPoliciesList(data);
+        setupPoliciesFormListeners();
+    } catch (err) {
+        console.error("Error loading policies:", err);
+        list.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color:var(--text-muted);">An error occurred.</td></tr>';
+    }
+}
+
+function renderPoliciesList(data) {
+    const list = document.getElementById('policiesTableBody');
+    if (!list) return;
+
     if (!data || data.length === 0) {
-        list.innerHTML = '<tr><td colspan="3" style="text-align:center;">No policies found.</td></tr>';
+        list.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color:var(--text-muted);">No policies published yet.</td></tr>';
         return;
     }
 
     list.innerHTML = '';
     data.forEach(policy => {
+        let desc = policy.description || '';
+        let category = 'General';
+        let location = 'All Offices';
+
+        // Parse parsed metadata if formatted as "[Category:X][Location:Y] desc"
+        if (desc.startsWith('[Category:')) {
+            const catMatch = desc.match(/\[Category:([^\]]+)\]/);
+            const locMatch = desc.match(/\[Location:([^\]]+)\]/);
+            if (catMatch) category = catMatch[1];
+            if (locMatch) location = locMatch[1];
+            desc = desc.replace(/\[Category:[^\]]+\]/, '').replace(/\[Location:[^\]]+\]/, '').trim();
+        }
+
+        const date = policy.created_at ? new Date(policy.created_at).toLocaleDateString('en-US', {
+            year: 'numeric', month: 'short', day: 'numeric'
+        }) : '-';
+
+        const fileUrl = policy.file || '#';
+        const title = policy.title || 'Corporate_Policy';
+        const downloadUrl = (fileUrl && fileUrl.startsWith('http')) 
+            ? `${BASE_URL}/download-file/?url=${encodeURIComponent(fileUrl)}&name=${encodeURIComponent(title)}` 
+            : fileUrl;
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td style="font-weight: 500;">${policy.title}</td>
-            <td style="color:var(--text-muted); font-size:0.9rem;">${policy.description || 'No description'}</td>
-            <td>
-                <a href="${policy.file || '#'}" target="_blank" class="btn btn-ghost" style="padding: 0.25rem 0.75rem; font-size:0.75rem; text-decoration:none;">View</a>
+            <td style="font-weight: 600; color: #fff;">${policy.title}</td>
+            <td style="color:var(--text-muted); font-size:0.9rem; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${desc}">${desc || 'No description'}</td>
+            <td><span class="status-badge" style="background: rgba(37,99,235,0.1); color: var(--primary); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">${category}</span></td>
+            <td><span class="status-badge" style="background: rgba(16,185,129,0.1); color: #10b981; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">${location}</span></td>
+            <td>${date}</td>
+            <td style="text-align: right;">
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                    <a href="${downloadUrl}" target="_blank" class="btn btn-ghost" style="padding: 0.25rem 0.75rem; font-size:0.75rem; text-decoration:none; display: inline-flex; align-items: center; gap: 0.25rem;">
+                        <i class="fa-solid fa-eye"></i> View
+                    </a>
+                    ${currentMode === 'manager' ? `
+                    <button class="btn btn-ghost" onclick="deletePolicy(${policy.id})" style="padding: 0.25rem 0.75rem; font-size:0.75rem; color:#f43f5e; border-color: rgba(244,63,94,0.15);">
+                        <i class="fa-solid fa-trash-can"></i> Delete
+                    </button>
+                    ` : ''}
+                </div>
             </td>
         `;
         list.appendChild(tr);
     });
+}
+
+function filterPolicies() {
+    const query = document.getElementById('policySearch')?.value.toLowerCase() || '';
+    const category = document.getElementById('filterCategory')?.value || 'ALL';
+    const location = document.getElementById('filterLocation')?.value || 'ALL';
+
+    const filtered = localPoliciesData.filter(p => {
+        let desc = p.description || '';
+        let pCategory = 'General';
+        let pLocation = 'All Offices';
+
+        if (desc.startsWith('[Category:')) {
+            const catMatch = desc.match(/\[Category:([^\]]+)\]/);
+            const locMatch = desc.match(/\[Location:([^\]]+)\]/);
+            if (catMatch) pCategory = catMatch[1];
+            if (locMatch) pLocation = locMatch[1];
+            desc = desc.replace(/\[Category:[^\]]+\]/, '').replace(/\[Location:[^\]]+\]/, '').trim();
+        }
+
+        const matchQuery = p.title.toLowerCase().includes(query) || desc.toLowerCase().includes(query);
+        const matchCat = category === 'ALL' || pCategory === category;
+        const matchLoc = location === 'ALL' || pLocation === location;
+
+        return matchQuery && matchCat && matchLoc;
+    });
+
+    renderPoliciesList(filtered);
+}
+
+let policiesFormBound = false;
+function setupPoliciesFormListeners() {
+    if (policiesFormBound) return;
+    const form = document.getElementById('uploadPolicyForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const title = document.getElementById('policyTitle').value;
+        const category = document.getElementById('policyCategory').value;
+        const location = document.getElementById('policyLocation').value;
+        const summary = document.getElementById('policyDesc').value;
+        const fileInput = document.getElementById('policyFile');
+
+        if (!fileInput.files || fileInput.files.length === 0) {
+            alert('Please select a valid PDF file.');
+            return;
+        }
+
+        const fileObj = fileInput.files[0];
+        const formattedDesc = `[Category:${category}][Location:${location}] ${summary}`;
+
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('description', formattedDesc);
+        formData.append('file', fileObj);
+
+        // Fetch auth token
+        const token = localStorage.getItem('token');
+        const headers = {};
+        if (token) headers['Authorization'] = `Token ${token}`;
+
+        try {
+            const res = await fetch(`${API_BASE}/policies/create/`, {
+                method: 'POST',
+                headers,
+                body: formData
+            });
+
+            if (res.ok) {
+                alert('Policy published successfully to Google Drive!');
+                form.reset();
+                loadPolicies();
+            } else {
+                const errData = await res.json();
+                alert(`Upload failed: ${errData.message || 'Server error'}`);
+            }
+        } catch (err) {
+            console.error(err);
+            alert('An unexpected error occurred during publishing.');
+        }
+    });
+
+    policiesFormBound = true;
+}
+
+async function deletePolicy(policyId) {
+    if (!confirm('Are you sure you want to permanently delete this corporate policy?')) return;
+
+    const token = localStorage.getItem('token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Token ${token}`;
+
+    try {
+        const res = await fetch(`${API_BASE}/policies/delete/${policyId}/`, {
+            method: 'DELETE',
+            headers
+        });
+
+        if (res.ok) {
+            alert('Policy deleted successfully!');
+            loadPolicies();
+        } else {
+            alert('Failed to delete policy.');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error deleting policy.');
+    }
+}
+
+
+// --- Offboarding Module ---
+let localOffboardingData = [];
+let currentOffboardSubtab = 'warnings';
+
+async function loadOffboarding() {
+    const tableBody = document.getElementById('offboardTableBody');
+    if (!tableBody) return;
+    tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 2rem;">Loading offboarding directory...</td></tr>';
+
+    try {
+        // Populate manager employee list in dropdown if in manager mode
+        if (currentMode === 'manager') {
+            const emps = await fetchData('/manager/employees/');
+            const selectEl = document.getElementById('offboardEmployee');
+            if (selectEl && emps) {
+                selectEl.innerHTML = '<option value="">-- Choose Employee --</option>';
+                emps.forEach(emp => {
+                    const fullName = `${emp.first_name || ''} ${emp.last_name || ''}`.trim() || emp.username;
+                    selectEl.innerHTML += `<option value="${emp.id}">${fullName} (${emp.designation || 'Staff'})</option>`;
+                });
+            }
+        }
+
+        const data = await fetchData('/manager/offboardings/');
+        if (!data) {
+            tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 2rem; color:var(--text-muted);">Failed to load offboarding items.</td></tr>';
+            return;
+        }
+
+        localOffboardingData = data;
+        setupOffboardTabs();
+        setupOffboardForm();
+        renderOffboardingSubtab();
+    } catch (err) {
+        console.error(err);
+        tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 2rem; color:var(--text-muted);">Error fetching offboarding list.</td></tr>';
+    }
+}
+
+function renderOffboardingSubtab() {
+    if (currentOffboardSubtab === 'warnings') renderWarnings();
+    else if (currentOffboardSubtab === 'resignations') renderResignations();
+    else if (currentOffboardSubtab === 'terminations') renderTerminations();
+    else if (currentOffboardSubtab === 'complaints') renderComplaints();
+}
+
+function renderWarnings() {
+    const header = document.getElementById('offboardTableHeader');
+    const body = document.getElementById('offboardTableBody');
+    if (!header || !body) return;
+
+    header.innerHTML = `
+        <th>Employee</th>
+        <th>Infraction Date</th>
+        <th>Reason / Infraction details</th>
+        <th>Letter/Doc</th>
+        ${currentMode === 'manager' ? '<th style="text-align: right;">Action</th>' : ''}
+    `;
+
+    const warnings = localOffboardingData.filter(o => o.action_type === 'warning');
+    if (warnings.length === 0) {
+        body.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 2.5rem; color: var(--text-muted);">No warning letters issued yet.</td></tr>';
+        return;
+    }
+
+    body.innerHTML = '';
+    warnings.forEach(w => {
+        const date = w.created_at ? new Date(w.created_at).toLocaleDateString() : '-';
+        const title = "Warning_Letter_" + (w.employee_name || "Employee").replace(/\s+/g, "_") + "_" + date.replace(/\//g, "-");
+        const downloadUrl = w.file ? `${BASE_URL}/download-file/?url=${encodeURIComponent(w.file)}&name=${encodeURIComponent(title)}` : '#';
+        const docLink = w.file ? `<a href="${downloadUrl}" target="_blank" style="color:var(--primary); text-decoration:none;"><i class="fa-solid fa-file-pdf"></i> View Letter</a>` : '<span style="color:var(--text-muted);">No Document</span>';
+        
+        body.innerHTML += `
+            <tr>
+                <td style="font-weight: 600; color:#fff;">${w.employee_name || 'Staff Member'}</td>
+                <td>${date}</td>
+                <td style="max-width: 300px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="${w.reason}">${w.reason}</td>
+                <td>${docLink}</td>
+                ${currentMode === 'manager' ? `
+                <td style="text-align: right;">
+                    <button onclick="deleteOffboardRecord(${w.id})" class="btn btn-ghost" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; color: #f43f5e; border-color: rgba(244,63,94,0.1);"><i class="fa-solid fa-trash"></i> Delete</button>
+                </td>` : ''}
+            </tr>
+        `;
+    });
+}
+
+function renderResignations() {
+    const header = document.getElementById('offboardTableHeader');
+    const body = document.getElementById('offboardTableBody');
+    if (!header || !body) return;
+
+    header.innerHTML = `
+        <th>Employee</th>
+        <th>Submission Date</th>
+        <th>Resignation Reason</th>
+        <th>Document</th>
+        ${currentMode === 'manager' ? '<th style="text-align: right;">Action</th>' : ''}
+    `;
+
+    const resignations = localOffboardingData.filter(o => o.action_type === 'resignation');
+    if (resignations.length === 0) {
+        body.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 2.5rem; color: var(--text-muted);">No resignation requests processed.</td></tr>';
+        return;
+    }
+
+    body.innerHTML = '';
+    resignations.forEach(r => {
+        const date = r.created_at ? new Date(r.created_at).toLocaleDateString() : '-';
+        const title = "Resignation_Letter_" + (r.employee_name || "Employee").replace(/\s+/g, "_") + "_" + date.replace(/\//g, "-");
+        const downloadUrl = r.file ? `${BASE_URL}/download-file/?url=${encodeURIComponent(r.file)}&name=${encodeURIComponent(title)}` : '#';
+        const docLink = r.file ? `<a href="${downloadUrl}" target="_blank" style="color:var(--primary); text-decoration:none;"><i class="fa-solid fa-file-pdf"></i> View letter</a>` : '<span style="color:var(--text-muted);">No Document</span>';
+
+        body.innerHTML += `
+            <tr>
+                <td style="font-weight: 600; color:#fff;">${r.employee_name || 'Staff Member'}</td>
+                <td>${date}</td>
+                <td style="max-width: 300px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="${r.reason}">${r.reason}</td>
+                <td>${docLink}</td>
+                ${currentMode === 'manager' ? `
+                <td style="text-align: right;">
+                    <button onclick="deleteOffboardRecord(${r.id})" class="btn btn-ghost" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; color: #f43f5e; border-color: rgba(244,63,94,0.1);"><i class="fa-solid fa-trash"></i> Delete</button>
+                </td>` : ''}
+            </tr>
+        `;
+    });
+}
+
+function renderTerminations() {
+    const header = document.getElementById('offboardTableHeader');
+    const body = document.getElementById('offboardTableBody');
+    if (!header || !body) return;
+
+    header.innerHTML = `
+        <th>Employee</th>
+        <th>Termination Date</th>
+        <th>Termination Clause / Reason</th>
+        <th>Separation Doc</th>
+        ${currentMode === 'manager' ? '<th style="text-align: right;">Action</th>' : ''}
+    `;
+
+    const terminations = localOffboardingData.filter(o => o.action_type === 'termination');
+    if (terminations.length === 0) {
+        body.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 2.5rem; color: var(--text-muted);">No terminations logged.</td></tr>';
+        return;
+    }
+
+    body.innerHTML = '';
+    terminations.forEach(t => {
+        const date = t.created_at ? new Date(t.created_at).toLocaleDateString() : '-';
+        const title = "Separation_Agreement_" + (t.employee_name || "Employee").replace(/\s+/g, "_") + "_" + date.replace(/\//g, "-");
+        const downloadUrl = t.file ? `${BASE_URL}/download-file/?url=${encodeURIComponent(t.file)}&name=${encodeURIComponent(title)}` : '#';
+        const docLink = t.file ? `<a href="${downloadUrl}" target="_blank" style="color:var(--primary); text-decoration:none;"><i class="fa-solid fa-file-pdf"></i> View Separation</a>` : '<span style="color:var(--text-muted);">No Document</span>';
+
+        body.innerHTML += `
+            <tr>
+                <td style="font-weight: 600; color:#fff;">${t.employee_name || 'Staff Member'}</td>
+                <td>${date}</td>
+                <td style="max-width: 300px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="${t.reason}">${t.reason}</td>
+                <td>${docLink}</td>
+                ${currentMode === 'manager' ? `
+                <td style="text-align: right;">
+                    <button onclick="deleteOffboardRecord(${t.id})" class="btn btn-ghost" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; color: #f43f5e; border-color: rgba(244,63,94,0.1);"><i class="fa-solid fa-trash"></i> Delete</button>
+                </td>` : ''}
+            </tr>
+        `;
+    });
+}
+
+function renderComplaints() {
+    const header = document.getElementById('offboardTableHeader');
+    const body = document.getElementById('offboardTableBody');
+    if (!header || !body) return;
+
+    header.innerHTML = `
+        <th>Employee Related</th>
+        <th>Grievance Date</th>
+        <th>Complaint Summary</th>
+        <th>Investigation Doc</th>
+        ${currentMode === 'manager' ? '<th style="text-align: right;">Action</th>' : ''}
+    `;
+
+    const complaints = localOffboardingData.filter(o => o.action_type === 'complaint');
+    if (complaints.length === 0) {
+        body.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 2.5rem; color: var(--text-muted);">No official complaints filed.</td></tr>';
+        return;
+    }
+
+    body.innerHTML = '';
+    complaints.forEach(c => {
+        const date = c.created_at ? new Date(c.created_at).toLocaleDateString() : '-';
+        const title = "Grievance_Attachment_" + (c.employee_name || "Employee").replace(/\s+/g, "_") + "_" + date.replace(/\//g, "-");
+        const downloadUrl = c.file ? `${BASE_URL}/download-file/?url=${encodeURIComponent(c.file)}&name=${encodeURIComponent(title)}` : '#';
+        const docLink = c.file ? `<a href="${downloadUrl}" target="_blank" style="color:var(--primary); text-decoration:none;"><i class="fa-solid fa-file-pdf"></i> View File</a>` : '<span style="color:var(--text-muted);">No Document</span>';
+
+        body.innerHTML += `
+            <tr>
+                <td style="font-weight: 600; color:#fff;">${c.employee_name || 'Staff Member'}</td>
+                <td>${date}</td>
+                <td style="max-width: 300px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="${c.reason}">${c.reason}</td>
+                <td>${docLink}</td>
+                ${currentMode === 'manager' ? `
+                <td style="text-align: right;">
+                    <button onclick="deleteOffboardRecord(${c.id})" class="btn btn-ghost" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; color: #f43f5e; border-color: rgba(244,63,94,0.1);"><i class="fa-solid fa-trash"></i> Delete</button>
+                </td>` : ''}
+            </tr>
+        `;
+    });
+}
+
+let offboardTabsBound = false;
+function setupOffboardTabs() {
+    if (offboardTabsBound) return;
+    const buttons = document.querySelectorAll('.offboard-subtab-btn');
+    buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            buttons.forEach(b => {
+                b.classList.remove('active', 'btn-primary');
+                b.classList.add('btn-ghost');
+            });
+            btn.classList.add('active', 'btn-primary');
+            btn.classList.remove('btn-ghost');
+
+            currentOffboardSubtab = btn.getAttribute('data-tab');
+            renderOffboardingSubtab();
+        });
+    });
+    offboardTabsBound = true;
+}
+
+let offboardFormBound = false;
+function setupOffboardForm() {
+    if (offboardFormBound) return;
+    const form = document.getElementById('createOffboardingForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const employee = document.getElementById('offboardEmployee').value;
+        const action_type = document.getElementById('offboardActionType').value;
+        const reason = document.getElementById('offboardReason').value;
+        const fileInput = document.getElementById('offboardFile');
+
+        if (!employee) {
+            alert('Please select an employee.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('employee', employee);
+        formData.append('action_type', action_type);
+        formData.append('reason', reason);
+
+        if (fileInput.files && fileInput.files.length > 0) {
+            formData.append('file', fileInput.files[0]);
+        }
+
+        const token = localStorage.getItem('token');
+        const headers = {};
+        if (token) headers['Authorization'] = `Token ${token}`;
+
+        try {
+            const res = await fetch(`${API_BASE}/manager/offboardings/`, {
+                method: 'POST',
+                headers,
+                body: formData
+            });
+
+            if (res.ok) {
+                alert('Offboarding record submitted and uploaded successfully!');
+                form.reset();
+                loadOffboarding();
+            } else {
+                const errData = await res.json();
+                alert(`Submission failed: ${errData.message || 'Server error'}`);
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Error creating offboarding record.');
+        }
+    });
+    offboardFormBound = true;
+}
+
+async function deleteOffboardRecord(id) {
+    if (!confirm('Are you sure you want to delete this offboarding/action record permanently?')) return;
+
+    const token = localStorage.getItem('token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Token ${token}`;
+
+    try {
+        const res = await fetch(`${API_BASE}/manager/offboardings/${id}/`, {
+            method: 'DELETE',
+            headers
+        });
+
+        if (res.ok) {
+            alert('Record deleted successfully.');
+            loadOffboarding();
+        } else {
+            alert('Failed to delete record.');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error deleting record.');
+    }
+}
+
+
+// --- Letter Heads Module ---
+let localLetterheadsData = [];
+
+async function loadLetterHeads() {
+    const tableBody = document.getElementById('letterHeadsTableBody');
+    if (!tableBody) return;
+    tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem;">Loading compiled letters directory...</td></tr>';
+
+    try {
+        // Populate candidates / employees select dropdown
+        const emps = await fetchData('/manager/employees/');
+        const selectEl = document.getElementById('letterEmployee');
+        if (selectEl && emps) {
+            selectEl.innerHTML = '<option value="">-- Choose Employee / Candidate --</option>';
+            emps.forEach(emp => {
+                const fullName = `${emp.first_name || ''} ${emp.last_name || ''}`.trim() || emp.username;
+                selectEl.innerHTML += `<option value="${emp.id}" data-fullname="${fullName}">${fullName} (${emp.designation || 'Staff'})</option>`;
+            });
+        }
+
+        const data = await fetchData('/manager/letterheads/');
+        if (!data) {
+            tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem; color:var(--text-muted);">Failed to load generated archives.</td></tr>';
+            return;
+        }
+
+        localLetterheadsData = data;
+        renderLetterheadsList(data);
+        setupLetterheadTemplates();
+        setupLetterheadForm();
+    } catch (err) {
+        console.error(err);
+        tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem; color:var(--text-muted);">Error fetching letterheads list.</td></tr>';
+    }
+}
+
+function renderLetterheadsList(data) {
+    const tableBody = document.getElementById('letterHeadsTableBody');
+    if (!tableBody) return;
+
+    if (!data || data.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem; color:var(--text-muted);">No documents compiled yet.</td></tr>';
+        return;
+    }
+
+    tableBody.innerHTML = '';
+    data.forEach(item => {
+        const date = item.created_at ? new Date(item.created_at).toLocaleDateString('en-US', {
+            year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        }) : '-';
+
+        let categoryBadge = '';
+        if (item.document_type === 'offer_letter') categoryBadge = '<span class="status-badge" style="background: rgba(37,99,235,0.1); color: var(--primary); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">Offer Letter</span>';
+        else if (item.document_type === 'nda') categoryBadge = '<span class="status-badge" style="background: rgba(16,185,129,0.1); color: #10b981; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">Confidential NDA</span>';
+        else if (item.document_type === 'payslip') categoryBadge = '<span class="status-badge" style="background: rgba(245,158,11,0.1); color: #f59e0b; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">Salary Payslip</span>';
+        else if (item.document_type === 'recommendation') categoryBadge = '<span class="status-badge" style="background: rgba(225,29,72,0.1); color: #e11d48; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">Recommendation</span>';
+        else categoryBadge = `<span class="status-badge" style="background: rgba(255,255,255,0.05); color: #9ca3af; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">${item.document_type}</span>`;
+
+        const fileUrl = item.file || '#';
+        const title = item.title || 'Compiled_Document';
+        const downloadUrl = (fileUrl && fileUrl.startsWith('http')) 
+            ? `${BASE_URL}/download-file/?url=${encodeURIComponent(fileUrl)}&name=${encodeURIComponent(title)}` 
+            : fileUrl;
+
+        tableBody.innerHTML += `
+            <tr>
+                <td style="font-weight: 600; color: #fff;">${item.title}</td>
+                <td>${categoryBadge}</td>
+                <td>${date}</td>
+                <td style="text-align: right;">
+                    <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                        <a href="${downloadUrl}" target="_blank" class="btn btn-ghost" style="padding: 0.25rem 0.75rem; font-size:0.75rem; text-decoration:none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open in Drive</a>
+                        <button onclick="deleteLetterHead(${item.id})" class="btn btn-ghost" style="padding: 0.25rem 0.75rem; font-size:0.75rem; color:#f43f5e; border-color: rgba(244,63,94,0.15);"><i class="fa-solid fa-trash"></i> Delete</button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+let letterTemplatesBound = false;
+function setupLetterheadTemplates() {
+    if (letterTemplatesBound) return;
+
+    const cards = [
+        { id: 'offerLetterTemplate', type: 'offer_letter' },
+        { id: 'ndaTemplate', type: 'nda' },
+        { id: 'payslipTemplate', type: 'payslip' },
+        { id: 'recommendTemplate', type: 'recommendation' }
+    ];
+
+    cards.forEach(card => {
+        const el = document.getElementById(card.id);
+        if (el) {
+            el.addEventListener('click', () => {
+                // Remove active styling from all template cards
+                cards.forEach(c => {
+                    const cel = document.getElementById(c.id);
+                    if (cel) {
+                        cel.style.background = 'transparent';
+                        cel.style.borderColor = 'var(--glass-border)';
+                        cel.classList.remove('active');
+                    }
+                });
+
+                // Add active style to selected card
+                el.style.background = 'rgba(37,99,235,0.05)';
+                el.style.borderColor = 'var(--primary)';
+                el.classList.add('active');
+
+                // Update hidden input type
+                document.getElementById('letterDocType').value = card.type;
+                updateLetterDynamicFields(card.type);
+            });
+        }
+    });
+
+    // Run first-time dynamic fields update
+    updateLetterDynamicFields('offer_letter');
+    letterTemplatesBound = true;
+}
+
+function updateLetterDynamicFields(type) {
+    const fieldsContainer = document.getElementById('letterDynamicFields');
+    if (!fieldsContainer) return;
+
+    fieldsContainer.innerHTML = '';
+    const labelStyle = `display:block; margin-bottom:0.5rem; font-size:0.85rem;`;
+    const inputStyle = `width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;`;
+
+    if (type === 'offer_letter') {
+        fieldsContainer.innerHTML = `
+            <div class="form-group" style="margin-bottom:0;">
+                <label style="${labelStyle}">Offer Designation</label>
+                <input type="text" id="letterDesignation" class="form-control" placeholder="e.g. Associate Tech Lead" required style="${inputStyle}">
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+                <label style="${labelStyle}">Annual Gross Salary (CTC)</label>
+                <input type="text" id="letterSalary" class="form-control" placeholder="e.g. ₹1,200,000 per annum" required style="${inputStyle}">
+            </div>
+        `;
+    } else if (type === 'nda') {
+        // NDA needs no extra fields, content is enough
+        fieldsContainer.innerHTML = `
+            <div style="grid-column: span 2; color: var(--text-muted); font-size: 0.85rem; padding: 0.5rem 0;">
+                <i class="fa-solid fa-circle-info"></i> The NDA utilizes standard corporate confidentiality clauses mapped to the chosen employee.
+            </div>
+        `;
+    } else if (type === 'payslip') {
+        fieldsContainer.innerHTML = `
+            <div class="form-group" style="margin-bottom:0;">
+                <label style="${labelStyle}">Salary Month</label>
+                <input type="text" id="letterMonth" class="form-control" placeholder="e.g. May 2026" required style="${inputStyle}">
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+                <label style="${labelStyle}">Net Paid Amount</label>
+                <input type="text" id="letterSalary" class="form-control" placeholder="e.g. ₹85,000" required style="${inputStyle}">
+            </div>
+        `;
+    } else if (type === 'recommendation') {
+        fieldsContainer.innerHTML = `
+            <div class="form-group" style="grid-column: span 2; margin-bottom:0;">
+                <label style="${labelStyle}">Serving Designation</label>
+                <input type="text" id="letterDesignation" class="form-control" placeholder="e.g. Technical Product Manager" required style="${inputStyle}">
+            </div>
+        `;
+    }
+}
+
+let letterFormBound = false;
+function setupLetterheadForm() {
+    if (letterFormBound) return;
+    const form = document.getElementById('compileLetterForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const title = document.getElementById('letterTitle').value;
+        const document_type = document.getElementById('letterDocType').value;
+        const employeeId = document.getElementById('letterEmployee').value;
+        const content = document.getElementById('letterContent').value;
+
+        if (!employeeId) {
+            alert('Please select a recipient employee.');
+            return;
+        }
+
+        // Get selected employee's full name
+        const selectEl = document.getElementById('letterEmployee');
+        const employeeName = selectEl.options[selectEl.selectedIndex].getAttribute('data-fullname') || 'Valued Employee';
+
+        const payload = {
+            title,
+            document_type,
+            employee: employeeId,
+            employee_name: employeeName,
+            content
+        };
+
+        // Gather template specific fields
+        const designationEl = document.getElementById('letterDesignation');
+        const salaryEl = document.getElementById('letterSalary');
+        const monthEl = document.getElementById('letterMonth');
+
+        if (designationEl) payload.designation = designationEl.value;
+        if (salaryEl) payload.salary = salaryEl.value;
+        if (monthEl) payload.month = monthEl.value;
+
+        const token = localStorage.getItem('token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Token ${token}`;
+
+        try {
+            const res = await fetch(`${API_BASE}/manager/letterheads/`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                alert('Letter compiled and compiled directly to Google Drive successfully!');
+                form.reset();
+                loadLetterHeads();
+            } else {
+                const errData = await res.json();
+                alert(`Compilation failed: ${errData.message || 'Server error'}`);
+            }
+        } catch (err) {
+            console.error(err);
+            alert('An unexpected error occurred during reportlab PDF compiling.');
+        }
+    });
+
+    letterFormBound = true;
+}
+
+async function deleteLetterHead(id) {
+    if (!confirm('Are you sure you want to delete this generated letterhead archive?')) return;
+
+    const token = localStorage.getItem('token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Token ${token}`;
+
+    try {
+        const res = await fetch(`${API_BASE}/manager/letterheads/${id}/`, {
+            method: 'DELETE',
+            headers
+        });
+
+        if (res.ok) {
+            alert('Letterhead archived document deleted successfully!');
+            loadLetterHeads();
+        } else {
+            alert('Failed to delete letterhead.');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error deleting letterhead.');
+    }
 }
 
 // --- Action Bindings ---

@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Employee Dashboard | ShnoorHR</title>
-    <link rel="stylesheet" href="../styles.css?v=2">
+    <script src="../theme.js"></script>
+    <link rel="stylesheet" href="../styles.css?v=3">
     <link rel="stylesheet" href="employee.css?v=3">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -22,6 +23,7 @@
         <div class="nav-item" data-target="leaves"><i class="fa-solid fa-umbrella-beach"></i> Leaves</div>
         <div class="nav-item" data-target="tasks"><i class="fa-solid fa-list-check"></i> Tasks</div>
         <div class="nav-item" data-target="holidays"><i class="fa-solid fa-tree"></i> Holidays</div>
+        <div class="nav-item" data-target="offboarding-section"><i class="fa-solid fa-user-xmark"></i> Offboarding</div>
         <div class="nav-item" data-target="orgchart"><i class="fa-solid fa-sitemap"></i> Org Chart</div>
         <div class="nav-item" data-target="documents"><i class="fa-solid fa-folder-open"></i> Documents</div>
         <div class="nav-item" data-target="expenses"><i class="fa-solid fa-wallet"></i> Expenses</div>
@@ -179,6 +181,31 @@
         <!-- View: Tasks -->
         <section id="tasks" class="view-section">
             <h2 class="gradient-text" style="margin-bottom: 2rem;">My Tasks</h2>
+            <!-- Tasks Filter Bar -->
+            <div class="filters-bar glass-panel" style="display: flex; gap: 1rem; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center; background: rgba(10, 25, 50, 0.5); border: 1px solid var(--glass-border);">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fa-solid fa-filter" style="color: var(--primary);"></i>
+                    <span style="font-weight: 500; color: #fff;">Filters:</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <label for="taskStatusFilter" style="font-size: 0.9rem; color: var(--text-muted);">Status:</label>
+                    <select id="taskStatusFilter" class="form-control" style="width: auto; padding: 0.3rem 1.5rem 0.3rem 0.5rem; background: var(--bg-navy); color: #fff; border: 1px solid var(--glass-border); border-radius: 8px; cursor: pointer;" onchange="applyTaskFilters()">
+                        <option value="all">All Statuses</option>
+                        <option value="Pending">Pending</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Completed">Completed</option>
+                    </select>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <label for="taskPriorityFilter" style="font-size: 0.9rem; color: var(--text-muted);">Priority:</label>
+                    <select id="taskPriorityFilter" class="form-control" style="width: auto; padding: 0.3rem 1.5rem 0.3rem 0.5rem; background: var(--bg-navy); color: #fff; border: 1px solid var(--glass-border); border-radius: 8px; cursor: pointer;" onchange="applyTaskFilters()">
+                        <option value="all">All Priorities</option>
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                    </select>
+                </div>
+            </div>
             <div class="table-container">
                 <table>
                     <thead>
@@ -1977,6 +2004,70 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </section>
+
+
+
+        <!-- View: Offboarding Module (Employee View) -->
+        <section id="offboarding-section" class="view-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 class="gradient-text" style="margin: 0;">My Actions & Separation</h2>
+            </div>
+
+            <!-- Employee Grievance / Resignation Form -->
+            <div class="glass-panel" style="padding: 1.5rem; margin-bottom: 2rem; border: 1px solid var(--glass-border);">
+                <h4 style="margin-bottom: 1.25rem; color: var(--primary); font-weight: 600;"><i class="fa-solid fa-file-invoice"></i> Submit Resignation or Official Grievance</h4>
+                <form id="createOffboardingForm" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; align-items: flex-end;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Action Type</label>
+                        <select id="offboardActionType" class="form-control" required
+                            style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                            <option value="resignation">Submit Resignation Letter</option>
+                            <option value="complaint">File Official Complaint / Grievance</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Supporting Document (Optional PDF/Image)</label>
+                        <input type="file" id="offboardFile" class="form-control"
+                            style="width:100%; padding:0.6rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2; margin-bottom: 0;">
+                        <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Exhaustive Details & Reasons</label>
+                        <input type="text" id="offboardReason" class="form-control" required placeholder="Type description or comments here..."
+                            style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid var(--glass-border); background:var(--bg-navy); color:#fff;">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1.5rem; height: 44px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-paper-plane"></i> Submit Request
+                    </button>
+                </form>
+            </div>
+
+            <!-- Subtabs Navigation (My Warnings, My Resignations, My Complaints) -->
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.03); padding: 0.4rem; border-radius: 10px; width: fit-content; border: 1px solid var(--glass-border);">
+                <button class="btn btn-primary offboard-subtab-btn active" data-tab="warnings" style="padding: 0.5rem 1.25rem; font-size: 0.85rem;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Warnings Issued
+                </button>
+                <button class="btn btn-ghost offboard-subtab-btn" data-tab="resignations" style="padding: 0.5rem 1.25rem; font-size: 0.85rem;">
+                    <i class="fa-solid fa-door-open"></i> Resignations Filed
+                </button>
+                <button class="btn btn-ghost offboard-subtab-btn" data-tab="complaints" style="padding: 0.5rem 1.25rem; font-size: 0.85rem;">
+                    <i class="fa-solid fa-circle-info"></i> Complaints / Grievances
+                </button>
+            </div>
+
+            <!-- Dynamic Lists Tables -->
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr id="offboardTableHeader">
+                            <!-- Dynamic headers based on chosen subtab -->
+                        </tr>
+                    </thead>
+                    <tbody id="offboardTableBody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
             </div>
         </section>
 

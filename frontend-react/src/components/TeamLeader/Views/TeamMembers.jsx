@@ -115,7 +115,7 @@ const TeamMembers = () => {
                     <button className="btn btn-primary" onClick={handleExportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
                         <i className="fa-solid fa-file-excel"></i> Export to Excel
                     </button>
-                    <span className="status-badge" style={{ background: 'rgba(30,58,138,0.1)', color: 'var(--primary-color)', padding: '0.5rem 1rem', borderRadius: '8px', fontWeight: 600 }}>
+                    <span className="status-badge" style={{ background: 'var(--primary-light)', color: 'var(--primary-color)', padding: '0.5rem 1rem', borderRadius: '8px', fontWeight: 600 }}>
                         {members.length} Members
                     </span>
                 </div>

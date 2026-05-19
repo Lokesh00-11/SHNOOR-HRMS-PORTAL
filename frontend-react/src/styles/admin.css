@@ -76,7 +76,6 @@
     }
 }
 
-/* Glass Panels replaced with Solid Panels */
 
 /* Glass Panels */
 .glass-panel {
@@ -112,7 +111,7 @@ table {
 }
 
 th {
-    background-color: #f8fafc;
+    background-color: var(--bg-tertiary);
     color: var(--text-muted);
     font-weight: 700;
     text-transform: uppercase;
@@ -135,7 +134,7 @@ tr:last-child td {
 }
 
 tr:hover {
-    background-color: rgba(30, 58, 138, 0.02);
+    background-color: var(--primary-light);
 }
 
 /* Status Badges */
@@ -218,7 +217,7 @@ tr:hover {
 
 .setting-item input:disabled,
 .setting-item select:disabled {
-    background-color: #f1f5f9;
+    background-color: var(--bg-tertiary);
     color: var(--text-muted);
     cursor: not-allowed;
 }
@@ -267,7 +266,7 @@ tr:hover {
     position: absolute;
     top: 0;
     right: 50%;
-    border-top: 1px solid #cbd5e1;
+    border-top: 1px solid var(--border-main);
     width: 50%;
     height: 20px;
 }
@@ -275,7 +274,7 @@ tr:hover {
 .tree li::after {
     right: auto;
     left: 50%;
-    border-left: 1px solid #cbd5e1;
+    border-left: 1px solid var(--border-main);
 }
 
 .tree li:only-child::after, .tree li:only-child::before {
@@ -291,7 +290,7 @@ tr:hover {
 }
 
 .tree li:last-child::before {
-    border-right: 1px solid #cbd5e1;
+    border-right: 1px solid var(--border-main);
     border-radius: 0 5px 0 0;
 }
 
@@ -304,7 +303,7 @@ tr:hover {
     position: absolute;
     top: 0;
     left: 50%;
-    border-left: 1px solid #cbd5e1;
+    border-left: 1px solid var(--border-main);
     width: 0;
     height: 20px;
 }

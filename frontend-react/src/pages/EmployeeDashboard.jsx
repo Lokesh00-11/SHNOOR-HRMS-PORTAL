@@ -11,6 +11,7 @@ import Holidays from '../components/Employee/Views/Holidays';
 import Expenses from '../components/Employee/Views/Expenses';
 import Offboarding from '../components/Employee/Views/Offboarding';
 import OrgChart from '../components/Employee/Views/OrgChart';
+import PlannerPage from '../components/Planner/PlannerPage';
 
 import '../styles/admin.css';
 
@@ -41,6 +42,8 @@ const EmployeeDashboard = () => {
                 return <Notifications />;
             case 'profile':
                 return <Profile />;
+            case 'planner':
+                return <PlannerPage role="employee" />;
             default:
                 return <Dashboard />;
         }

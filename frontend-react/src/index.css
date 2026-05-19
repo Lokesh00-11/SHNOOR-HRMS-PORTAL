@@ -1,39 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-:root {
-  
-  --bg-main: #f1f5f9;
-  --bg-secondary: rgba(255, 255, 255, 0.7);  
-  --bg-tertiary: #e2e8f0;  
-  
-  --primary-color: #1e3a8a; 
-  --primary-hover: #172554; 
-  --primary-light: #eef2ff; 
-  
-  --text-main: #0f172a;     
-  --text-muted: #475569;    
-  
-  --danger-color: #ef4444;
-  --success-color: #10b981;
-  --warning-color: #f59e0b;
-
-  /* Glassmorphism & Borders */
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.4);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-  --border-subtle: #cbd5e1;
-  --border-main: #94a3b8;
-  
-  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
+@import './styles/theme.css';
 
 body {
   margin: 0;
-  font-family: var(--font-family);
+  font-family: var(--font-body);
   background-color: var(--bg-main);
   color: var(--text-main);
   -webkit-font-smoothing: antialiased;
@@ -54,7 +24,7 @@ body {
   text-decoration: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-family: var(--font-family);
+  font-family: var(--font-body);
   border: none;
 }
 
@@ -81,7 +51,7 @@ body {
 
 .btn-ghost:hover {
   background-color: var(--bg-main);
-  border-color: #cbd5e1;
+  border-color: var(--border-main);
 }
 
 /* Scrollbar styling */
@@ -95,10 +65,11 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--border-main);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--text-muted);
 }
+

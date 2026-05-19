@@ -513,3 +513,72 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.target_role}"
+
+class PlannerEvent(models.Model):
+    EVENT_TYPES = [
+        ('Leave', 'Leave'),
+        ('WFH', 'WFH'),
+        ('Holiday', 'Holiday'),
+        ('Meeting', 'Meeting'),
+        ('Shift', 'Shift'),
+        ('Task Deadline', 'Task Deadline'),
+        ('Attendance Issue', 'Attendance Issue'),
+        ('Training', 'Training'),
+        ('Company Event', 'Company Event'),
+        ('Late Mark', 'Late Mark'),
+        ('Absent', 'Absent'),
+    ]
+    VISIBILITY_CHOICES = [
+        ('Private', 'Private'),
+        ('Team', 'Team'),
+        ('Department', 'Department'),
+        ('Organization', 'Organization'),
+    ]
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Approved', 'Approved'),
+        ('Rejected', 'Rejected'),
+        ('Completed', 'Completed'),
+    ]
+
+    employee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='planner_events', null=True, blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_planner_events')
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    event_type = models.CharField(max_length=50, choices=EVENT_TYPES)
+    start_date = models.DateField()
+    end_date = models.DateField(blank=True, null=True)
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pending')
+    visibility = models.CharField(max_length=50, choices=VISIBILITY_CHOICES, default='Private')
+    department = models.CharField(max_length=100, blank=True, null=True)
+    office = models.CharField(max_length=100, blank=True, null=True)
+    color_code = models.CharField(max_length=20, default='#3b82f6')
+    is_approved = models.BooleanField(default=False)
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_planner_events')
+    approved_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.title
+
+class PlannerHoliday(models.Model):
+    title = models.CharField(max_length=255)
+    holiday_date = models.DateField()
+    description = models.TextField(blank=True, null=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    color_code = models.CharField(max_length=20, default='#10b981')
+
+    def __str__(self):
+        return f"{self.title} - {self.holiday_date}"
+
+class PlannerShift(models.Model):
+    employee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='planner_shifts')
+    shift_name = models.CharField(max_length=100)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    assigned_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_shifts')
+    color_code = models.CharField(max_length=20, default='#f59e0b')
+
+    def __str__(self):
+        return f"{self.shift_name} - {self.employee.username}"

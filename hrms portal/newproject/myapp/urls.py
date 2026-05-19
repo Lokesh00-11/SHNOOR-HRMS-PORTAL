@@ -22,7 +22,10 @@ from .views import (
     TeamLeaderTeamMembersView, TeamLeaderAttendanceView, TeamLeaderTasksView, TeamLeaderPerformanceView,
     EmployeeExpenseListView, TeamLeaderExpenseListView, TeamLeaderExpenseUpdateView,
     ManagerExpenseListView, ManagerExpenseApproveView, ManagerExpensePayView,
-    DownloadFileView
+    DownloadFileView,
+    PlannerMyEventsView, PlannerTeamEventsView, PlannerDepartmentEventsView,
+    PlannerAllEventsView, PlannerHolidaysView, PlannerCreateEventView,
+    PlannerApproveEventView, PlannerCalendarFeedView
 )
 
 urlpatterns = [
@@ -109,4 +112,14 @@ urlpatterns = [
     path('api/teamleader/tasks/', TeamLeaderTasksView.as_view(), name='tl_tasks'),
     path('api/teamleader/performance/', TeamLeaderPerformanceView.as_view(), name='tl_performance'),
     path('api/download-file/', DownloadFileView.as_view(), name='download_file'),
+    
+    # Planner URLs
+    path('api/planner/my-events/', PlannerMyEventsView.as_view(), name='planner_my_events'),
+    path('api/planner/team-events/', PlannerTeamEventsView.as_view(), name='planner_team_events'),
+    path('api/planner/department-events/', PlannerDepartmentEventsView.as_view(), name='planner_department_events'),
+    path('api/planner/all-events/', PlannerAllEventsView.as_view(), name='planner_all_events'),
+    path('api/planner/holidays/', PlannerHolidaysView.as_view(), name='planner_holidays'),
+    path('api/planner/calendar-feed/', PlannerCalendarFeedView.as_view(), name='planner_calendar_feed'),
+    path('api/planner/create-event/', PlannerCreateEventView.as_view(), name='planner_create_event'),
+    path('api/planner/approve-event/<int:pk>/', PlannerApproveEventView.as_view(), name='planner_approve_event'),
 ]

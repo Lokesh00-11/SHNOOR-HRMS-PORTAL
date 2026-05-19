@@ -11,6 +11,7 @@ import OfflineRequests from '../components/Admin/Views/OfflineRequests';
 import EmailQueries from '../components/Admin/Views/EmailQueries';
 import SuperAdmin from '../components/Admin/Views/SuperAdmin';
 import OrgChart from '../components/Admin/Views/OrgChart';
+import PlannerPage from '../components/Planner/PlannerPage';
 
 import '../styles/admin.css';
 
@@ -41,6 +42,8 @@ const AdminDashboard = () => {
                 return <SuperAdmin />;
             case 'orgchart': 
                 return <OrgChart />;
+            case 'planner':
+                return <PlannerPage role="admin" />;
             default:
                 return <SystemOverview />;
         }

@@ -11,8 +11,10 @@ from .models import (
     Employee, SupportQuery, Holiday, Appreciation, LeaveRequest,
     CompanyPolicy, Payroll, Offboarding, LetterHead, AdminProfile,
     Asset, Attendance, Expense, Task, CompanyDocument, ManagerProfile, OrgChart, Notification,
-    TeamLeaderProfile
+    TeamLeaderProfile, PlannerEvent, PlannerHoliday, PlannerShift
 )
+from .serializers import PlannerEventSerializer, PlannerHolidaySerializer, PlannerShiftSerializer
+from .permissions import IsAdmin, IsManager, IsTeamLeader, IsEmployee, IsAdminOrManager
 from django.utils import timezone
 from datetime import datetime
 
@@ -2885,3 +2887,131 @@ class DownloadFileView(APIView):
         except Exception as e:
             return Response({'message': f"Error downloading file: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+# ==========================================
+# PLANNER VIEWS
+# ==========================================
+
+from django.db.models import Q
+
+class PlannerMyEventsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        events = PlannerEvent.objects.filter(employee=request.user).order_by('-start_date')
+        serializer = PlannerEventSerializer(events, many=True)
+        return Response(serializer.data)
+
+class PlannerTeamEventsView(APIView):
+    permission_classes = [IsTeamLeader | IsManager | IsAdmin]
+
+    def get(self, request):
+        if request.user.role == 'team_leader':
+            team_members = User.objects.filter(employee_profile__team_leader=request.user)
+            events = PlannerEvent.objects.filter(Q(employee__in=team_members) | Q(employee=request.user)).order_by('-start_date')
+        else:
+            events = PlannerEvent.objects.all()
+        serializer = PlannerEventSerializer(events, many=True)
+        return Response(serializer.data)
+
+class PlannerDepartmentEventsView(APIView):
+    permission_classes = [IsManager | IsAdmin]
+
+    def get(self, request):
+        if request.user.role == 'manager':
+            # Simplified: Assuming manager can see all events for their department, or just all if simplified.
+            # Assuming employee profile has department
+            department = ""
+            if hasattr(request.user, 'manager_profile'):
+                department = request.user.manager_profile.department
+            events = PlannerEvent.objects.filter(employee__employee_profile__department=department).order_by('-start_date')
+        else:
+            events = PlannerEvent.objects.all()
+            
+        serializer = PlannerEventSerializer(events, many=True)
+        return Response(serializer.data)
+
+class PlannerAllEventsView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        events = PlannerEvent.objects.all().order_by('-start_date')
+        serializer = PlannerEventSerializer(events, many=True)
+        return Response(serializer.data)
+
+class PlannerHolidaysView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        holidays = PlannerHoliday.objects.all().order_by('holiday_date')
+        serializer = PlannerHolidaySerializer(holidays, many=True)
+        return Response(serializer.data)
+
+class PlannerCreateEventView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = PlannerEventSerializer(data=request.data)
+        if serializer.is_valid():
+            # If the user doesn't pass employee, default to themselves so it's not orphaned
+            employee = request.user if 'employee' not in serializer.validated_data else serializer.validated_data['employee']
+            event = serializer.save(created_by=request.user, employee=employee)
+            return Response(PlannerEventSerializer(event).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class PlannerApproveEventView(APIView):
+    permission_classes = [IsTeamLeader | IsManager | IsAdmin]
+
+    def patch(self, request, pk):
+        try:
+            event = PlannerEvent.objects.get(pk=pk)
+        except PlannerEvent.DoesNotExist:
+            return Response({'message': 'Event not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+        if request.user.role == 'team_leader' and event.employee.employee_profile.team_leader != request.user:
+             return Response({'message': 'Not authorized to approve this event'}, status=status.HTTP_403_FORBIDDEN)
+
+        event.is_approved = request.data.get('is_approved', True)
+        event.status = request.data.get('status', 'Approved')
+        event.approved_by = request.user
+        event.approved_at = timezone.now()
+        event.save()
+        
+        return Response(PlannerEventSerializer(event).data)
+
+class PlannerCalendarFeedView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        # A combined feed of all events relevant to the user for the custom calendar
+        user = request.user
+        holidays = PlannerHoliday.objects.all()
+        
+        if user.role == 'employee':
+            team_leader = getattr(getattr(user, 'employee_profile', None), 'team_leader', None)
+            events = PlannerEvent.objects.filter(
+                Q(employee=user) | 
+                Q(created_by=user) |
+                Q(visibility='Organization') |
+                Q(visibility='Team', created_by=team_leader) |
+                Q(visibility='Team', employee__employee_profile__team_leader=team_leader)
+            ).distinct()
+        elif user.role == 'team_leader':
+            team_members = User.objects.filter(employee_profile__team_leader=user)
+            events = PlannerEvent.objects.filter(
+                Q(employee__in=team_members) | Q(employee=user) | Q(created_by=user) | Q(visibility='Organization')
+            ).distinct()
+        elif user.role == 'manager':
+            department = getattr(getattr(user, 'manager_profile', None), 'department', '')
+            events = PlannerEvent.objects.filter(
+                Q(employee__employee_profile__department=department) | Q(visibility='Organization') | Q(created_by=user)
+            ).distinct()
+        else: # admin
+            events = PlannerEvent.objects.all()
+            
+        events_serializer = PlannerEventSerializer(events, many=True)
+        holidays_serializer = PlannerHolidaySerializer(holidays, many=True)
+        
+        return Response({
+            'events': events_serializer.data,
+            'holidays': holidays_serializer.data
+        })

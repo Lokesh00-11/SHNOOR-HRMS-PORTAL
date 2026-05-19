@@ -1,17 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import ThemeToggle from '../Common/ThemeToggle';
+import { useTheme } from '../../context/ThemeContext';
 
 const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) => {
-    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
-
-    useEffect(() => {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
-    }, [theme]);
-
-    const toggleTheme = () => {
-        setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-    };
-    // visibility properties
+    const { theme } = useTheme();
+    // visible hk
     const menuItems = [
         { id: 'dashboard', label: 'Dashboard', icon: 'fa-chart-pie', visibleFor: ['manager', 'self'] },
         { id: 'employees', label: 'Employees', icon: 'fa-users', visibleFor: ['manager'] },
@@ -27,6 +20,7 @@ const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) =
         { id: 'offboarding', label: 'Offboarding', icon: 'fa-user-xmark', visibleFor: ['manager'] },
         { id: 'letterheads', label: 'Letter Heads', icon: 'fa-file-signature', visibleFor: ['manager'] },
         { id: 'orgchart', label: 'Org Chart', icon: 'fa-sitemap', visibleFor: ['manager', 'self'] },
+        { id: 'planner', label: 'Planner', icon: 'fa-calendar-days', visibleFor: ['manager', 'self'] },
         { id: 'notifications', label: 'Notifications', icon: 'fa-bell', visibleFor: ['manager', 'self'] },
     ];
 
@@ -48,7 +42,7 @@ const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) =
                 ShnoorHR
             </a>
 
-            {/* Mode Switcher Toggle inside Sidebar */}
+            {/* Toggle inside Sidebar */}
             <div style={{
                 display: 'flex', 
                 gap: '0.25rem', 
@@ -94,7 +88,7 @@ const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) =
                 ))}
             </div>
 
-            {/* Premium Theme Mode Switcher */}
+            {/* Theme Mode Switch */}
             <div className="sidebar-theme-item" style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -108,28 +102,7 @@ const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) =
                 <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <i className="fa-solid fa-circle-half-stroke" style={{ color: 'var(--primary-color)' }}></i> Theme Mode
                 </span>
-                <button 
-                    onClick={toggleTheme}
-                    className="theme-toggle-btn"
-                    style={{
-                        background: 'rgba(255,255,255,0.08)',
-                        border: '1px solid var(--glass-border)',
-                        color: 'var(--text-main)',
-                        padding: '0.35rem 0.75rem',
-                        borderRadius: '20px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        transition: 'all 0.3s ease'
-                    }}
-                >
-                    {theme === 'dark' ? (
-                        <i className="fa-solid fa-sun" style={{ color: '#f59e0b' }}></i>
-                    ) : (
-                        <i className="fa-solid fa-moon" style={{ color: '#6366f1' }}></i>
-                    )}
-                </button>
+                <ThemeToggle />
             </div>
 
             <div style={{ padding: '0 0.75rem 1rem' }}>

@@ -57,7 +57,7 @@ const Dashboard = () => {
                                 {loading ? '...' : stats.total_team_members}
                             </h1>
                         </div>
-                        <div className="card-icon" style={{ background: 'rgba(30, 58, 138, 0.1)', color: 'var(--primary-color)', padding: '0.75rem', borderRadius: '50%' }}>
+                        <div className="card-icon" style={{ background: 'var(--primary-light)', color: 'var(--primary-color)', padding: '0.75rem', borderRadius: '50%' }}>
                             <i className="fa-solid fa-users" style={{ fontSize: '1.5rem' }}></i>
                         </div>
                     </div>

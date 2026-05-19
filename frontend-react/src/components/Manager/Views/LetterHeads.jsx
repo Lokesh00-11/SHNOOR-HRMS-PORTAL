@@ -150,7 +150,7 @@ const LetterHeads = () => {
             {/* Template Selector Cards */}
             <div className="dashboard-grid" style={{ marginBottom: '2rem' }}>
                 {[
-                    { type: 'offer_letter', title: 'Offer Letter', desc: 'Generate standard job offers with title & gross CTC packages.', icon: 'fa-file-signature', bg: 'rgba(30,58,138,0.05)', activeColor: 'var(--primary-color)' },
+                    { type: 'offer_letter', title: 'Offer Letter', desc: 'Generate standard job offers with title & gross CTC packages.', icon: 'fa-file-signature', bg: 'var(--primary-light)', activeColor: 'var(--primary-color)' },
                     { type: 'nda', title: 'Confidential NDA', desc: 'Generate corporate non-disclosure agreements for candidate onboarding.', icon: 'fa-user-shield', bg: 'rgba(16,185,129,0.05)', activeColor: '#10b981' },
                     { type: 'payslip', title: 'Salary Payslip', desc: 'Generate monthly corporate payslips with direct payouts mapped.', icon: 'fa-money-bill-wave', bg: 'rgba(245,158,11,0.05)', activeColor: '#f59e0b' },
                     { type: 'recommendation', title: 'Recommendation Letter', desc: 'Generate official performance recommendation and relieving files.', icon: 'fa-medal', bg: 'rgba(225,29,72,0.05)', activeColor: '#e11d48' }
@@ -333,11 +333,11 @@ const LetterHeads = () => {
                                 }
                                 
                                 let categoryBadge = '';
-                                if (item.document_type === 'offer_letter') categoryBadge = '<span class="status-badge" style="background: rgba(30,58,138,0.1); color: var(--primary); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">Offer Letter</span>';
+                                if (item.document_type === 'offer_letter') categoryBadge = '<span class="status-badge" style="background: var(--primary-light); color: var(--primary-color); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">Offer Letter</span>';
                                 else if (item.document_type === 'nda') categoryBadge = '<span class="status-badge" style="background: rgba(16,185,129,0.1); color: #10b981; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">Confidential NDA</span>';
                                 else if (item.document_type === 'payslip') categoryBadge = '<span class="status-badge" style="background: rgba(245,158,11,0.1); color: #f59e0b; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">Salary Payslip</span>';
                                 else if (item.document_type === 'recommendation') categoryBadge = '<span class="status-badge" style="background: rgba(225,29,72,0.1); color: #e11d48; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">Recommendation</span>';
-                                else categoryBadge = `<span class="status-badge" style="background: rgba(255,255,255,0.05); color: #9ca3af; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">${item.document_type}</span>`;
+                                else categoryBadge = `<span class="status-badge" style="background: var(--bg-tertiary); color: var(--text-muted); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">${item.document_type}</span>`;
 
                                 const downloadUrl = item.file ? (item.file.startsWith('http') ? `${API_BASE}/download-file/?url=${encodeURIComponent(item.file)}&name=${encodeURIComponent(item.title)}` : item.file) : '#';
 

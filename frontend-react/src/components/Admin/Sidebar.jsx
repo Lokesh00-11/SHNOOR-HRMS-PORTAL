@@ -1,18 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import ThemeToggle from '../Common/ThemeToggle';
+import { useTheme } from '../../context/ThemeContext';
 // Note: You may want to use a Link component if you switch to react-router-dom later.
 // For now, we are using state-based navigation as requested.
 
 const Sidebar = ({ currentView, setCurrentView }) => {
-    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
-
-    useEffect(() => {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
-    }, [theme]);
-
-    const toggleTheme = () => {
-        setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-    };
+    const { theme } = useTheme();
     
     const menuItems = [
         { id: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard' },
@@ -23,6 +16,7 @@ const Sidebar = ({ currentView, setCurrentView }) => {
         { id: 'emails', icon: 'fa-envelope', label: 'Email Queries' },
         { id: 'superadmin', icon: 'fa-user-shield', label: 'Super Admin' },
         { id: 'orgchart', icon: 'fa-sitemap', label: 'Org Chart' },
+        { id: 'planner', icon: 'fa-calendar-days', label: 'Planner' },
         { id: 'website', icon: 'fa-globe', label: 'Website Settings' },
         { id: 'notifications', icon: 'fa-bell', label: 'Notifications' },
         { id: 'settings', icon: 'fa-gear', label: 'Settings' },
@@ -61,28 +55,7 @@ const Sidebar = ({ currentView, setCurrentView }) => {
                 <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <i className="fa-solid fa-circle-half-stroke" style={{ color: 'var(--primary-color)' }}></i> Theme Mode
                 </span>
-                <button 
-                    onClick={toggleTheme}
-                    className="theme-toggle-btn"
-                    style={{
-                        background: 'rgba(255,255,255,0.08)',
-                        border: '1px solid var(--glass-border)',
-                        color: 'var(--text-main)',
-                        padding: '0.35rem 0.75rem',
-                        borderRadius: '20px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        transition: 'all 0.3s ease'
-                    }}
-                >
-                    {theme === 'dark' ? (
-                        <i className="fa-solid fa-sun" style={{ color: '#f59e0b' }}></i>
-                    ) : (
-                        <i className="fa-solid fa-moon" style={{ color: '#6366f1' }}></i>
-                    )}
-                </button>
+                <ThemeToggle />
             </div>
 
             <a href="/login" className="nav-item" style={{ color: '#f43f5e', textDecoration: 'none', padding: '0.75rem 1rem' }}>

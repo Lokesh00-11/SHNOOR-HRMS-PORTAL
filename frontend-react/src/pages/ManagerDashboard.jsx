@@ -15,6 +15,7 @@ import Offboarding from '../components/Manager/Views/Offboarding';
 import LetterHeads from '../components/Manager/Views/LetterHeads';
 import OrgChart from '../components/Manager/Views/OrgChart';
 import Notifications from '../components/Manager/Views/Notifications';
+import PlannerPage from '../components/Planner/PlannerPage';
 
 import '../styles/admin.css';
 
@@ -59,6 +60,8 @@ const ManagerDashboard = () => {
                 return <LetterHeads />;
             case 'orgchart':
                 return <OrgChart />;
+            case 'planner':
+                return <PlannerPage role={currentMode} />;
             case 'notifications':
                 return <Notifications currentMode={currentMode} />;
             default:

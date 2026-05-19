@@ -30,4 +30,4 @@ class MyappConfig(AppConfig):
                 logger.warning(f"GOOGLE DRIVE OAUTH CONFIG WARNING: {w}")
                 print(f"GOOGLE DRIVE OAUTH CONFIG WARNING: {w}")
 
-
+        import myapp.signals

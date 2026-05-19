@@ -226,7 +226,7 @@ html, body, #root {
 .premium-placeholder-image {
     width: 100%;
     height: 400px;
-    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    background: var(--gradient-premium-1);
     border-radius: 20px;
     box-shadow: var(--shadow-lg);
     border: 1px solid var(--bg-tertiary);
@@ -237,7 +237,7 @@ html, body, #root {
 }
 
 .premium-placeholder-image.variant-2 {
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    background: var(--gradient-premium-2);
 }
 
 .placeholder-content {
@@ -302,7 +302,7 @@ html, body, #root {
 
 .mock-profile .line.title {
     width: 60%;
-    background-color: #cbd5e1;
+    background-color: var(--border-main);
 }
 
 .mock-profile .line.subtitle {

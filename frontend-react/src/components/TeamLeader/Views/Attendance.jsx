@@ -115,7 +115,7 @@ const Attendance = () => {
                                 const statusLower = (log.status || '').toLowerCase();
                                 const statusClass = statusLower === 'present' ? 'active' : 'pending';
                                 return (
-                                    <tr key={log.id || index} style={isSelf ? { background: 'rgba(30, 58, 138, 0.08)' } : {}}>
+                                    <tr key={log.id || index} style={isSelf ? { background: 'var(--primary-light)' } : {}}>
                                         <td style={{ fontWeight: 600 }}>
                                             {log.employee_name}
                                         </td>

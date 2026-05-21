@@ -21,7 +21,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'role', 'first_name', 'last_name', 'password', 'phone_number', 'location', 'admin_profile']
+        fields = ['id', 'username', 'email', 'role', 'first_name', 'last_name', 'password', 'phone_number', 'location', 'admin_profile', 'company']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
@@ -59,14 +59,14 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
 class CompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
-        fields = ['id', 'name', 'email', 'members_count', 'is_active', 'license_expired', 'created_at']
+        fields = ['id', 'name', 'email', 'members_count', 'is_active', 'license_expired', 'license_expiry_date', 'created_at']
 
 class TransactionSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source='company.name', read_only=True)
     plan_name = serializers.CharField(source='subscription_plan.name', read_only=True)
     class Meta:
         model = Transactions
-        fields = ['id', 'company', 'company_name', 'subscription_plan', 'plan_name', 'amount', 'transaction_date']
+        fields = ['id', 'company', 'company_name', 'subscription_plan', 'plan_name', 'amount', 'transaction_id', 'status', 'payment_method', 'transaction_date']
 
 class EmployeeSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source='user.first_name', read_only=True)
@@ -76,7 +76,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
         model = Employee
         fields = [
             'id', 'user', 'first_name', 'last_name', 'email', 'designation', 'department', 
-            'salary', 'casual_leaves', 'sick_leaves', 'vacation_leaves',
+            'salary', 'casual_leaves', 'sick_leaves', 'vacation_leaves', 'paid_leaves',
             'employee_id', 'bank_name', 'account_number', 'ifsc_code', 'pan_number', 'shift', 'employment_type'
         ]
 
@@ -98,7 +98,8 @@ class EmployeeProfileSerializer(serializers.ModelSerializer):
             'employee_id', 'date_of_joining', 'bank_name', 'account_number', 'ifsc_code', 'branch_name',
             'aadhaar_number', 'pan_number', 'marital_status', 'nationality', 'blood_group', 
             'permanent_address', 'emergency_contact_name', 'emergency_contact_phone', 
-            'emergency_contact_relation', 'shift'
+            'emergency_contact_relation', 'shift', 'casual_leaves', 'sick_leaves', 'vacation_leaves', 'paid_leaves',
+            'profile_picture', 'work_mode'
         ]
 
     def update(self, instance, validated_data):
@@ -119,10 +120,19 @@ class EmployeeProfileSerializer(serializers.ModelSerializer):
 class SupportQuerySerializer(serializers.ModelSerializer):
     sender_username = serializers.CharField(source='sender.username', read_only=True)
     recipient_username = serializers.CharField(source='recipient.username', read_only=True)
+    sender_name = serializers.SerializerMethodField()
+    recipient_name = serializers.SerializerMethodField()
+    
     class Meta:
         model = SupportQuery
-        fields = ['id', 'sender', 'sender_username', 'recipient', 'recipient_username', 'target_role', 'subject', 'message', 'status', 'sender_read', 'recipient_read', 'created_at', 'updated_at']
+        fields = ['id', 'sender', 'sender_username', 'sender_name', 'recipient', 'recipient_username', 'recipient_name', 'target_role', 'subject', 'message', 'reply', 'status', 'sender_read', 'recipient_read', 'created_at', 'updated_at']
         extra_kwargs = {'sender': {'read_only': True}, 'recipient': {'read_only': True}}
+        
+    def get_sender_name(self, obj):
+        return f"{obj.sender.first_name} {obj.sender.last_name}".strip() or obj.sender.username if obj.sender else "Unknown"
+
+    def get_recipient_name(self, obj):
+        return f"{obj.recipient.first_name} {obj.recipient.last_name}".strip() or obj.recipient.username if obj.recipient else "Unknown"
 
 class HolidaySerializer(serializers.ModelSerializer):
     class Meta:
@@ -168,7 +178,7 @@ class OffboardingSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='employee.user.username', read_only=True)
     class Meta:
         model = Offboarding
-        fields = ['id', 'employee', 'employee_name', 'username', 'action_type', 'reason', 'date', 'created_at']
+        fields = ['id', 'employee', 'employee_name', 'username', 'action_type', 'reason', 'file', 'date', 'created_at']
 
 class LetterHeadSerializer(serializers.ModelSerializer):
     class Meta:

@@ -15,6 +15,9 @@ import Offboarding from '../components/Manager/Views/Offboarding';
 import LetterHeads from '../components/Manager/Views/LetterHeads';
 import OrgChart from '../components/Manager/Views/OrgChart';
 import Notifications from '../components/Manager/Views/Notifications';
+import Subscription from '../components/Manager/Views/Subscription';
+import ManagerQueries from '../components/Manager/Views/Queries';
+import EmployeeQueries from '../components/Employee/Views/Queries';
 
 import '../styles/admin.css';
 
@@ -59,8 +62,12 @@ const ManagerDashboard = () => {
                 return <LetterHeads />;
             case 'orgchart':
                 return <OrgChart />;
+            case 'queries':
+                return currentMode === 'manager' ? <ManagerQueries /> : <EmployeeQueries />;
             case 'notifications':
                 return <Notifications currentMode={currentMode} />;
+            case 'subscription':
+                return <Subscription />;
             default:
                 return <Dashboard currentMode={currentMode} />;
         }

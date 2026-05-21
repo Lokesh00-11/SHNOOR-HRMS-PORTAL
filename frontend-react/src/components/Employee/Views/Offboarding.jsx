@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { get, post } from '../../../services/api';
+import { get, post, API_BASE } from '../../../services/api';
 
 const Offboarding = () => {
     const [activeTab, setActiveTab] = useState('warnings');
@@ -10,7 +10,6 @@ const Offboarding = () => {
     const fetchOffboardingData = async () => {
         try {
             setLoading(true);
-            
             const records = await get('/employee/offboardings/');
             setAllRecords(records || []);
         } catch (err) {
@@ -27,13 +26,16 @@ const Offboarding = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            
-            await post('/employee/offboardings/', { 
-                action_type: formData.actionType, 
-                reason: formData.reason 
-            });
+            const uploadData = new FormData();
+            uploadData.append('action_type', formData.actionType);
+            uploadData.append('reason', formData.reason);
+            if (formData.file) {
+                uploadData.append('file', formData.file);
+            }
+
+            await post('/employee/offboardings/', uploadData);
             alert('Request submitted successfully!');
-            setFormData({ ...formData, reason: '' });
+            setFormData({ actionType: 'resignation', reason: '', file: null });
             fetchOffboardingData();
         } catch (err) {
             alert('Failed to submit request: ' + err.message);
@@ -41,7 +43,6 @@ const Offboarding = () => {
     };
 
     const renderTable = () => {
-        
         const filteredData = allRecords.filter(item => {
             if (activeTab === 'warnings') return item.action_type === 'warning';
             if (activeTab === 'resignations') return item.action_type === 'resignation';
@@ -57,43 +58,85 @@ const Offboarding = () => {
                 <thead>
                     {activeTab === 'warnings' ? (
                         <tr>
-                            <th>Date</th>
+                            <th>Date Issued</th>
                             <th>Warning Title</th>
-                            <th>Reason</th>
+                            <th>Reason / Remarks</th>
+                            <th>Document</th>
                             <th>Status</th>
                         </tr>
                     ) : activeTab === 'resignations' ? (
                         <tr>
                             <th>Date Filed</th>
-                            <th>Reason</th>
+                            <th>Resignation Request</th>
+                            <th>Statement / Comments</th>
+                            <th>Document Attachment</th>
                             <th>Status</th>
                         </tr>
                     ) : (
                         <tr>
                             <th>Date Filed</th>
-                            <th>Grievance / Subject</th>
+                            <th>Grievance Summary</th>
+                            <th>Complaint Description</th>
+                            <th>Document Supporting</th>
                             <th>Status</th>
                         </tr>
                     )}
                 </thead>
                 <tbody>
-                    {filteredData.map((item, idx) => (
-                        <tr key={idx}>
-                            <td>{new Date(item.created_at).toLocaleDateString()}</td>
-                            {activeTab === 'warnings' ? (
-                                <>
-                                    <td><strong>Official Warning</strong></td>
-                                    <td>{item.reason}</td>
-                                    <td><span className="status-badge warning">Issued</span></td>
-                                </>
-                            ) : (
-                                <>
-                                    <td>{item.reason}</td>
-                                    <td><span className={`status-badge ${item.status?.toLowerCase()}`}>{item.status || 'Pending'}</span></td>
-                                </>
-                            )}
-                        </tr>
-                    ))}
+                    {filteredData.map((item, idx) => {
+                        const fileUrl = item.file ? (item.file.startsWith('http') ? `${API_BASE}/download-file/?url=${encodeURIComponent(item.file)}&name=${encodeURIComponent(item.action_type)}` : item.file) : null;
+                        return (
+                            <tr key={idx}>
+                                <td>{new Date(item.created_at).toLocaleDateString()}</td>
+                                {activeTab === 'warnings' ? (
+                                    <>
+                                        <td><strong>Official Warning</strong></td>
+                                        <td>{item.reason}</td>
+                                        <td>
+                                            {fileUrl ? (
+                                                <a href={fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary-color)', textDecoration: 'none', fontWeight: 500 }}>
+                                                    <i className="fa-solid fa-file-pdf"></i> View Letter
+                                                </a>
+                                            ) : (
+                                                <span style={{ color: 'var(--text-muted)' }}>No Document</span>
+                                            )}
+                                        </td>
+                                        <td><span className="status-badge warning">Issued</span></td>
+                                    </>
+                                ) : activeTab === 'resignations' ? (
+                                    <>
+                                        <td><strong>Resignation Letter</strong></td>
+                                        <td>{item.reason}</td>
+                                        <td>
+                                            {fileUrl ? (
+                                                <a href={fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary-color)', textDecoration: 'none', fontWeight: 500 }}>
+                                                    <i className="fa-solid fa-file-pdf"></i> View Letter
+                                                </a>
+                                            ) : (
+                                                <span style={{ color: 'var(--text-muted)' }}>No Document</span>
+                                            )}
+                                        </td>
+                                        <td><span className={`status-badge ${item.status?.toLowerCase()}`}>{item.status || 'Pending'}</span></td>
+                                    </>
+                                ) : (
+                                    <>
+                                        <td><strong>Grievance Filed</strong></td>
+                                        <td>{item.reason}</td>
+                                        <td>
+                                            {fileUrl ? (
+                                                <a href={fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary-color)', textDecoration: 'none', fontWeight: 500 }}>
+                                                    <i className="fa-solid fa-file-pdf"></i> View Attachment
+                                                </a>
+                                            ) : (
+                                                <span style={{ color: 'var(--text-muted)' }}>No Document</span>
+                                            )}
+                                        </td>
+                                        <td><span className={`status-badge ${item.status?.toLowerCase()}`}>{item.status || 'Pending'}</span></td>
+                                    </>
+                                )}
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
         );
@@ -128,6 +171,15 @@ const Offboarding = () => {
                             value={formData.reason}
                             onChange={e => setFormData({...formData, reason: e.target.value})}
                             style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', background: 'var(--bg-secondary)', color: 'var(--text-main)', border: '1px solid var(--border-subtle)' }}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem' }}>Attach PDF/Doc (Optional)</label>
+                        <input 
+                            type="file" 
+                            accept=".pdf,.doc,.docx,.jpg,.png"
+                            onChange={e => setFormData({...formData, file: e.target.files[0]})}
+                            style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', background: 'var(--bg-secondary)', color: 'var(--text-main)', border: '1px solid var(--border-subtle)' }}
                         />
                     </div>
                     <button type="submit" className="btn btn-primary" style={{ height: '44px' }}>

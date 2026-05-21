@@ -98,7 +98,7 @@ const Dashboard = ({ currentMode }) => {
             <h2 className="gradient-text" style={{ marginBottom: '2rem' }}>My Dashboard</h2>
             
             {profile && (
-                <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                <div className="glass-panel-no-hover" style={{ padding: '1.5rem', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                     <div style={{
                         width: '60px', 
                         height: '60px', 
@@ -125,25 +125,25 @@ const Dashboard = ({ currentMode }) => {
             )}
 
             <div className="dashboard-grid">
-                <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                <div className="glass-panel-no-hover" style={{ padding: '1.5rem' }}>
                     <h4 style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Leave Balance</h4>
                     <h1 style={{ fontSize: '2rem', color: 'var(--primary-color)', marginTop: '0.5rem' }}>
                         {loading ? '...' : `${selfStats?.total_leaves || 0} Days`}
                     </h1>
                 </div>
-                <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                <div className="glass-panel-no-hover" style={{ padding: '1.5rem' }}>
                     <h4 style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Pending Tasks</h4>
                     <h1 style={{ fontSize: '2rem', color: '#10b981', marginTop: '0.5rem' }}>
                         {loading ? '...' : (selfStats?.pending_tasks || 0)}
                     </h1>
                 </div>
-                <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                <div className="glass-panel-no-hover" style={{ padding: '1.5rem' }}>
                     <h4 style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Appreciations</h4>
                     <h1 style={{ fontSize: '2rem', color: '#f59e0b', marginTop: '0.5rem' }}>
                         {loading ? '...' : (selfStats?.appreciations_count || 0)}
                     </h1>
                 </div>
-                <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                <div className="glass-panel-no-hover" style={{ padding: '1.5rem' }}>
                     <h4 style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Active Warnings</h4>
                     <h1 style={{ fontSize: '2rem', color: '#f43f5e', marginTop: '0.5rem' }}>
                         {loading ? '...' : (selfStats?.warnings_count || 0)}

@@ -10,6 +10,7 @@ import Offboarding from '../components/TeamLeader/Views/Offboarding';
 import Documents from '../components/TeamLeader/Views/Documents';
 import Notifications from '../components/TeamLeader/Views/Notifications';
 import Profile from '../components/TeamLeader/Views/Profile';
+import Queries from '../components/TeamLeader/Views/Queries';
 
 import '../styles/admin.css';
 
@@ -41,6 +42,8 @@ const TeamLeaderDashboard = () => {
                 return <Offboarding />;
             case 'documents':
                 return <Documents />;
+            case 'queries':
+                return <Queries />;
             case 'notifications':
                 return <Notifications />;
             case 'profile':

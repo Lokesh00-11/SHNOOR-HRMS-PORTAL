@@ -11,6 +11,8 @@ import Holidays from '../components/Employee/Views/Holidays';
 import Expenses from '../components/Employee/Views/Expenses';
 import Offboarding from '../components/Employee/Views/Offboarding';
 import OrgChart from '../components/Employee/Views/OrgChart';
+import Queries from '../components/Employee/Views/Queries';
+import Payroll from '../components/Employee/Views/Payroll';
 
 import '../styles/admin.css';
 
@@ -37,6 +39,10 @@ const EmployeeDashboard = () => {
                 return <Documents />;
             case 'expenses':
                 return <Expenses />;
+            case 'payroll':
+                return <Payroll />;
+            case 'queries':
+                return <Queries />;
             case 'notifications':
                 return <Notifications />;
             case 'profile':

@@ -80,6 +80,7 @@ const Tasks = () => {
                         <tr>
                             <th>Title</th>
                             <th>Description</th>
+                            <th>My Note</th>
                             <th>Deadline</th>
                             <th>Priority</th>
                             <th>Status</th>
@@ -88,14 +89,15 @@ const Tasks = () => {
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan="6" style={{ textAlign: 'center' }}>Loading...</td></tr>
+                            <tr><td colSpan="7" style={{ textAlign: 'center' }}>Loading...</td></tr>
                         ) : filteredTasks.length === 0 ? (
-                            <tr><td colSpan="6" style={{ textAlign: 'center' }}>No tasks found</td></tr>
+                            <tr><td colSpan="7" style={{ textAlign: 'center' }}>No tasks found</td></tr>
                         ) : (
                             filteredTasks.map((task) => (
                                 <tr key={task.id}>
                                     <td style={{ fontWeight: 600 }}>{task.title}</td>
                                     <td style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{task.description}</td>
+                                    <td style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>{task.employee_note || '-'}</td>
                                     <td>{task.deadline || '-'}</td>
                                     <td>
                                         <span style={{ color: task.priority === 'High' ? '#f43f5e' : (task.priority === 'Medium' ? '#f59e0b' : '#10b981'), fontWeight: 600 }}>

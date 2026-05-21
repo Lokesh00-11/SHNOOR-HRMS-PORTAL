@@ -21,6 +21,8 @@ const Sidebar = ({ currentView, setCurrentView }) => {
         { id: 'orgchart', label: 'Org Chart', icon: 'fa-sitemap' },
         { id: 'documents', label: 'Documents', icon: 'fa-folder-open' },
         { id: 'expenses', label: 'Expenses', icon: 'fa-wallet' },
+        { id: 'payroll', label: 'Payroll', icon: 'fa-file-invoice-dollar' },
+        { id: 'queries', label: 'Queries', icon: 'fa-circle-question' },
         { id: 'notifications', label: 'Notifications', icon: 'fa-bell' },
         { id: 'profile', label: 'Profile', icon: 'fa-user' },
     ];

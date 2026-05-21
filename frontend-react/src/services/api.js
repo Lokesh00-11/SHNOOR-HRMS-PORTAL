@@ -20,7 +20,11 @@ export async function get(endpoint) {
         headers: getHeaders()
     });
     if (!response.ok) {
-        throw new Error(`GET request failed: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 403 && errorData.subscription_blocked) {
+            window.dispatchEvent(new CustomEvent('subscription-blocked', { detail: errorData }));
+        }
+        throw new Error(errorData.message || `GET request failed: ${response.statusText}`);
     }
     return response.json();
 }
@@ -34,6 +38,9 @@ export async function post(endpoint, data) {
     });
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        if (response.status === 403 && errorData.subscription_blocked) {
+            window.dispatchEvent(new CustomEvent('subscription-blocked', { detail: errorData }));
+        }
         throw new Error(errorData.message || `POST request failed: ${response.statusText}`);
     }
     return response.json();
@@ -48,6 +55,9 @@ export async function patch(endpoint, data) {
     });
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        if (response.status === 403 && errorData.subscription_blocked) {
+            window.dispatchEvent(new CustomEvent('subscription-blocked', { detail: errorData }));
+        }
         throw new Error(errorData.message || `PATCH request failed: ${response.statusText}`);
     }
     return response.json();
@@ -62,6 +72,9 @@ export async function put(endpoint, data) {
     });
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        if (response.status === 403 && errorData.subscription_blocked) {
+            window.dispatchEvent(new CustomEvent('subscription-blocked', { detail: errorData }));
+        }
         throw new Error(errorData.message || `PUT request failed: ${response.statusText}`);
     }
     return response.json();
@@ -73,9 +86,12 @@ export async function del(endpoint) {
         headers: getHeaders()
     });
     if (!response.ok) {
-        throw new Error(`DELETE request failed: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 403 && errorData.subscription_blocked) {
+            window.dispatchEvent(new CustomEvent('subscription-blocked', { detail: errorData }));
+        }
+        throw new Error(errorData.message || `DELETE request failed: ${response.statusText}`);
     }
-    // Handle empty responses
     if (response.status === 204) return null;
     return response.json().catch(() => null);
 }

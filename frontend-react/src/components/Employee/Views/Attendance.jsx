@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { get, post } from '../../../services/api';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
 
 const parseCustomDate = (dateStr) => {
     if (!dateStr || dateStr === '-') return null;
@@ -28,6 +30,7 @@ const Attendance = () => {
     const [attendance, setAttendance] = useState([]);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
+    const [currentDate, setCurrentDate] = useState(new Date());
 
     const fetchAttendance = async () => {
         try {
@@ -71,10 +74,92 @@ const Attendance = () => {
         }
     };
 
+    const getMonthlyStats = () => {
+        let totalSessions = 0;
+        let clockedIn = 0;
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const today = new Date();
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateObj = new Date(currentYear, currentMonth, d);
+            if (dateObj > today) continue;
+
+            const dayStr = String(d).padStart(2, '0');
+            const monthStr = String(currentMonth + 1).padStart(2, '0');
+            const yearStr = String(currentYear);
+            const targetDatePrefix = `${dayStr}-${monthStr}-${yearStr}`;
+
+            const rec = attendance.find(rec => rec.date && rec.date.startsWith(targetDatePrefix));
+            if (rec) {
+                totalSessions++;
+                if (!rec.check_out) {
+                    clockedIn++;
+                }
+            }
+        }
+
+        return { totalSessions, clockedIn };
+    };
+
+    const stats = getMonthlyStats();
+
+    const getSelfTileContent = ({ date, view }) => {
+        if (view === 'month') {
+            const d = date.getDate();
+            const m = date.getMonth();
+            const y = date.getFullYear();
+
+            const dayStr = String(d).padStart(2, '0');
+            const monthStr = String(m + 1).padStart(2, '0');
+            const yearStr = String(y);
+            const targetDatePrefix = `${dayStr}-${monthStr}-${yearStr}`;
+
+            const rec = attendance.find(r => r.date && r.date.startsWith(targetDatePrefix));
+            if (rec) {
+                const checkInTime = rec.check_in ? parseCustomDate(rec.check_in) : null;
+                const checkOutTime = rec.check_out ? parseCustomDate(rec.check_out) : null;
+
+                return (
+                    <div className="tile-attendance-info" style={{ display: 'flex', flexDirection: 'column', fontSize: '0.7rem', gap: '3px' }}>
+                        {!rec.check_out && (
+                            <span style={{
+                                color: '#3b82f6',
+                                fontWeight: 600,
+                                fontSize: '0.65rem',
+                                background: 'rgba(59, 130, 246, 0.1)',
+                                padding: '0.1rem 0.3rem',
+                                borderRadius: '4px',
+                                alignSelf: 'flex-start',
+                                marginBottom: '4px'
+                            }}>
+                                Clocked In
+                            </span>
+                        )}
+                        {checkInTime && (
+                            <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <i className="fa-solid fa-right-to-bracket" style={{ color: '#10b981', fontSize: '0.65rem' }}></i>
+                                {checkInTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                        )}
+                        {checkOutTime && (
+                            <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <i className="fa-solid fa-right-from-bracket" style={{ color: '#f43f5e', fontSize: '0.65rem' }}></i>
+                                {checkOutTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                        )}
+                    </div>
+                );
+            }
+        }
+        return null;
+    };
+
     return (
         <section className="view-section active">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <h2 className="gradient-text">My Attendance</h2>
+                <h2 className="gradient-text" style={{ marginBottom: 0 }}>My Attendance</h2>
                 <div style={{ display: 'flex', gap: '1rem' }}>
                     <button 
                         className="btn btn-primary" 
@@ -91,6 +176,40 @@ const Attendance = () => {
                         Clock Out
                     </button>
                 </div>
+            </div>
+
+            {/* Attendance Monthly Dashboard Summary */}
+            <div className="dashboard-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+                <div className="glass-panel" style={{ padding: '1.25rem' }}>
+                    <h5 style={{ color: 'var(--text-muted)', fontWeight: 500, margin: 0 }}>Total Clock Ins / Outs</h5>
+                    <h2 style={{ fontSize: '2rem', color: 'var(--text-main)', margin: '0.25rem 0 0 0' }}>
+                        {loading ? '...' : stats.totalSessions}
+                    </h2>
+                </div>
+                <div className="glass-panel" style={{ padding: '1.25rem' }}>
+                    <h5 style={{ color: 'var(--text-muted)', fontWeight: 500, margin: 0 }}>Active Sessions (Clocked In)</h5>
+                    <h2 style={{ fontSize: '2rem', color: '#3b82f6', margin: '0.25rem 0 0 0' }}>
+                        {loading ? '...' : stats.clockedIn}
+                    </h2>
+                </div>
+            </div>
+
+            {/* Calendar Component Wrapper */}
+            <div className="custom-calendar-card self-calendar">
+                {loading && attendance.length === 0 ? (
+                    <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '3rem' }}>
+                        <i className="fa-solid fa-spinner fa-spin fa-2x" style={{ marginBottom: '1rem', color: 'var(--primary-color)' }}></i>
+                        <p>Loading calendar...</p>
+                    </div>
+                ) : (
+                    <Calendar
+                        value={currentDate}
+                        onActiveStartDateChange={({ activeStartDate }) => {
+                            if (activeStartDate) setCurrentDate(activeStartDate);
+                        }}
+                        tileContent={getSelfTileContent}
+                    />
+                )}
             </div>
 
             <div className="table-container">

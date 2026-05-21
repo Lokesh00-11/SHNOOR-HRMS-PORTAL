@@ -68,9 +68,10 @@ class ManagerAttendanceView(APIView):
                 return Response({'message': 'Invalid date format.'}, status=status.HTTP_400_BAD_REQUEST)
         elif search_query:
             start_date = timezone.now().date() - timedelta(days=30)
+            end_date = timezone.now().date()
             attendance_qs = Attendance.objects.filter(
                 employee__in=employees,
-                date__range=[start_date, timezone.now().date()]
+                date__range=[start_date, end_date]
             ).order_by('-date', 'check_in')
             is_historical = True
         else:
@@ -90,32 +91,43 @@ class ManagerAttendanceView(APIView):
             
         data = []
         if is_historical:
-            for key, logs in att_map.items():
-                emp_id, rec_date = key
-                emp = next((e for e in employees if e.id == emp_id), None)
-                if not emp: continue
-                
-                emp_name = f"{emp.user.first_name} {emp.user.last_name}".strip() or emp.user.username
-                
-                for log in logs:
-                    in_time = localtime(log.check_in).strftime("%I:%M %p") if log.check_in else "-"
-                    if log.check_out:
-                        out_time = localtime(log.check_out).strftime("%I:%M %p")
-                        hours = log.hours_worked or 0
+            current_date = start_date
+            while current_date <= end_date:
+                for emp in employees:
+                    logs = att_map.get((emp.id, current_date), [])
+                    emp_name = f"{emp.user.first_name} {emp.user.last_name}".strip() or emp.user.username
+                    
+                    if not logs:
+                        data.append({
+                            "employee_id": emp.id,
+                            "employee_name": emp_name,
+                            "date": current_date.strftime("%d-%m-%Y"),
+                            "check_in": "-",
+                            "check_out": "-",
+                            "hours_worked": "0.00",
+                            "status": "Absent"
+                        })
                     else:
-                        out_time = "Still In"
-                        diff = timezone.now() - log.check_in
-                        hours = diff.total_seconds() / 3600.0
-                        
-                    data.append({
-                        "attendance_id": log.id,
-                        "employee_name": emp_name,
-                        "date": rec_date.strftime("%d-%m-%Y"),
-                        "check_in": in_time,
-                        "check_out": out_time,
-                        "hours_worked": round(float(hours), 2),
-                        "status": "Present"
-                    })
+                        for log in logs:
+                            in_time = localtime(log.check_in).strftime("%I:%M %p") if log.check_in else "-"
+                            if log.check_out:
+                                out_time = localtime(log.check_out).strftime("%I:%M %p")
+                                hours = log.hours_worked or 0
+                            else:
+                                out_time = "Still In"
+                                diff = timezone.now() - log.check_in
+                                hours = diff.total_seconds() / 3600.0
+                                
+                            data.append({
+                                "attendance_id": log.id,
+                                "employee_name": emp_name,
+                                "date": current_date.strftime("%d-%m-%Y"),
+                                "check_in": in_time,
+                                "check_out": out_time,
+                                "hours_worked": round(float(hours), 2),
+                                "status": "Present"
+                            })
+                current_date += timedelta(days=1)
         else:
             for emp in employees:
                 logs = att_map.get((emp.id, view_date), [])
@@ -147,15 +159,14 @@ class ManagerAttendanceView(APIView):
                             "status": "Present"
                         })
             
-        data.sort(key=lambda x: x['employee_name'])
+        # Stable sort 1: by employee name A-Z
+        data.sort(key=lambda x: (x['employee_name'] or '').lower())
         
-        def get_sort_key(item):
-            d, m, y = item['date'].split('-')
-            sort_date = f"{y}-{m}-{d}"
-            status_priority = 1 if item['status'] == 'Present' else 0
-            return (sort_date, status_priority)
-
-        data.sort(key=get_sort_key, reverse=True)
+        # Stable sort 2: by status (Present before Absent)
+        data.sort(key=lambda x: 0 if x['status'] == 'Present' else 1)
+        
+        # Stable sort 3: by date descending
+        data.sort(key=lambda x: f"{x['date'].split('-')[2]}-{x['date'].split('-')[1]}-{x['date'].split('-')[0]}", reverse=True)
         
         return Response(data)
 
@@ -296,12 +307,26 @@ class EmployeeClockInView(APIView):
         )
 
         now_local = timezone.localtime(timezone.now())
-        if now_local.time() > time(10, 10):
+        is_first_clockin = not completed_sessions.exists()
+        
+        if is_first_clockin and now_local.time() > time(10, 10):
             try:
                 admin_user = User.objects.filter(role__in=['admin', 'super_admin']).first()
+                manager_user = User.objects.filter(role='manager').first()
+                notify_user = admin_user or manager_user
+                
+                if notify_user:
+                    Notification.objects.create(
+                        recipient=notify_user,
+                        sender=request.user,
+                        title="Late Clock-in Alert",
+                        message=f"Employee {request.user.first_name} {request.user.last_name} ({request.user.username}) clocked in late today at {now_local.strftime('%I:%M %p')}.",
+                        target_role=notify_user.role
+                    )
+
                 Notification.objects.create(
                     recipient=request.user,
-                    sender=admin_user if admin_user else request.user,
+                    sender=notify_user if notify_user else request.user,
                     title="Late Clock-in Warning",
                     message=f"You clocked in late today at {now_local.strftime('%I:%M %p')}. Please ensure you clock in by 10:10 AM.",
                     target_role='employee'

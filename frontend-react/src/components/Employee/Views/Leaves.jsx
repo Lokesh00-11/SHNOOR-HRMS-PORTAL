@@ -5,6 +5,12 @@ const Leaves = () => {
     const [leaves, setLeaves] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
+    const [stats, setStats] = useState({
+        sick_leaves: 7,
+        casual_leaves: 7,
+        vacation_leaves: 7,
+        paid_leaves_taken: 0
+    });
     const [formData, setFormData] = useState({
         leave_type: 'Sick',
         start_date: '',
@@ -15,10 +21,16 @@ const Leaves = () => {
     const fetchLeaves = async () => {
         try {
             setLoading(true);
-            const data = await get('/employee/leaves/');
-            setLeaves(data || []);
+            const [leavesData, statsData] = await Promise.all([
+                get('/employee/leaves/'),
+                get('/employee/stats/')
+            ]);
+            setLeaves(leavesData || []);
+            if (statsData) {
+                setStats(statsData);
+            }
         } catch (err) {
-            console.error('Error fetching leaves:', err);
+            console.error('Error fetching leaves data:', err);
         } finally {
             setLoading(false);
         }
@@ -40,13 +52,79 @@ const Leaves = () => {
         }
     };
 
+    // Calculate leave metrics dynamically
+    let totalDays = 0;
+    let approvedDays = 0;
+    let pendingDays = 0;
+
+    leaves.forEach(item => {
+        const start = new Date(item.start_date);
+        const end = new Date(item.end_date);
+        const days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
+        if (!isNaN(days)) {
+            totalDays += days;
+            if (item.status.toUpperCase() === 'APPROVED') {
+                approvedDays += days;
+            } else if (item.status.toUpperCase() === 'PENDING') {
+                pendingDays += days;
+            }
+        }
+    });
+
     return (
         <section className="view-section active">
+            <style>{`
+                .leaves-grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 1.5rem;
+                    margin-bottom: 2rem;
+                }
+                @media (max-width: 992px) {
+                    .leaves-grid {
+                        grid-template-columns: repeat(2, 1fr);
+                    }
+                }
+                @media (max-width: 600px) {
+                    .leaves-grid {
+                        grid-template-columns: 1fr;
+                    }
+                }
+            `}</style>
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <h2 className="gradient-text">My Leaves</h2>
                 <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
                     {showForm ? 'Cancel' : 'Apply Leave'}
                 </button>
+            </div>
+
+            <div className="leaves-grid">
+                <div className="glass-panel" style={{ padding: '1.5rem', textAlign: 'center' }}>
+                    <h4 style={{ color: 'var(--text-muted)' }}>Free Sick Leaves</h4>
+                    <h1 style={{ fontSize: '2rem', color: 'var(--primary-color)', marginTop: '0.5rem' }}>{stats.sick_leaves} <span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>/ 7 left</span></h1>
+                </div>
+                <div className="glass-panel" style={{ padding: '1.5rem', textAlign: 'center' }}>
+                    <h4 style={{ color: 'var(--text-muted)' }}>Free Casual Leaves</h4>
+                    <h1 style={{ fontSize: '2rem', color: 'var(--primary-color)', marginTop: '0.5rem' }}>{stats.casual_leaves} <span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>/ 7 left</span></h1>
+                </div>
+                <div className="glass-panel" style={{ padding: '1.5rem', textAlign: 'center' }}>
+                    <h4 style={{ color: 'var(--text-muted)' }}>Free Vacation Leaves</h4>
+                    <h1 style={{ fontSize: '2rem', color: 'var(--primary-color)', marginTop: '0.5rem' }}>{stats.vacation_leaves} <span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>/ 7 left</span></h1>
+                </div>
+                <div className="glass-panel" style={{ padding: '1.5rem', textAlign: 'center' }}>
+                    <h4 style={{ color: 'var(--text-muted)' }}>Paid Leaves Taken</h4>
+                    <h1 style={{ fontSize: '2rem', color: 'var(--danger-color)', marginTop: '0.5rem' }}>{stats.paid_leaves_taken}</h1>
+                </div>
+                <div className="glass-panel" style={{ padding: '1.5rem', textAlign: 'center' }}>
+                    <h4 style={{ color: 'var(--text-muted)' }}>Total Approved</h4>
+                    <h1 style={{ fontSize: '2rem', color: '#10b981', marginTop: '0.5rem' }}>{approvedDays}</h1>
+                </div>
+                <div className="glass-panel" style={{ padding: '1.5rem', textAlign: 'center' }}>
+                    <h4 style={{ color: 'var(--text-muted)' }}>Total Pending</h4>
+                    <h1 style={{ fontSize: '2rem', color: '#f59e0b', marginTop: '0.5rem' }}>{pendingDays}</h1>
+                </div>
             </div>
 
             {showForm && (

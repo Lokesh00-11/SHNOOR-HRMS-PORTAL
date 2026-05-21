@@ -1,0 +1,265 @@
+.custom-calendar-card {
+    background: var(--bg-secondary) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 2rem;
+}
+
+.react-calendar {
+    width: 100% !important;
+    background: transparent !important;
+    border: none !important;
+    font-family: inherit !important;
+    color: var(--text-main) !important;
+}
+
+.react-calendar__navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    height: 48px;
+}
+
+.react-calendar__navigation button {
+    color: var(--text-main) !important;
+    min-width: 44px;
+    background: var(--bg-main) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.react-calendar__navigation button:enabled:hover,
+.react-calendar__navigation button:enabled:focus {
+    background: var(--bg-tertiary) !important;
+}
+
+.react-calendar__navigation__label {
+    font-weight: 600 !important;
+    font-size: 1.25rem !important;
+    background: transparent !important;
+    border: none !important;
+}
+
+.react-calendar__month-view__weekdays {
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    text-align: center;
+    margin-bottom: 0.75rem;
+}
+
+.react-calendar__month-view__weekdays__weekday abbr {
+    text-decoration: none !important;
+    border: none !important;
+}
+
+.react-calendar__month-view__days {
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.75rem;
+}
+
+.react-calendar__tile {
+    background: var(--bg-main) !important;
+    border: 2px solid var(--border-subtle) !important;
+    border-radius: 8px;
+    color: var(--text-main) !important;
+    min-height: 120px;
+    padding: 0.75rem !important;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.react-calendar__tile abbr {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    color: var(--text-main) !important;
+    margin-bottom: 4px;
+    text-decoration: none !important;
+}
+
+.react-calendar__tile:enabled:hover,
+.react-calendar__tile:enabled:focus {
+    background: var(--bg-main) !important;
+    border-color: var(--border-subtle) !important;
+}
+
+.react-calendar__tile--now {
+    background: var(--bg-main) !important;
+    border: 2px solid var(--border-subtle) !important;
+}
+
+.react-calendar__tile--now abbr {
+    color: var(--text-main) !important;
+    font-weight: 700 !important;
+}
+
+.react-calendar__tile--now:enabled:hover,
+.react-calendar__tile--now:enabled:focus,
+.react-calendar__tile--now.react-calendar__tile--active {
+    background: var(--bg-main) !important;
+    border-color: var(--border-subtle) !important;
+}
+
+.react-calendar__tile--now:enabled:hover abbr,
+.react-calendar__tile--now:enabled:focus abbr,
+.react-calendar__tile--now.react-calendar__tile--active abbr {
+    color: var(--text-main) !important;
+}
+
+.react-calendar__tile--now.react-calendar__tile--active .tile-attendance-info span {
+    color: var(--text-muted) !important;
+    background: transparent !important;
+}
+
+/* Status badge for today's active tile - Team mode (green badge) */
+.team-calendar .react-calendar__tile--now.react-calendar__tile--active .tile-attendance-info > span:first-child {
+    color: var(--success-color) !important;
+    background: rgba(16, 185, 129, 0.1) !important;
+}
+
+/* Status badge for today's active tile - Self mode (blue badge) */
+.self-calendar .react-calendar__tile--now.react-calendar__tile--active .tile-attendance-info > span:first-child {
+    color: #3b82f6 !important;
+    background: rgba(59, 130, 246, 0.1) !important;
+}
+
+.react-calendar__tile--now.react-calendar__tile--active .tile-attendance-info i {
+    color: inherit !important;
+}
+
+.react-calendar__tile--active {
+    background: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: #ffffff !important;
+}
+
+.react-calendar__tile--active abbr {
+    color: #ffffff !important;
+}
+
+.react-calendar__tile--active .tile-attendance-info span {
+    color: rgba(255, 255, 255, 0.9) !important;
+    background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.react-calendar__tile--active .tile-attendance-info i {
+    color: #ffffff !important;
+}
+
+.react-calendar__month-view__days__day--neighboringMonth {
+    opacity: 0.35;
+}
+
+.tile-attendance-info {
+    width: 100%;
+    text-align: left;
+    margin-top: auto;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    width: 95%;
+    max-width: 480px;
+    padding: 2rem;
+    box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 1rem;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: color 0.2s;
+}
+
+.close-btn:hover {
+    color: var(--text-main);
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    background: var(--bg-main);
+    color: var(--text-main);
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease;
+}
+
+.form-control option {
+    background: var(--bg-secondary) !important;
+    color: var(--text-main) !important;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 1rem;
+}

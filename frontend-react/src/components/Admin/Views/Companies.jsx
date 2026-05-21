@@ -63,6 +63,39 @@ const Companies = () => {
         }
     };
 
+    const extendCompanyLicense = async (id, currentExpiry) => {
+        const monthsStr = window.prompt("Enter number of months to extend the subscription license:", "1");
+        if (monthsStr === null) return;
+        const months = parseInt(monthsStr);
+        if (isNaN(months) || months <= 0) {
+            alert("Please enter a valid number of months.");
+            return;
+        }
+
+        try {
+            let baseDate = new Date();
+            if (currentExpiry) {
+                const currentExpiryDate = new Date(currentExpiry);
+                if (currentExpiryDate > baseDate) {
+                    baseDate = currentExpiryDate;
+                }
+            }
+            baseDate.setMonth(baseDate.getMonth() + months);
+            const formattedDate = baseDate.toISOString().split('T')[0];
+
+            await patch(`/admin/companies/${id}/`, {
+                license_expiry_date: formattedDate,
+                license_expired: false,
+                is_active: true
+            });
+            alert(`Extended successfully! New expiry date: ${formattedDate}`);
+            await fetchCompanies();
+        } catch (err) {
+            console.error('Failed to extend license:', err);
+            alert('Failed to extend license.');
+        }
+    };
+
     return (
         <section className="view-section active">
             <h2 className="gradient-text" style={{ marginBottom: '2rem' }}>Registered Companies</h2>
@@ -103,6 +136,8 @@ const Companies = () => {
                             <th>Company Name</th>
                             <th>Email Address</th>
                             <th>Total Users</th>
+                            <th>License Purchase Date</th>
+                            <th>Expiry Date</th>
                             <th>Status</th>
                             <th style={{ textAlign: 'center' }}>Actions</th>
                         </tr>
@@ -110,11 +145,11 @@ const Companies = () => {
                     <tbody>
                         {loading ? (
                             <tr>
-                                <td colSpan="5" style={{ textAlign: 'center' }}>Loading companies...</td>
+                                <td colSpan="7" style={{ textAlign: 'center' }}>Loading companies...</td>
                             </tr>
                         ) : companies.length === 0 ? (
                             <tr>
-                                <td colSpan="5" style={{ textAlign: 'center' }}>No companies found.</td>
+                                <td colSpan="7" style={{ textAlign: 'center' }}>No companies found.</td>
                             </tr>
                         ) : (
                             companies.map(company => (
@@ -122,28 +157,54 @@ const Companies = () => {
                                     <td style={{ fontWeight: 600 }}>{company.name}</td>
                                     <td>{company.email}</td>
                                     <td>{company.members_count || 0}</td>
+                                    <td style={{ color: 'var(--text-muted)' }}>
+                                        {company.created_at ? company.created_at.split(' ')[0] : 'N/A'}
+                                    </td>
+                                    <td style={{ 
+                                        fontWeight: 600, 
+                                        color: company.license_expired ? 'var(--danger-color)' : 'var(--text-main)'
+                                    }}>
+                                        {company.license_expiry_date ? (
+                                            <span>
+                                                {company.license_expiry_date}
+                                                {company.license_expired && <span style={{ marginLeft: '8px', fontSize: '0.75rem', color: 'var(--danger-color)' }}>(Expired)</span>}
+                                            </span>
+                                        ) : (
+                                            <span style={{ color: 'var(--text-muted)' }}>No License</span>
+                                        )}
+                                    </td>
                                     <td>
                                         <span className={`status ${company.is_active ? 'active' : 'inactive'}`}>
                                             {company.is_active ? 'Active' : 'Inactive'}
                                         </span>
                                     </td>
                                     <td style={{ textAlign: 'center' }}>
-                                        <button 
-                                            className="btn btn-ghost" 
-                                            style={{ padding: '0.5rem', marginRight: '0.5rem', minWidth: '40px' }} 
-                                            onClick={() => toggleCompanyStatus(company.id, company.is_active)}
-                                            title={company.is_active ? 'Deactivate Company' : 'Activate Company'}
-                                        >
-                                            <i className="fa-solid fa-power-off" style={{ color: company.is_active ? 'var(--warning-color)' : 'var(--success-color)' }}></i>
-                                        </button>
-                                        <button 
-                                            className="btn btn-ghost" 
-                                            style={{ padding: '0.5rem', minWidth: '40px' }} 
-                                            onClick={() => deleteCompany(company.id)}
-                                            title="Delete Company"
-                                        >
-                                            <i className="fa-solid fa-trash" style={{ color: 'var(--danger-color)' }}></i>
-                                        </button>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                                            <button 
+                                                className="btn btn-ghost" 
+                                                style={{ padding: '0.5rem', minWidth: '40px' }} 
+                                                onClick={() => toggleCompanyStatus(company.id, company.is_active)}
+                                                title={company.is_active ? 'Deactivate Company' : 'Activate Company'}
+                                            >
+                                                <i className="fa-solid fa-power-off" style={{ color: company.is_active ? 'var(--warning-color)' : 'var(--success-color)' }}></i>
+                                            </button>
+                                            <button 
+                                                className="btn btn-ghost" 
+                                                style={{ padding: '0.5rem', minWidth: '40px' }} 
+                                                onClick={() => extendCompanyLicense(company.id, company.license_expiry_date)}
+                                                title="Extend License / Renew Plan"
+                                            >
+                                                <i className="fa-solid fa-calendar-plus" style={{ color: 'var(--primary-color)' }}></i>
+                                            </button>
+                                            <button 
+                                                className="btn btn-ghost" 
+                                                style={{ padding: '0.5rem', minWidth: '40px' }} 
+                                                onClick={() => deleteCompany(company.id)}
+                                                title="Delete Company"
+                                            >
+                                                <i className="fa-solid fa-trash" style={{ color: 'var(--danger-color)' }}></i>
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))

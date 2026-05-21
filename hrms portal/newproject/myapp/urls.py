@@ -1,10 +1,10 @@
 from django.urls import path
 from .views import (
     LoginView, AdminStatsView, CompanyListView, CompanyDetailView, AdminCompanyCreateView,
-    SubscriptionPlanListView, TransactionListView, UserManagementView, UserDetailView, SuperAdminListView,
+    SubscriptionPlanListView, SubscriptionPlanDetailView, TransactionListView, UserManagementView, UserDetailView, SuperAdminListView,
     SupportQueryView, SupportQueryDetailView, SupportQueryUnreadCountView, ManagerEmployeeListView,
     HolidayView, AppreciationView, LeaveRequestView, LeaveRequestDetailView,
-    CompanyPolicyView, CompanyPolicyDetailView, PayrollView,
+    CompanyPolicyView, CompanyPolicyDetailView, PayrollView, ManagerPaySingleEmployeeView,
     OffboardingView, OffboardingDetailView, EmployeeReportView,
     LetterHeadView, LetterHeadDetailView, UserProfileView, AdminSettingsView,
     EmployeeStatsView, CalendarDataView, AssetView, EmployeeAppreciationView,
@@ -14,6 +14,7 @@ from .views import (
     TeamLeaderAttendanceView, ManagerLeaveApprovalView, ManagerTaskCreateView, ManagerTaskListView,
     EmployeeTaskListView, EmployeeTaskUpdateView, TaskDetailView,
     DocumentUploadView, EmployeeDocumentsView, ManagerProfileView, ManagerProfileUpdateView,
+    ManagerSubscriptionView, ManagerRenewSubscriptionView,
     EmployeeProfileView, EmployeeProfileUpdateView, OrgChartView, OrgChartDetailView, 
     NotificationView, AllEmployeeProfilesView,
     TeamLeaderProfileView, TeamLeaderProfileUpdateView, TeamLeaderStatsView,
@@ -21,7 +22,7 @@ from .views import (
     SystemDataSetupView, PendingLeavesCountView, MarkNotificationsReadView,
     EmployeeExpenseListView, TeamLeaderExpenseListView, TeamLeaderExpenseUpdateView,
     ManagerExpenseListView, ManagerExpenseApproveView, ManagerExpensePayView,
-    DownloadFileView
+    DownloadFileView, EmployeeQueriesView, ManagerQueriesView, TeamLeaderQueriesView
 )
 
 urlpatterns = [
@@ -33,12 +34,15 @@ urlpatterns = [
     path('api/auth/login/', LoginView.as_view(), name='login'),
     path('api/manager/profile/', ManagerProfileView.as_view(), name='manager_profile'),
     path('api/manager/profile/update/', ManagerProfileUpdateView.as_view(), name='manager_profile_update'),
+    path('api/manager/subscription/', ManagerSubscriptionView.as_view(), name='manager_subscription'),
+    path('api/manager/renew/', ManagerRenewSubscriptionView.as_view(), name='manager_renew'),
     path('api/user/profile/', UserProfileView.as_view(), name='user_profile'),
     path('api/admin/stats/', AdminStatsView.as_view(), name='admin_stats'),
     path('api/admin/companies/', CompanyListView.as_view(), name='companies'),
     path('api/admin/companies/<int:pk>/', CompanyDetailView.as_view(), name='company_detail'),
     path('api/admin/companies/create/', AdminCompanyCreateView.as_view(), name='admin_company_create'),
     path('api/admin/subscriptions/', SubscriptionPlanListView.as_view(), name='subscriptions'),
+    path('api/admin/subscriptions/<int:pk>/', SubscriptionPlanDetailView.as_view(), name='subscription_plan_detail'),
     path('api/admin/transactions/', TransactionListView.as_view(), name='transactions'),
     path('api/admin/users/', UserManagementView.as_view(), name='user_management'),
     path('api/admin/users/<int:pk>/', UserDetailView.as_view(), name='user_detail'),
@@ -58,6 +62,7 @@ urlpatterns = [
     path('api/manager/letterheads/<int:pk>/', LetterHeadDetailView.as_view(), name='letterhead_detail'),
     path('api/manager/policies/<int:pk>/', CompanyPolicyDetailView.as_view(), name='manager_policy_detail'),
     path('api/manager/payroll/', PayrollView.as_view(), name='payroll'),
+    path('api/manager/payroll/pay/', ManagerPaySingleEmployeeView.as_view(), name='manager_payroll_pay'),
     path('api/manager/leaves/<int:pk>/', LeaveRequestDetailView.as_view(), name='manager_leave_detail'),
     path('api/manager/leaves/pending-count/', PendingLeavesCountView.as_view(), name='pending_leaves_count'),
     path('api/manager/policies/', CompanyPolicyView.as_view(), name='manager_policies'),
@@ -114,4 +119,7 @@ urlpatterns = [
     path('api/teamleader/performance/', TeamLeaderPerformanceView.as_view(), name='tl_performance'),
     path('api/system/setup-data/', SystemDataSetupView.as_view(), name='system_setup_data'),
     path('api/download-file/', DownloadFileView.as_view(), name='download_file'),
+    path('api/employee/queries/', EmployeeQueriesView.as_view(), name='employee_queries'),
+    path('api/manager/queries/', ManagerQueriesView.as_view(), name='manager_queries'),
+    path('api/teamleader/queries/', TeamLeaderQueriesView.as_view(), name='teamleader_queries'),
 ]

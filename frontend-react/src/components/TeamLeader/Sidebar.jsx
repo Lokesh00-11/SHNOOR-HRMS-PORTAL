@@ -21,6 +21,7 @@ const Sidebar = ({ currentView, setCurrentView }) => {
         { id: 'expenses', label: 'Team Expenses', icon: 'fa-wallet' },
         { id: 'offboarding', label: 'Offboarding', icon: 'fa-user-xmark' },
         { id: 'documents', label: 'Documents', icon: 'fa-folder-open' },
+        { id: 'queries', label: 'Team Queries', icon: 'fa-circle-question' },
         { id: 'notifications', label: 'Notifications', icon: 'fa-bell' },
         { id: 'profile', label: 'Profile', icon: 'fa-user-gear' }
     ];

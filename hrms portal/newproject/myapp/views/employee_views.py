@@ -4,10 +4,10 @@ from rest_framework import status, permissions
 from django.db import models
 from django.utils import timezone
 from ..models import (
-    Employee, Attendance, Appreciation, LeaveRequest, Offboarding, Task, Expense
+    Employee, Attendance, Appreciation, LeaveRequest, Offboarding, Task, Expense, SupportQuery, User
 )
 from ..serializers import (
-    AppreciationSerializer, EmployeeProfileSerializer, ExpenseSerializer
+    AppreciationSerializer, EmployeeProfileSerializer, ExpenseSerializer, SupportQuerySerializer
 )
 
 class EmployeeStatsView(APIView):
@@ -23,32 +23,20 @@ class EmployeeStatsView(APIView):
         total_appreciations = Appreciation.objects.filter(recipient=user).count()
         
         approved_leaves = LeaveRequest.objects.filter(employee=user, status='approved')
-        used_sick = used_casual = used_vacation = total_days_taken = 0
-        for leave in approved_leaves:
-            d = (leave.end_date - leave.start_date).days + 1
-            ltype = leave.leave_type.lower()
-            if 'sick' in ltype: used_sick += d; total_days_taken += d
-            elif 'casual' in ltype: used_casual += d; total_days_taken += d
-            elif 'vacation' in ltype: used_vacation += d; total_days_taken += d
+        total_days_taken = sum((leave.end_date - leave.start_date).days + 1 for leave in approved_leaves)
             
         total_warnings = Offboarding.objects.filter(employee=employee_profile, action_type='warning').count()
-        paid_sick = max(0, used_sick - 7)
-        paid_casual = max(0, used_casual - 7)
-        paid_vacation = max(0, used_vacation - 7)
-        total_paid_leaves = paid_sick + paid_casual + paid_vacation
-        total_free_used = (used_sick - paid_sick) + (used_casual - paid_casual) + (used_vacation - paid_vacation)
-        remaining_balance = 21 - total_free_used
 
         return Response({
             'hours_worked': float(total_hours),
             'appreciations': total_appreciations,
             'leaves_taken': total_days_taken,
             'warnings': total_warnings,
-            'sick_leaves': max(0, 7 - used_sick),
-            'casual_leaves': max(0, 7 - used_casual),
-            'vacation_leaves': max(0, 7 - used_vacation),
-            'total_balance': remaining_balance,
-            'paid_leaves_taken': total_paid_leaves
+            'sick_leaves': employee_profile.sick_leaves,
+            'casual_leaves': employee_profile.casual_leaves,
+            'vacation_leaves': employee_profile.vacation_leaves,
+            'total_balance': employee_profile.sick_leaves + employee_profile.casual_leaves + employee_profile.vacation_leaves,
+            'paid_leaves_taken': employee_profile.paid_leaves
         })
 
 class EmployeeReportView(APIView):
@@ -113,5 +101,32 @@ class EmployeeExpenseView(APIView):
         serializer = ExpenseSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EmployeeQueriesView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        queries = SupportQuery.objects.filter(sender=request.user).order_by('-created_at')
+        serializer = SupportQuerySerializer(queries, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        data = request.data.copy()
+        target_role = data.get('target_role')
+        
+        recipient = None
+        if target_role == 'team_leader':
+            employee_profile = getattr(request.user, 'employee_profile', None)
+            if employee_profile and employee_profile.team_leader:
+                recipient = employee_profile.team_leader
+        elif target_role == 'manager':
+            company = request.user.company
+            recipient = User.objects.filter(role='manager', company=company).first()
+
+        serializer = SupportQuerySerializer(data=data)
+        if serializer.is_valid():
+            serializer.save(sender=request.user, recipient=recipient)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

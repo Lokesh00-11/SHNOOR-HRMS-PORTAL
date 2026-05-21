@@ -295,6 +295,28 @@ const ManageProfiles = () => {
                         </div>
 
                         <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '1rem', marginBottom: '1.5rem' }}>
+                            <h4 style={{ color: 'var(--primary-color)', marginBottom: '0.5rem' }}>Leave Balance Information</h4>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1rem', marginTop: '0.5rem' }}>
+                                <div style={{ background: 'var(--bg-main)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Free Sick Leaves</div>
+                                    <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--primary-color)', marginTop: '0.25rem' }}>{selectedProfile.sick_leaves ?? 7} / 7 left</div>
+                                </div>
+                                <div style={{ background: 'var(--bg-main)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Free Casual Leaves</div>
+                                    <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--primary-color)', marginTop: '0.25rem' }}>{selectedProfile.casual_leaves ?? 7} / 7 left</div>
+                                </div>
+                                <div style={{ background: 'var(--bg-main)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Free Vacation Leaves</div>
+                                    <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--primary-color)', marginTop: '0.25rem' }}>{selectedProfile.vacation_leaves ?? 7} / 7 left</div>
+                                </div>
+                                <div style={{ background: 'var(--bg-main)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Paid Leaves Taken</div>
+                                    <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--danger-color)', marginTop: '0.25rem' }}>{selectedProfile.paid_leaves ?? 0}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '1rem', marginBottom: '1.5rem' }}>
                             <h4 style={{ color: 'var(--primary-color)', marginBottom: '0.5rem' }}>Bank Account Details</h4>
                             <p style={{ margin: '0.4rem 0' }}><strong>Bank:</strong> {selectedProfile.bank_name || '-'}</p>
                             <p style={{ margin: '0.4rem 0' }}><strong>Account Number:</strong> {selectedProfile.account_number || '-'}</p>

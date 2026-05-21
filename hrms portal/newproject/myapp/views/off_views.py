@@ -127,21 +127,55 @@ class OffboardingView(APIView):
         serializer = OffboardingSerializer(offboardings, many=True)
         return Response(serializer.data)
     def post(self, request):
-        if request.user.role.lower() not in ['manager', 'admin', 'super_admin']:
-            return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
-        serializer = OffboardingSerializer(data=request.data)
+        user = request.user
+        role = user.role.lower()
+        
+        data = request.data
+        if hasattr(data, 'copy'):
+            data = data.copy()
+        
+        if role == 'employee':
+            try:
+                employee_profile = user.employee_profile
+            except Exception:
+                return Response({'message': 'Employee profile not found.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            action_type = data.get('action_type')
+            if action_type not in ['resignation', 'complaint']:
+                return Response({'message': 'Employees can only submit resignations or complaints.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            data['employee'] = employee_profile.id
+        else:
+            if role not in ['manager', 'admin', 'super_admin']:
+                return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = OffboardingSerializer(data=data)
         if serializer.is_valid():
             offboarding = serializer.save()
-            # Send notification to employee
+            # Send notification
             try:
                 from ..models import Notification
-                Notification.objects.create(
-                    title=f"New Offboarding Record: {offboarding.action_type.capitalize()}",
-                    message=f"A new offboarding record has been created for you: {offboarding.reason}",
-                    sender=request.user,
-                    recipient=offboarding.employee.user,
-                    target_role='employee'
-                )
+                if role != 'employee':
+                    Notification.objects.create(
+                        title=f"New Offboarding Record: {offboarding.action_type.capitalize()}",
+                        message=f"A new offboarding record has been created for you: {offboarding.reason}",
+                        sender=user,
+                        recipient=offboarding.employee.user,
+                        target_role='employee'
+                    )
+                else:
+                    # Notify manager / admins
+                    from django.contrib.auth import get_user_model
+                    UserModel = get_user_model()
+                    managers = UserModel.objects.filter(role__in=['manager', 'admin'])
+                    for mgr in managers:
+                        Notification.objects.create(
+                            title=f"New Employee Submission: {offboarding.action_type.capitalize()}",
+                            message=f"Employee {user.get_full_name() or user.username} has submitted a {offboarding.action_type}: {offboarding.reason}",
+                            sender=user,
+                            recipient=mgr,
+                            target_role=mgr.role.lower()
+                        )
             except Exception as e:
                 print(f"Error creating notification: {e}")
             return Response(serializer.data, status=status.HTTP_201_CREATED)

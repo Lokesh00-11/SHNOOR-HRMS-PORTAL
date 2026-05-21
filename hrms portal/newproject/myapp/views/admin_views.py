@@ -92,6 +92,18 @@ class SubscriptionPlanListView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class SubscriptionPlanDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def delete(self, request, pk):
+        if request.user.role.lower() != 'admin':
+            return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            plan = SubscriptionPlan.objects.get(pk=pk)
+            plan.delete()
+            return Response({'message': 'Plan deleted successfully'}, status=status.HTTP_200_OK)
+        except SubscriptionPlan.DoesNotExist:
+            return Response({'message': 'Plan not found'}, status=status.HTTP_404_NOT_FOUND)
+
 class TransactionListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):

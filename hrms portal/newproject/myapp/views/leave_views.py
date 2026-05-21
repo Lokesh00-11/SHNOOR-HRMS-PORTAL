@@ -30,25 +30,7 @@ class EmployeeLeaveApplyView(APIView):
         data = request.data.copy()
         data['employee'] = request.user.id
         
-        leave_type = data.get('leave_type', 'General')
-        try:
-            start_date = datetime.strptime(data.get('start_date'), '%Y-%m-%d').date()
-            end_date = datetime.strptime(data.get('end_date'), '%Y-%m-%d').date()
-            days = (end_date - start_date).days + 1
-            
-            employee_profile = request.user.employee_profile
-            available = 0
-            if 'sick' in leave_type.lower():
-                available = employee_profile.sick_leaves
-            elif 'casual' in leave_type.lower():
-                available = employee_profile.casual_leaves
-            elif 'vacation' in leave_type.lower():
-                available = employee_profile.vacation_leaves
-            
-            if days > available:
-                data['leave_type'] = 'Paid Leave'
-        except Exception:
-            pass
+
         
         serializer = LeaveRequestSerializer(data=data)
         if serializer.is_valid():
@@ -93,17 +75,6 @@ class LeaveRequestDetailView(APIView):
             if serializer.is_valid():
                 updated_leave = serializer.save()
                 
-                if old_status != 'approved' and new_status == 'approved':
-                    try:
-                        employee_profile = updated_leave.employee.employee_profile
-                        days = (updated_leave.end_date - updated_leave.start_date).days + 1
-                        ltype = updated_leave.leave_type.lower()
-                        if 'casual' in ltype: employee_profile.casual_leaves -= days
-                        elif 'sick' in ltype: employee_profile.sick_leaves -= days
-                        elif 'vacation' in ltype: employee_profile.vacation_leaves -= days
-                        employee_profile.save()
-                    except Exception as e:
-                        print(f"Error updating leave balance: {e}")
 
                 if old_status != new_status:
                     try:

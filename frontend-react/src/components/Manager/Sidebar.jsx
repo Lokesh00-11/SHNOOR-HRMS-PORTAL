@@ -28,6 +28,8 @@ const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) =
         { id: 'letterheads', label: 'Letter Heads', icon: 'fa-file-signature', visibleFor: ['manager'] },
         { id: 'orgchart', label: 'Org Chart', icon: 'fa-sitemap', visibleFor: ['manager', 'self'] },
         { id: 'notifications', label: 'Notifications', icon: 'fa-bell', visibleFor: ['manager', 'self'] },
+        { id: 'queries', label: 'Queries', icon: 'fa-circle-question', visibleFor: ['manager', 'self'] },
+        { id: 'subscription', label: 'Subscription', icon: 'fa-credit-card', visibleFor: ['manager'] },
     ];
 
     const handleLogout = () => {

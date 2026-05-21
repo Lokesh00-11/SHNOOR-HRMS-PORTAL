@@ -3,10 +3,10 @@ from rest_framework.response import Response
 from rest_framework import status, permissions
 from django.db import models
 from ..models import (
-    TeamLeaderProfile, Employee, Task, Attendance
+    TeamLeaderProfile, Employee, Task, Attendance, SupportQuery, Notification
 )
 from ..serializers import (
-    TeamLeaderProfileSerializer, EmployeeProfileSerializer, TaskSerializer
+    TeamLeaderProfileSerializer, EmployeeProfileSerializer, TaskSerializer, SupportQuerySerializer
 )
 
 class TeamLeaderProfileView(APIView):
@@ -94,3 +94,39 @@ class TeamLeaderPerformanceView(APIView):
                 'attendance_percentage': 90.0
             })
         return Response(data)
+
+class TeamLeaderQueriesView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role.lower() not in ['team_leader', 'admin', 'super_admin']:
+            return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+        queries = SupportQuery.objects.filter(recipient=request.user).order_by('-created_at')
+        serializer = SupportQuerySerializer(queries, many=True)
+        return Response(serializer.data)
+
+    def put(self, request):
+        if request.user.role.lower() not in ['team_leader', 'admin', 'super_admin']:
+            return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+            
+        query_id = request.data.get('query_id')
+        reply_text = request.data.get('reply')
+        new_status = request.data.get('status', 'resolved')
+        
+        try:
+            query = SupportQuery.objects.get(id=query_id, recipient=request.user)
+            query.reply = reply_text
+            query.status = new_status
+            query.recipient_read = True
+            query.sender_read = False
+            query.save()
+            
+            # Optionally send a notification back
+            Notification.objects.create(
+                recipient=query.sender, sender=request.user, title="Query Reply",
+                message=f"Your Team Leader has replied to your query: {query.subject}"
+            )
+            
+            return Response({'message': 'Query replied successfully!'})
+        except SupportQuery.DoesNotExist:
+            return Response({'message': 'Query not found or access denied.'}, status=status.HTTP_404_NOT_FOUND)

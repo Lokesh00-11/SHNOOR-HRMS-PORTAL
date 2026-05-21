@@ -15,6 +15,7 @@ class User(AbstractUser):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='employee')
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     location = models.CharField(max_length=255, blank=True, null=True)
+    company = models.ForeignKey('Company', on_delete=models.SET_NULL, null=True, blank=True, related_name='users')
     
     def __str__(self):
         return f"{self.username} ({self.role})"
@@ -43,7 +44,14 @@ class Company(models.Model):
     members_count = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
     license_expired = models.BooleanField(default=False)
+    license_expiry_date = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.license_expiry_date:
+            from datetime import date, timedelta
+            self.license_expiry_date = date.today() + timedelta(days=7)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -52,6 +60,9 @@ class Transactions(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='transactions')
     subscription_plan = models.ForeignKey(SubscriptionPlan, on_delete=models.SET_NULL, null=True, blank=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    transaction_id = models.CharField(max_length=50, unique=True, blank=True, null=True)
+    status = models.CharField(max_length=20, default='Success')
+    payment_method = models.CharField(max_length=50, default='Card')
     transaction_date = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
@@ -67,6 +78,7 @@ class Employee(models.Model):
     casual_leaves = models.IntegerField(default=7)
     sick_leaves = models.IntegerField(default=7)
     vacation_leaves = models.IntegerField(default=7)
+    paid_leaves = models.IntegerField(default=0)
     
     # Personal Details
     phone = models.CharField(max_length=15, blank=True, null=True)
@@ -122,6 +134,7 @@ class SupportQuery(models.Model):
     target_role = models.CharField(max_length=20, null=True, blank=True) # 'manager' or 'team_leader'
     subject = models.CharField(max_length=255)
     message = models.TextField()
+    reply = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     sender_read = models.BooleanField(default=True)
     recipient_read = models.BooleanField(default=False)
@@ -167,6 +180,52 @@ class LeaveRequest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        old_status = None
+        if not is_new:
+            try:
+                old_status = LeaveRequest.objects.get(pk=self.pk).status
+            except Exception:
+                pass
+        
+        super().save(*args, **kwargs)
+        
+        # Deduct balances when leave request becomes approved
+        if (is_new and self.status == 'approved') or (not is_new and old_status != 'approved' and self.status == 'approved'):
+            try:
+                employee_profile = self.employee.employee_profile
+                days = (self.end_date - self.start_date).days + 1
+                ltype = self.leave_type.lower()
+                
+                if 'casual' in ltype:
+                    available = employee_profile.casual_leaves
+                    if days <= available:
+                        employee_profile.casual_leaves -= days
+                    else:
+                        employee_profile.casual_leaves = 0
+                        employee_profile.paid_leaves += (days - available)
+                elif 'sick' in ltype:
+                    available = employee_profile.sick_leaves
+                    if days <= available:
+                        employee_profile.sick_leaves -= days
+                    else:
+                        employee_profile.sick_leaves = 0
+                        employee_profile.paid_leaves += (days - available)
+                elif 'vacation' in ltype:
+                    available = employee_profile.vacation_leaves
+                    if days <= available:
+                        employee_profile.vacation_leaves -= days
+                    else:
+                        employee_profile.vacation_leaves = 0
+                        employee_profile.paid_leaves += (days - available)
+                else:
+                    employee_profile.paid_leaves += days
+                    
+                employee_profile.save()
+            except Exception as e:
+                print(f"Error updating leave balance on save: {e}")
+
     def __str__(self):
         return f"{self.employee.username} - {self.leave_type} ({self.status})"
 
@@ -191,7 +250,7 @@ class Payroll(models.Model):
         if not self.amount or self.amount == 0:
             base_salary = self.employee.salary or 0
             bonus = 0
-            if self.employee.shift.lower() == 'night':
+            if self.employee.shift and self.employee.shift.lower() == 'night':
                 bonus = float(base_salary) * 0.1
             self.amount = float(base_salary) + bonus
             

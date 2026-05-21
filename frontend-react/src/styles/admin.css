@@ -1,3 +1,5 @@
+@import './manager.css';
+
 /* Admin Sidebar Layout */
 .admin-layout {
     display: flex;
@@ -95,6 +97,16 @@
     box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.12);
 }
 
+.glass-panel-no-hover {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    box-shadow: var(--glass-shadow);
+    padding: 1.5rem;
+}
+
 /* Tables */
 .table-container {
     background: var(--bg-secondary);
@@ -120,6 +132,7 @@ th {
     letter-spacing: 1px;
     padding: 1.25rem 1.5rem;
     border-bottom: 2px solid var(--bg-tertiary);
+    text-align: left;
 }
 
 td {
@@ -154,6 +167,7 @@ tr:hover {
 .status-badge.approved { background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; }
 .status-badge.rejected { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
 .status-badge.active { background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; }
+.status-badge.expired { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
 .status-badge.warning { background: #ffedd5; color: #ea580c; border: 1px solid #fed7aa; }
 .status-badge.draft { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
 

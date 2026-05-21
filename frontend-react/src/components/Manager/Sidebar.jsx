@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useBadges } from '../../context/BadgeContext';
 
 const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) => {
+    const { badgeCounts, markAsRead } = useBadges();
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
     useEffect(() => {
@@ -19,6 +21,7 @@ const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) =
         { id: 'attendance', label: 'Attendance', icon: 'fa-calendar-check', visibleFor: ['manager', 'self'] },
         { id: 'leaves', label: 'Leaves', icon: 'fa-umbrella-beach', visibleFor: ['manager', 'self'] },
         { id: 'tasks', label: 'Tasks', icon: 'fa-list-check', visibleFor: ['manager'] },
+        { id: 'thanks', label: 'Thanks', icon: 'fa-thumbs-up', visibleFor: ['manager', 'self'] },
         { id: 'documents', label: 'Documents', icon: 'fa-folder-open', visibleFor: ['self'] },
         { id: 'profile', label: 'Profile', icon: 'fa-user', visibleFor: ['self'] },
         { id: 'payroll', label: 'Payroll', icon: 'fa-file-invoice-dollar', visibleFor: ['manager'] },
@@ -88,10 +91,23 @@ const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) =
                     <div
                         key={item.id}
                         className={`nav-item ${currentView === item.id ? 'active' : ''}`}
-                        onClick={() => setCurrentView(item.id)}
-                        style={{ cursor: 'pointer' }}
+                        onClick={() => {
+                            setCurrentView(item.id);
+                            if (['leaves', 'expenses', 'queries', 'tasks', 'notifications', 'payroll', 'thanks', 'offboarding'].includes(item.id)) {
+                                markAsRead(item.id);
+                            }
+                        }}
+                        style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                     >
-                        <i className={`fa-solid ${item.icon}`}></i> {item.label}
+                        <div><i className={`fa-solid ${item.icon}`}></i> {item.label}</div>
+                        {badgeCounts[item.id] > 0 && (
+                            <span style={{
+                                background: '#ef4444', color: 'white', padding: '2px 8px', 
+                                borderRadius: '12px', fontSize: '0.7rem', fontWeight: 'bold'
+                            }}>
+                                {badgeCounts[item.id]}
+                            </span>
+                        )}
                     </div>
                 ))}
             </div>

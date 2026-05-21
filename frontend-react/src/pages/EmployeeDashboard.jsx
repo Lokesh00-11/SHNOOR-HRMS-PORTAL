@@ -3,6 +3,7 @@ import Sidebar from '../components/Employee/Sidebar';
 import Dashboard from '../components/Employee/Views/Dashboard';
 import Attendance from '../components/Employee/Views/Attendance';
 import Tasks from '../components/Employee/Views/Tasks';
+import Thanks from '../components/Employee/Views/Thanks';
 import Leaves from '../components/Employee/Views/Leaves';
 import Profile from '../components/Employee/Views/Profile';
 import Notifications from '../components/Employee/Views/Notifications';
@@ -29,6 +30,8 @@ const EmployeeDashboard = () => {
                 return <Leaves />;
             case 'tasks':
                 return <Tasks />;
+            case 'thanks':
+                return <Thanks />;
             case 'holidays':
                 return <Holidays />;
             case 'offboarding':

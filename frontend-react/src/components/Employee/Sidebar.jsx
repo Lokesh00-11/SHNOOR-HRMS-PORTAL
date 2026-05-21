@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useBadges } from '../../context/BadgeContext';
 
 const Sidebar = ({ currentView, setCurrentView }) => {
+    const { badgeCounts, markAsRead } = useBadges();
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
     useEffect(() => {
@@ -16,6 +18,7 @@ const Sidebar = ({ currentView, setCurrentView }) => {
         { id: 'attendance', label: 'Attendance', icon: 'fa-calendar-check' },
         { id: 'leaves', label: 'Leaves', icon: 'fa-umbrella-beach' },
         { id: 'tasks', label: 'Tasks', icon: 'fa-list-check' },
+        { id: 'thanks', label: 'Thanks', icon: 'fa-thumbs-up' },
         { id: 'holidays', label: 'Holidays', icon: 'fa-tree' },
         { id: 'offboarding', label: 'Offboarding', icon: 'fa-user-xmark' },
         { id: 'orgchart', label: 'Org Chart', icon: 'fa-sitemap' },
@@ -44,10 +47,23 @@ const Sidebar = ({ currentView, setCurrentView }) => {
                     <div 
                         key={item.id}
                         className={`nav-item ${currentView === item.id ? 'active' : ''}`}
-                        onClick={() => setCurrentView(item.id)}
+                        onClick={() => {
+                            setCurrentView(item.id);
+                            if (['leaves', 'expenses', 'queries', 'tasks', 'notifications', 'payroll', 'thanks', 'offboarding'].includes(item.id)) {
+                                markAsRead(item.id);
+                            }
+                        }}
+                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                     >
-                        <i className={`fa-solid ${item.icon}`}></i>
-                        {item.label}
+                        <div><i className={`fa-solid ${item.icon}`}></i> {item.label}</div>
+                        {badgeCounts[item.id] > 0 && (
+                            <span style={{
+                                background: '#ef4444', color: 'white', padding: '2px 8px', 
+                                borderRadius: '12px', fontSize: '0.7rem', fontWeight: 'bold'
+                            }}>
+                                {badgeCounts[item.id]}
+                            </span>
+                        )}
                     </div>
                 ))}
             </nav>

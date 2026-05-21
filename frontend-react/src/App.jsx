@@ -6,6 +6,7 @@ import EmployeeDashboard from "./pages/EmployeeDashboard";
 import ManagerDashboard from "./pages/ManagerDashboard";
 import TeamLeaderDashboard from "./pages/TeamLeaderDashboard";
 import SubscriptionBlockedScreen from "./pages/SubscriptionBlockedScreen";
+import { BadgeProvider } from "./context/BadgeContext";
 
 function App() {
     const [currentRoute, setCurrentRoute] = useState(window.location.pathname.replace(/\/$/, ""));
@@ -50,9 +51,11 @@ function App() {
     };
 
     return (
-        <div>
-            {renderRoute()}
-        </div>
+        <BadgeProvider>
+            <div>
+                {renderRoute()}
+            </div>
+        </BadgeProvider>
     );
 }
 

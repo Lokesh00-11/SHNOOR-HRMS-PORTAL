@@ -4,7 +4,7 @@ from django.utils import timezone
 from django.db import models
 from .models import (
     User, SuperAdmin, SubscriptionPlan, Company, Transactions, Employee,
-    SupportQuery, Holiday, Appreciation, LeaveRequest, CompanyPolicy,
+    SupportQuery, Holiday, Appreciation, AppreciationComment, Thanks, ThanksComment, LeaveRequest, CompanyPolicy,
     Payroll, Offboarding, LetterHead, AdminProfile, Attendance, Asset,
     Expense, Task, CompanyDocument, ManagerProfile, TeamLeaderProfile, OrgChart, Notification
 )
@@ -89,11 +89,12 @@ class EmployeeProfileSerializer(serializers.ModelSerializer):
     date_of_joining = serializers.DateField(source='joining_date', required=False, allow_null=True)
     branch_name = serializers.CharField(source='branch', required=False, allow_blank=True)
     full_name = serializers.SerializerMethodField()
+    user_id = serializers.IntegerField(source='user.id', read_only=True)
 
     class Meta:
         model = Employee
         fields = [
-            'id', 'username', 'email', 'first_name', 'last_name', 'full_name',
+            'id', 'user_id', 'username', 'email', 'first_name', 'last_name', 'full_name',
             'designation', 'department', 'phone_number', 'gender', 'date_of_birth', 'address',
             'employee_id', 'date_of_joining', 'bank_name', 'account_number', 'ifsc_code', 'branch_name',
             'aadhaar_number', 'pan_number', 'marital_status', 'nationality', 'blood_group', 
@@ -139,12 +140,48 @@ class HolidaySerializer(serializers.ModelSerializer):
         model = Holiday
         fields = ['id', 'name', 'date', 'description', 'created_at']
 
+class AppreciationCommentSerializer(serializers.ModelSerializer):
+    author_username = serializers.CharField(source='author.username', read_only=True)
+    class Meta:
+        model = AppreciationComment
+        fields = ['id', 'appreciation', 'author', 'author_username', 'text', 'created_at']
+
 class AppreciationSerializer(serializers.ModelSerializer):
     sender_username = serializers.CharField(source='sender.username', read_only=True)
     recipient_username = serializers.CharField(source='recipient.username', read_only=True)
+    comments = AppreciationCommentSerializer(many=True, read_only=True)
     class Meta:
         model = Appreciation
-        fields = ['id', 'sender', 'sender_username', 'recipient', 'recipient_username', 'title', 'description', 'amount', 'created_at']
+        fields = ['id', 'sender', 'sender_username', 'recipient', 'recipient_username', 'title', 'description', 'amount', 'created_at', 'comments']
+
+class ThanksCommentSerializer(serializers.ModelSerializer):
+    author_username = serializers.CharField(source='author.username', read_only=True)
+    author_name = serializers.SerializerMethodField()
+    class Meta:
+        model = ThanksComment
+        fields = ['id', 'thanks', 'author', 'author_username', 'author_name', 'text', 'created_at']
+    def get_author_name(self, obj):
+        name = f"{obj.author.first_name} {obj.author.last_name}".strip()
+        if name: return name
+        return obj.author.username.split('@')[0].capitalize() if '@' in obj.author.username else obj.author.username
+
+class ThanksSerializer(serializers.ModelSerializer):
+    sender_username = serializers.CharField(source='sender.username', read_only=True)
+    recipient_username = serializers.CharField(source='recipient.username', read_only=True)
+    sender_name = serializers.SerializerMethodField()
+    recipient_name = serializers.SerializerMethodField()
+    comments = ThanksCommentSerializer(many=True, read_only=True)
+    class Meta:
+        model = Thanks
+        fields = ['id', 'sender', 'sender_username', 'sender_name', 'recipient', 'recipient_username', 'recipient_name', 'title', 'description', 'created_at', 'comments']
+    def get_sender_name(self, obj):
+        name = f"{obj.sender.first_name} {obj.sender.last_name}".strip()
+        if name: return name
+        return obj.sender.username.split('@')[0].capitalize() if '@' in obj.sender.username else obj.sender.username
+    def get_recipient_name(self, obj):
+        name = f"{obj.recipient.first_name} {obj.recipient.last_name}".strip()
+        if name: return name
+        return obj.recipient.username.split('@')[0].capitalize() if '@' in obj.recipient.username else obj.recipient.username
 
 class LeaveRequestSerializer(serializers.ModelSerializer):
     employee_username = serializers.CharField(source='employee.username', read_only=True)

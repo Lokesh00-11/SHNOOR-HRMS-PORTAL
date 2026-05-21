@@ -1,12 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { get, post } from '../../../services/api';
 
+const ALL_CURRENCIES = (() => {
+    try {
+        const codes = Intl.supportedValuesOf('currency');
+        const displayNames = new Intl.DisplayNames(['en'], { type: 'currency' });
+
+        return codes.map(code => {
+            const name = displayNames.of(code);
+            const parts = new Intl.NumberFormat('en', { style: 'currency', currency: code }).formatToParts(0);
+            const symbol = parts.find(p => p.type === 'currency')?.value || '';
+            return { code, label: `${name} ${symbol !== code ? symbol : ''}`.trim() };
+        });
+    } catch (e) {
+        return [
+            { code: 'INR', label: 'Indian Rupee ₹' },
+            { code: 'USD', label: 'United States Dollar $' },
+            { code: 'EUR', label: 'Euro €' },
+            { code: 'GBP', label: 'British Pound £' }
+        ];
+    }
+})();
+
 const Expenses = () => {
     const [expenses, setExpenses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [filters, setFilters] = useState({ search: '', status: 'ALL', payment: 'ALL', startDate: '', endDate: '' });
-    const [formData, setFormData] = useState({ title: '', category: 'Travel', amount: '', description: '', receipt: null });
+    const [formData, setFormData] = useState({ title: '', category: 'Travel', amount: '', currency: 'INR', description: '', receipt: null });
 
     const fetchExpenses = async () => {
         try {
@@ -31,6 +52,7 @@ const Expenses = () => {
             formDataToSubmit.append('title', formData.title);
             formDataToSubmit.append('category', formData.category);
             formDataToSubmit.append('amount', formData.amount);
+            formDataToSubmit.append('currency', formData.currency);
             formDataToSubmit.append('description', formData.description);
             formDataToSubmit.append('status', isDraft ? 'DRAFT' : 'PENDING');
             if (formData.receipt) {
@@ -41,19 +63,19 @@ const Expenses = () => {
             alert(`Expense ${isDraft ? 'saved as draft' : 'submitted'} successfully!`);
             setIsModalOpen(false);
             fetchExpenses();
-            setFormData({ title: '', category: 'Travel', amount: '', description: '', receipt: null });
+            setFormData({ title: '', category: 'Travel', amount: '', currency: 'INR', description: '', receipt: null });
         } catch (err) {
             alert('Failed to submit expense: ' + err.message);
         }
     };
 
     const filteredExpenses = expenses.filter(exp => {
-        const matchesSearch = exp.title?.toLowerCase().includes(filters.search.toLowerCase()) || 
-                             exp.description?.toLowerCase().includes(filters.search.toLowerCase());
+        const matchesSearch = exp.title?.toLowerCase().includes(filters.search.toLowerCase()) ||
+            exp.description?.toLowerCase().includes(filters.search.toLowerCase());
         const matchesStatus = filters.status === 'ALL' || exp.status?.toUpperCase() === filters.status;
         const matchesPayment = filters.payment === 'ALL' || exp.payment_status?.toUpperCase() === filters.payment;
         const matchesDate = (!filters.startDate || new Date(exp.date) >= new Date(filters.startDate)) &&
-                           (!filters.endDate || new Date(exp.date) <= new Date(filters.endDate));
+            (!filters.endDate || new Date(exp.date) <= new Date(filters.endDate));
         return matchesSearch && matchesStatus && matchesPayment && matchesDate;
     });
 
@@ -96,16 +118,24 @@ const Expenses = () => {
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
                     <div style={{ flex: 2, minWidth: '200px' }}>
                         <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Search</label>
-                        <input type="text" className="form-control" placeholder="Search claims..." value={filters.search} onChange={e => setFilters({...filters, search: e.target.value})} style={{ width: '100%', background: 'var(--bg-secondary)', color: 'var(--text-main)', border: '1px solid var(--border-subtle)', padding: '0.75rem', borderRadius: '8px' }} />
+                        <input type="text" className="form-control" placeholder="Search claims..." value={filters.search} onChange={e => setFilters({ ...filters, search: e.target.value })} style={{ width: '100%', background: 'var(--bg-secondary)', color: 'var(--text-main)', border: '1px solid var(--border-subtle)', padding: '0.75rem', borderRadius: '8px' }} />
                     </div>
                     <div style={{ flex: 1 }}>
                         <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Status</label>
-                        <select className="form-control" value={filters.status} onChange={e => setFilters({...filters, status: e.target.value})} style={{ width: '100%', background: 'var(--bg-secondary)', color: 'var(--text-main)', border: '1px solid var(--border-subtle)', padding: '0.75rem', borderRadius: '8px' }}>
+                        <select className="form-control" value={filters.status} onChange={e => setFilters({ ...filters, status: e.target.value })} style={{ width: '100%', background: 'var(--bg-secondary)', color: 'var(--text-main)', border: '1px solid var(--border-subtle)', padding: '0.75rem', borderRadius: '8px' }}>
                             <option value="ALL">All Statuses</option>
                             <option value="PENDING">Pending</option>
                             <option value="APPROVED">Approved</option>
                             <option value="REJECTED">Rejected</option>
                             <option value="DRAFT">Draft</option>
+                        </select>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Payment</label>
+                        <select className="form-control" value={filters.payment} onChange={e => setFilters({ ...filters, payment: e.target.value })} style={{ width: '100%', background: 'var(--bg-secondary)', color: 'var(--text-main)', border: '1px solid var(--border-subtle)', padding: '0.75rem', borderRadius: '8px' }}>
+                            <option value="ALL">All Payments</option>
+                            <option value="PAID">Paid</option>
+                            <option value="UNPAID">Not Paid</option>
                         </select>
                     </div>
                     <button className="btn btn-ghost" onClick={() => setFilters({ search: '', status: 'ALL', payment: 'ALL', startDate: '', endDate: '' })} style={{ height: '44px' }}>Reset</button>
@@ -132,10 +162,10 @@ const Expenses = () => {
                             <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>No expense claims found.</td></tr>
                         ) : filteredExpenses.map(exp => (
                             <tr key={exp.id}>
-                                <td>{exp.date}</td>
-                                <td><strong>{exp.title}</strong><br/><small style={{ color: 'var(--text-muted)' }}>{exp.description}</small></td>
+                                <td>{(exp.date || exp.created_at || '').split(' ')[0].split('T')[0] || new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}</td>
+                                <td><strong>{exp.title}</strong><br /><small style={{ color: 'var(--text-muted)' }}>{exp.description}</small></td>
                                 <td>{exp.category}</td>
-                                <td>₹{parseFloat(exp.amount).toFixed(2)}</td>
+                                <td>{exp.currency || 'INR'} {parseFloat(exp.amount).toFixed(2)}</td>
                                 <td>
                                     <span className={`status-badge ${exp.status?.toLowerCase()}`}>
                                         {exp.status}
@@ -154,20 +184,20 @@ const Expenses = () => {
             {/* Add Expense Modal */}
             {isModalOpen && (
                 <div className="modal-overlay" style={{ display: 'flex', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(5px)', zIndex: 1000, alignItems: 'center', justifySelf: 'stretch', justifyContent: 'center', padding: '1rem' }}>
-                    <div className="glass-panel" style={{ width: '100%', maxWidth: '600px', padding: '2rem' }}>
-                        <div style={{ display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                            <h3 className="gradient-text"><i className="fa-solid fa-receipt"></i> Submit Expense Claim</h3>
-                            <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-main)', fontSize: '1.5rem', cursor: 'pointer' }}>&times;</button>
+                    <div style={{ width: '100%', maxWidth: '600px', padding: '2rem', background: '#ffffff', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <h3 style={{ margin: 0, color: '#1e3a8a', fontSize: '1.5rem', fontWeight: 'bold' }}><i className="fa-solid fa-receipt"></i> Submit Expense Claim</h3>
+                            <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: '1.5rem', cursor: 'pointer' }}>&times;</button>
                         </div>
                         <form onSubmit={(e) => handleSubmit(e)}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
-                                <div className="form-group">
-                                    <label>Title/Merchant</label>
-                                    <input type="text" className="form-control" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="e.g. Uber Ride" style={{ width: '100%', background: 'var(--bg-secondary)', color: 'var(--text-main)', border: '1px solid var(--border-subtle)', padding: '0.75rem', borderRadius: '8px' }} />
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#374151', fontWeight: 600, fontSize: '0.9rem' }}>Title/Merchant</label>
+                                    <input type="text" required value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} placeholder="e.g. Uber Ride" style={{ width: '100%', background: '#f9fafb', color: '#111827', border: '1px solid #d1d5db', padding: '0.75rem', borderRadius: '8px', boxSizing: 'border-box' }} />
                                 </div>
-                                <div className="form-group">
-                                    <label>Category</label>
-                                    <select className="form-control" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} style={{ width: '100%', background: 'var(--bg-secondary)', color: 'var(--text-main)', border: '1px solid var(--border-subtle)', padding: '0.75rem', borderRadius: '8px' }}>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#374151', fontWeight: 600, fontSize: '0.9rem' }}>Category</label>
+                                    <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} style={{ width: '100%', background: '#f9fafb', color: '#111827', border: '1px solid #d1d5db', padding: '0.75rem', borderRadius: '8px', boxSizing: 'border-box' }}>
                                         <option value="Travel">Travel</option>
                                         <option value="Meals">Meals</option>
                                         <option value="Supplies">Supplies</option>
@@ -176,29 +206,36 @@ const Expenses = () => {
                                     </select>
                                 </div>
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
-                                <div className="form-group">
-                                    <label>Amount (₹)</label>
-                                    <input type="number" step="0.01" className="form-control" required value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} placeholder="0.00" style={{ width: '100%', background: 'var(--bg-secondary)', color: 'var(--text-main)', border: '1px solid var(--border-subtle)', padding: '0.75rem', borderRadius: '8px' }} />
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#374151', fontWeight: 600, fontSize: '0.9rem' }}>Currency</label>
+                                    <select value={formData.currency} onChange={e => setFormData({ ...formData, currency: e.target.value })} style={{ width: '100%', background: '#f9fafb', color: '#111827', border: '1px solid #d1d5db', padding: '0.75rem', borderRadius: '8px', boxSizing: 'border-box' }}>
+                                        {ALL_CURRENCIES.map(c => (
+                                            <option key={c.code} value={c.code}>{c.label}</option>
+                                        ))}
+                                    </select>
                                 </div>
-                                <div className="form-group">
-                                    <label>Receipt File</label>
-                                    <input 
-                                        type="file" 
-                                        className="form-control" 
-                                        onChange={e => setFormData({...formData, receipt: e.target.files[0]})}
-                                        style={{ width: '100%', background: 'var(--bg-secondary)', color: 'var(--text-main)', border: '1px solid var(--border-subtle)', padding: '0.5rem', borderRadius: '8px' }} 
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#374151', fontWeight: 600, fontSize: '0.9rem' }}>Amount</label>
+                                    <input type="number" step="0.01" required value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} placeholder="0.00" style={{ width: '100%', background: '#f9fafb', color: '#111827', border: '1px solid #d1d5db', padding: '0.75rem', borderRadius: '8px', boxSizing: 'border-box' }} />
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#374151', fontWeight: 600, fontSize: '0.9rem' }}>Receipt File</label>
+                                    <input
+                                        type="file"
+                                        onChange={e => setFormData({ ...formData, receipt: e.target.files[0] })}
+                                        style={{ width: '100%', background: '#f9fafb', color: '#111827', border: '1px solid #d1d5db', padding: '0.55rem', borderRadius: '8px', boxSizing: 'border-box' }}
                                     />
                                 </div>
                             </div>
-                            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                                <label>Description</label>
-                                <textarea className="form-control" rows="3" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Provide extra details..." style={{ width: '100%', background: 'var(--bg-secondary)', color: 'var(--text-main)', border: '1px solid var(--border-subtle)', padding: '0.75rem', borderRadius: '8px' }}></textarea>
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#374151', fontWeight: 600, fontSize: '0.9rem' }}>Description</label>
+                                <textarea rows="3" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="Provide extra details..." style={{ width: '100%', background: '#f9fafb', color: '#111827', border: '1px solid #d1d5db', padding: '0.75rem', borderRadius: '8px', boxSizing: 'border-box', resize: 'vertical' }}></textarea>
                             </div>
-                            <div style={{ display: 'flex', justifySelf: 'stretch', justifyContent: 'flex-end', gap: '1rem' }}>
-                                <button type="button" className="btn btn-ghost" onClick={() => setIsModalOpen(false)}>Cancel</button>
-                                <button type="button" className="btn btn-ghost" onClick={(e) => handleSubmit(e, true)}>Save Draft</button>
-                                <button type="submit" className="btn btn-primary">Submit Claim</button>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', borderTop: '1px solid #e5e7eb', paddingTop: '1.5rem' }}>
+                                <button type="button" onClick={() => setIsModalOpen(false)} style={{ padding: '0.6rem 1.5rem', background: '#ffffff', border: '1px solid #d1d5db', color: '#374151', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
+                                <button type="button" onClick={(e) => handleSubmit(e, true)} style={{ padding: '0.6rem 1.5rem', background: '#e0f2fe', border: '1px solid #bae6fd', color: '#0369a1', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Save Draft</button>
+                                <button type="submit" className="btn btn-primary" style={{ padding: '0.6rem 1.5rem', borderRadius: '8px' }}>Submit Claim</button>
                             </div>
                         </form>
                     </div>

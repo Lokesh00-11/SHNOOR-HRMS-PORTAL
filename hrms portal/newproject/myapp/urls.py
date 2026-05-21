@@ -3,7 +3,7 @@ from .views import (
     LoginView, AdminStatsView, CompanyListView, CompanyDetailView, AdminCompanyCreateView,
     SubscriptionPlanListView, SubscriptionPlanDetailView, TransactionListView, UserManagementView, UserDetailView, SuperAdminListView,
     SupportQueryView, SupportQueryDetailView, SupportQueryUnreadCountView, ManagerEmployeeListView,
-    HolidayView, AppreciationView, LeaveRequestView, LeaveRequestDetailView,
+    HolidayView, AppreciationView, AppreciationCommentView, ThanksView, ThanksCommentView, LeaveRequestView, LeaveRequestDetailView,
     CompanyPolicyView, CompanyPolicyDetailView, PayrollView, ManagerPaySingleEmployeeView,
     OffboardingView, OffboardingDetailView, EmployeeReportView,
     LetterHeadView, LetterHeadDetailView, UserProfileView, AdminSettingsView,
@@ -22,7 +22,8 @@ from .views import (
     SystemDataSetupView, PendingLeavesCountView, MarkNotificationsReadView,
     EmployeeExpenseListView, TeamLeaderExpenseListView, TeamLeaderExpenseUpdateView,
     ManagerExpenseListView, ManagerExpenseApproveView, ManagerExpensePayView,
-    DownloadFileView, EmployeeQueriesView, ManagerQueriesView, TeamLeaderQueriesView
+    DownloadFileView, EmployeeQueriesView, ManagerQueriesView, TeamLeaderQueriesView,
+    BadgeCountsView, MarkBadgeReadView
 )
 
 urlpatterns = [
@@ -31,6 +32,8 @@ urlpatterns = [
     path('api/notifications/', NotificationView.as_view(), name='notifications'),
     path('api/notifications/mark-read/', MarkNotificationsReadView.as_view(), name='mark_notifications_read'),
     path('api/notifications/mark-all-read/', MarkNotificationsReadView.as_view(), {'mark_all': True}, name='mark_all_notifications_read'),
+    path('api/badges/counts/', BadgeCountsView.as_view(), name='badge_counts'),
+    path('api/badges/mark-read/', MarkBadgeReadView.as_view(), name='mark_badge_read'),
     path('api/auth/login/', LoginView.as_view(), name='login'),
     path('api/manager/profile/', ManagerProfileView.as_view(), name='manager_profile'),
     path('api/manager/profile/update/', ManagerProfileUpdateView.as_view(), name='manager_profile_update'),
@@ -54,6 +57,10 @@ urlpatterns = [
     path('api/manager/employees/', ManagerEmployeeListView.as_view(), name='manager_employees'),
     path('api/manager/holidays/', HolidayView.as_view(), name='holidays'),
     path('api/manager/appreciations/', AppreciationView.as_view(), name='appreciations'),
+    path('api/appreciations/<int:appreciation_id>/comments/', AppreciationCommentView.as_view(), name='appreciation_comments'),
+    path('api/manager/thanks/', ThanksView.as_view(), name='thanks'),
+    path('api/employee/thanks/', ThanksView.as_view(), name='employee_thanks'),
+    path('api/thanks/<int:thanks_id>/comments/', ThanksCommentView.as_view(), name='thanks_comments'),
     path('api/manager/leaves/', LeaveRequestView.as_view(), name='manager_leaves'),
     path('api/manager/settings/', UserProfileView.as_view(), name='manager_settings'),
     path('api/manager/offboardings/', OffboardingView.as_view(), name='offboardings'),

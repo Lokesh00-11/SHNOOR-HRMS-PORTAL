@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useBadges } from '../../context/BadgeContext';
 
 const Sidebar = ({ currentView, setCurrentView }) => {
+    const { badgeCounts, markAsRead } = useBadges();
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
     useEffect(() => {
@@ -46,10 +48,23 @@ const Sidebar = ({ currentView, setCurrentView }) => {
                     <div
                         key={item.id}
                         className={`nav-item ${currentView === item.id ? 'active' : ''}`}
-                        onClick={() => setCurrentView(item.id)}
-                        style={{ cursor: 'pointer' }}
+                        onClick={() => {
+                            setCurrentView(item.id);
+                            if (['expenses', 'queries', 'tasks', 'notifications'].includes(item.id)) {
+                                markAsRead(item.id);
+                            }
+                        }}
+                        style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                     >
-                        <i className={`fa-solid ${item.icon}`}></i> {item.label}
+                        <div><i className={`fa-solid ${item.icon}`}></i> {item.label}</div>
+                        {badgeCounts[item.id] > 0 && (
+                            <span style={{
+                                background: '#ef4444', color: 'white', padding: '2px 8px', 
+                                borderRadius: '12px', fontSize: '0.7rem', fontWeight: 'bold'
+                            }}>
+                                {badgeCounts[item.id]}
+                            </span>
+                        )}
                     </div>
                 ))}
             </div>

@@ -75,7 +75,7 @@ export async function put(endpoint, data) {
         if (response.status === 403 && errorData.subscription_blocked) {
             window.dispatchEvent(new CustomEvent('subscription-blocked', { detail: errorData }));
         }
-        throw new Error(errorData.message || `PUT request failed: ${response.statusText}`);
+        throw new Error(errorData.message || (Object.keys(errorData).length > 0 ? JSON.stringify(errorData) : `PUT request failed: ${response.statusText}`));
     }
     return response.json();
 }

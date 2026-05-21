@@ -164,6 +164,34 @@ class Appreciation(models.Model):
     def __str__(self):
         return f"{self.title} for {self.recipient.username}"
 
+class AppreciationComment(models.Model):
+    appreciation = models.ForeignKey(Appreciation, on_delete=models.CASCADE, related_name='comments')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appreciation_comments')
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Comment by {self.author.username} on {self.appreciation}"
+
+class Thanks(models.Model):
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_thanks')
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_thanks')
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Thanks: {self.title} for {self.recipient.username}"
+
+class ThanksComment(models.Model):
+    thanks = models.ForeignKey(Thanks, on_delete=models.CASCADE, related_name='comments')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='thanks_comments')
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Comment by {self.author.username} on {self.thanks}"
+
 class LeaveRequest(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -375,6 +403,7 @@ class Expense(models.Model):
     title = models.CharField(max_length=255, default='Expense Claim')
     category = models.CharField(max_length=100)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=10, default='INR')
     description = models.TextField(blank=True, null=True)
     receipt = models.FileField(upload_to=expense_receipt_upload_path, blank=True, null=True)
     receipt_url = models.URLField(max_length=1000, blank=True, null=True)
@@ -596,6 +625,7 @@ class Notification(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_notifications')
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
     target_role = models.CharField(max_length=20, choices=ROLE_CHOICES, null=True, blank=True)
+    notification_type = models.CharField(max_length=50, default='general')
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 

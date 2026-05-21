@@ -52,7 +52,22 @@ const Dashboard = () => {
         return { text: 'Clocked Out', color: 'var(--primary-color)' };
     };
 
-    const nextHoliday = holidays.length > 0 ? holidays.filter(h => new Date(h.date) >= new Date())[0] : null;
+    const parseDate = (dStr) => {
+        if (!dStr) return '';
+        const parts = dStr.split('-');
+        if (parts.length === 3 && parts[0].length === 2) return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        return dStr;
+    };
+
+    const nextHoliday = holidays.length > 0 
+        ? holidays
+            .filter(h => {
+                const today = new Date();
+                const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+                return parseDate(h.date) >= todayStr;
+            })
+            .sort((a, b) => parseDate(a.date).localeCompare(parseDate(b.date)))[0]
+        : null;
     const status = getStatusText();
     const pendingExpenses = expenses.filter(e => e.status?.toLowerCase() === 'pending');
     const totalPendingAmount = pendingExpenses.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);

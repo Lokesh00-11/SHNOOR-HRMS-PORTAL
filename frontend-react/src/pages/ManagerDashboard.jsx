@@ -6,6 +6,7 @@ import ManageProfiles from '../components/Manager/Views/ManageProfiles';
 import Attendance from '../components/Manager/Views/Attendance';
 import Leaves from '../components/Manager/Views/Leaves';
 import Tasks from '../components/Manager/Views/Tasks';
+import Thanks from '../components/Manager/Views/Thanks';
 import Documents from '../components/Manager/Views/Documents';
 import Profile from '../components/Manager/Views/Profile';
 import Payroll from '../components/Manager/Views/Payroll';
@@ -46,6 +47,8 @@ const ManagerDashboard = () => {
                 return <Leaves currentMode={currentMode} />;
             case 'tasks':
                 return <Tasks currentMode={currentMode} />;
+            case 'thanks':
+                return <Thanks currentMode={currentMode} />;
             case 'documents':
                 return <Documents />;
             case 'profile':

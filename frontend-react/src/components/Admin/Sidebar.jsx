@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-// Note: You may want to use a Link component if you switch to react-router-dom later.
-// For now, we are using state-based navigation as requested.
+import { useBadges } from '../../context/BadgeContext';
 
 const Sidebar = ({ currentView, setCurrentView }) => {
+    const { badgeCounts, markAsRead } = useBadges();
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
     useEffect(() => {
@@ -38,10 +38,23 @@ const Sidebar = ({ currentView, setCurrentView }) => {
                 <div 
                     key={item.id}
                     className={`nav-item ${currentView === item.id ? 'active' : ''}`}
-                    onClick={() => setCurrentView(item.id)}
-                    style={{ cursor: 'pointer' }}
+                    onClick={() => {
+                        setCurrentView(item.id);
+                        if (['emails', 'notifications', 'transactions'].includes(item.id)) {
+                            markAsRead(item.id === 'emails' ? 'queries' : item.id);
+                        }
+                    }}
+                    style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                 >
-                    <i className={`fa-solid ${item.icon}`}></i> {item.label}
+                    <div><i className={`fa-solid ${item.icon}`}></i> {item.label}</div>
+                    {((item.id === 'emails' && badgeCounts.queries > 0) || (item.id === 'notifications' && badgeCounts.notifications > 0) || (item.id === 'transactions' && badgeCounts.transactions > 0)) && (
+                        <span style={{
+                            background: '#ef4444', color: 'white', padding: '2px 8px', 
+                            borderRadius: '12px', fontSize: '0.7rem', fontWeight: 'bold'
+                        }}>
+                            {item.id === 'emails' ? badgeCounts.queries : (item.id === 'transactions' ? badgeCounts.transactions : badgeCounts.notifications)}
+                        </span>
+                    )}
                 </div>
             ))}
             

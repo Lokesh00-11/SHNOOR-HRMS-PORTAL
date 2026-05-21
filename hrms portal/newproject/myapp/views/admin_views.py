@@ -163,7 +163,7 @@ class AdminSettingsView(APIView):
 class AllEmployeeProfilesView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
-        if request.user.role.lower() not in ['manager', 'admin', 'super_admin']:
+        if request.user.role.lower() not in ['employee', 'team_leader', 'manager', 'admin', 'super_admin']:
             return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
         employees = Employee.objects.select_related('user').all().order_by('user__first_name')
         serializer = EmployeeProfileSerializer(employees, many=True)

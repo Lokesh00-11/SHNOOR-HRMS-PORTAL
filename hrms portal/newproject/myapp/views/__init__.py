@@ -38,14 +38,15 @@ from .document_views import (
 )
 from .notification_views import (
     NotificationView, MarkNotificationsReadView, UnreadNotificationCountView,
-    EmployeeNotificationView
+    EmployeeNotificationView, BadgeCountsView, MarkBadgeReadView
 )
 from .off_views import (
     HolidayView, AssetView, OrgChartView, OrgChartDetailView,
     SupportQueryView, SupportQueryDetailView, SupportQueryUnreadCountView,
     OffboardingView, OffboardingDetailView, CalendarDataView
 )
-from .appreciation_views import AppreciationView
+from .appreciation_views import AppreciationView, AppreciationCommentView
+from .thanks_views import ThanksView, ThanksCommentView
 from .expense_views import (
     EmployeeExpenseListView, TeamLeaderExpenseListView, TeamLeaderExpenseUpdateView,
     ManagerExpenseListView, ManagerExpenseApproveView, ManagerExpensePayView

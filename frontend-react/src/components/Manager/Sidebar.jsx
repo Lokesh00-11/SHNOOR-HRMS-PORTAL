@@ -4,6 +4,7 @@ import { useTheme } from '../../context/ThemeContext';
 
 const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) => {
     const { theme } = useTheme();
+    
     // visible hk
     const menuItems = [
         { id: 'dashboard', label: 'Dashboard', icon: 'fa-chart-pie', visibleFor: ['manager', 'self'] },
@@ -22,6 +23,7 @@ const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) =
         { id: 'orgchart', label: 'Org Chart', icon: 'fa-sitemap', visibleFor: ['manager', 'self'] },
         { id: 'planner', label: 'Planner', icon: 'fa-calendar-days', visibleFor: ['manager', 'self'] },
         { id: 'notifications', label: 'Notifications', icon: 'fa-bell', visibleFor: ['manager', 'self'] },
+        { id: 'settings', label: 'Settings', icon: 'fa-gear', visibleFor: ['manager', 'self'] },
     ];
 
     const handleLogout = () => {
@@ -88,22 +90,7 @@ const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) =
                 ))}
             </div>
 
-            {/* Theme Mode Switch */}
-            <div className="sidebar-theme-item" style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '0.75rem 1rem',
-                margin: '0.5rem 0.75rem',
-                borderRadius: '8px',
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid var(--glass-border)'
-            }}>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <i className="fa-solid fa-circle-half-stroke" style={{ color: 'var(--primary-color)' }}></i> Theme Mode
-                </span>
-                <ThemeToggle />
-            </div>
+
 
             <div style={{ padding: '0 0.75rem 1rem' }}>
                 <button 

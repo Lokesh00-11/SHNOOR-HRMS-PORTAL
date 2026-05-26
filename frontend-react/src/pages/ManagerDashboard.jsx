@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Manager/Sidebar';
+import ThemeToggle from '../components/Common/ThemeToggle';
 import Dashboard from '../components/Manager/Views/Dashboard';
 import Employees from '../components/Manager/Views/Employees';
 import ManageProfiles from '../components/Manager/Views/ManageProfiles';
@@ -16,6 +17,7 @@ import LetterHeads from '../components/Manager/Views/LetterHeads';
 import OrgChart from '../components/Manager/Views/OrgChart';
 import Notifications from '../components/Manager/Views/Notifications';
 import PlannerPage from '../components/Planner/PlannerPage';
+import Settings from '../components/Manager/Views/Settings';
 
 import '../styles/admin.css';
 
@@ -64,6 +66,8 @@ const ManagerDashboard = () => {
                 return <PlannerPage role={currentMode} />;
             case 'notifications':
                 return <Notifications currentMode={currentMode} />;
+            case 'settings':
+                return <Settings />;
             default:
                 return <Dashboard currentMode={currentMode} />;
         }
@@ -77,7 +81,15 @@ const ManagerDashboard = () => {
                 currentMode={currentMode} 
                 setCurrentMode={setCurrentMode} 
             />
-            <main className="main-content" style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>
+            <main className="main-content" style={{ flex: 1, padding: '2rem', overflowY: 'auto', position: 'relative' }}>
+                <div className="dashboard-theme-toggle-container" style={{
+                    position: 'absolute',
+                    top: '2rem',
+                    right: '3rem',
+                    zIndex: 100
+                }}>
+                    <ThemeToggle />
+                </div>
                 {renderContent()}
             </main>
         </div>

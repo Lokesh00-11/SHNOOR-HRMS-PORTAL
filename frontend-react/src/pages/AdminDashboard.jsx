@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import Sidebar from '../components/Admin/Sidebar';
+import ThemeToggle from '../components/Common/ThemeToggle';
 import SystemOverview from '../components/Admin/Views/SystemOverview';
 import Companies from '../components/Admin/Views/Companies';
 import Notifications from '../components/Admin/Views/Notifications';
-import WebsiteSettings from '../components/Admin/Views/WebsiteSettings';
-import AdminSettings from '../components/Admin/Views/AdminSettings';
+import AdminSettingsLayout from '../components/Admin/Views/Settings/AdminSettingsLayout';
 import Subscriptions from '../components/Admin/Views/Subscriptions';
 import Transactions from '../components/Admin/Views/Transactions';
 import OfflineRequests from '../components/Admin/Views/OfflineRequests';
@@ -26,10 +26,8 @@ const AdminDashboard = () => {
                 return <Companies />;
             case 'notifications':
                 return <Notifications />;
-            case 'website':
-                return <WebsiteSettings />;
-            case 'settings':
-                return <AdminSettings />;
+            case 'system_settings':
+                return <AdminSettingsLayout />;
             case 'subscriptions': 
                 return <Subscriptions />;
             case 'transactions': 
@@ -56,7 +54,15 @@ const AdminDashboard = () => {
             
             <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
             
-            <main className="main-content">
+            <main className="main-content" style={{ position: 'relative' }}>
+                <div className="dashboard-theme-toggle-container" style={{
+                    position: 'absolute',
+                    top: '2rem',
+                    right: '3rem',
+                    zIndex: 100
+                }}>
+                    <ThemeToggle />
+                </div>
                 {renderView()}
             </main>
         </div>

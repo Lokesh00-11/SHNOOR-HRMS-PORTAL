@@ -48,17 +48,17 @@ const Attendance = () => {
         }
     };
 
-    // Custom date & time parser to protect against "Invalid Date" errors
+    //  date & time 
     const parseCustomDateTime = (dateTimeStr) => {
         if (!dateTimeStr || dateTimeStr === '-') return '-';
-        // If it's already a formatted time (like HH:MM:SS / AM/PM), return it
+        
         if (dateTimeStr.includes(':') && !dateTimeStr.includes('-') && !dateTimeStr.includes('/')) {
             return dateTimeStr;
         }
         try {
             const parts = dateTimeStr.split(' ');
             if (parts.length === 2) {
-                // E.g. "DD-MM-YYYY HH:mm:ss"
+               
                 const dateParts = parts[0].split('-');
                 if (dateParts.length === 3) {
                     return `${dateParts[0]}/${dateParts[1]}/${dateParts[2]} ${parts[1]}`;

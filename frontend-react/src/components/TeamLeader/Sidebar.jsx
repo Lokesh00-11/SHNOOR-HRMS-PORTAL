@@ -2,8 +2,9 @@ import React from 'react';
 import ThemeToggle from '../Common/ThemeToggle';
 import { useTheme } from '../../context/ThemeContext';
 
-const Sidebar = ({ currentView, setCurrentView }) => {
+const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) => {
     const { theme } = useTheme();
+    
 
     const menuItems = [
         { id: 'dashboard', label: 'Dashboard', icon: 'fa-chart-pie' },
@@ -12,11 +13,14 @@ const Sidebar = ({ currentView, setCurrentView }) => {
         { id: 'tasks', label: 'Team Tasks', icon: 'fa-list-check' },
         { id: 'performance', label: 'Performance', icon: 'fa-chart-line' },
         { id: 'expenses', label: 'Team Expenses', icon: 'fa-wallet' },
+        { id: 'finance', label: 'Finance', icon: 'fa-file-invoice-dollar' },
+        { id: 'reports', label: 'Reports', icon: 'fa-chart-simple' },
         { id: 'offboarding', label: 'Offboarding', icon: 'fa-user-xmark' },
         { id: 'documents', label: 'Documents', icon: 'fa-folder-open' },
         { id: 'notifications', label: 'Notifications', icon: 'fa-bell' },
         { id: 'profile', label: 'Profile', icon: 'fa-user-gear' },
-        { id: 'planner', label: 'Planner', icon: 'fa-calendar-days' }
+        { id: 'planner', label: 'Planner', icon: 'fa-calendar-days' },
+        { id : 'settings', label: 'Settings', icon: 'fa-gear' }
     ];
 
     const handleLogout = () => {
@@ -30,7 +34,7 @@ const Sidebar = ({ currentView, setCurrentView }) => {
     return (
         <aside className="sidebar">
             <a href="#" className="logo" style={{ textDecoration: 'none', marginBottom: '2rem' }}>
-                <i className="fa-solid fa-users-gear" style={{ color: 'var(--primary)', marginRight: '10px' }}></i> 
+                <i className="fa-solid fa-users" style={{ color: 'var(--primary)', marginRight: '10px' }}></i> 
                 ShnoorHR
             </a>
 
@@ -47,22 +51,7 @@ const Sidebar = ({ currentView, setCurrentView }) => {
                 ))}
             </div>
 
-            {/* Premium Theme Mode Switcher */}
-            <div className="sidebar-theme-item" style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '0.75rem 1rem',
-                margin: '0.5rem 0.75rem',
-                borderRadius: '8px',
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid var(--glass-border)'
-            }}>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <i className="fa-solid fa-circle-half-stroke" style={{ color: 'var(--primary-color)' }}></i> Theme Mode
-                </span>
-                <ThemeToggle />
-            </div>
+
 
             <div style={{ padding: '0 0.75rem 1rem' }}>
                 <button 

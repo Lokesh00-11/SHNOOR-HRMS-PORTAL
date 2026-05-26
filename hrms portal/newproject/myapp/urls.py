@@ -21,11 +21,14 @@ from .views import (
     TeamLeaderProfileView, TeamLeaderProfileUpdateView, TeamLeaderStatsView,
     TeamLeaderTeamMembersView, TeamLeaderAttendanceView, TeamLeaderTasksView, TeamLeaderPerformanceView,
     EmployeeExpenseListView, TeamLeaderExpenseListView, TeamLeaderExpenseUpdateView,
+    TeamLeaderPayrollView,
     ManagerExpenseListView, ManagerExpenseApproveView, ManagerExpensePayView,
     DownloadFileView,
     PlannerMyEventsView, PlannerTeamEventsView, PlannerDepartmentEventsView,
     PlannerAllEventsView, PlannerHolidaysView, PlannerCreateEventView,
-    PlannerApproveEventView, PlannerCalendarFeedView
+    PlannerApproveEventView, PlannerCalendarFeedView,
+    PlannerFiltersView, PlannerLockDayView, PlannerUnlockDayView,
+    PlannerShiftView, PlannerHolidayView, PlannerIcsFeedView
 )
 
 urlpatterns = [
@@ -111,6 +114,7 @@ urlpatterns = [
     path('api/teamleader/attendance/', TeamLeaderAttendanceView.as_view(), name='tl_attendance'),
     path('api/teamleader/tasks/', TeamLeaderTasksView.as_view(), name='tl_tasks'),
     path('api/teamleader/performance/', TeamLeaderPerformanceView.as_view(), name='tl_performance'),
+    path('api/teamleader/payroll/', TeamLeaderPayrollView.as_view(), name='tl_payroll'),
     path('api/download-file/', DownloadFileView.as_view(), name='download_file'),
     
     # Planner URLs
@@ -122,4 +126,10 @@ urlpatterns = [
     path('api/planner/calendar-feed/', PlannerCalendarFeedView.as_view(), name='planner_calendar_feed'),
     path('api/planner/create-event/', PlannerCreateEventView.as_view(), name='planner_create_event'),
     path('api/planner/approve-event/<int:pk>/', PlannerApproveEventView.as_view(), name='planner_approve_event'),
+    path('api/planner/filters/', PlannerFiltersView.as_view(), name='planner_filters'),
+    path('api/planner/lock/', PlannerLockDayView.as_view(), name='planner_lock_day'),
+    path('api/planner/unlock/<int:pk>/', PlannerUnlockDayView.as_view(), name='planner_unlock_day'),
+    path('api/planner/shifts/', PlannerShiftView.as_view(), name='planner_shifts'),
+    path('api/planner/holidays/create/', PlannerHolidayView.as_view(), name='planner_create_holiday'),
+    path('api/planner/ics/<str:token>/', PlannerIcsFeedView.as_view(), name='planner_ics_feed'),
 ]

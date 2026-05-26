@@ -4,10 +4,12 @@
     left: 0;
     width: 100%;
     z-index: 1000;
-    background-color: var(--bg-secondary);
-    border-bottom: 1px solid var(--bg-tertiary);
-    padding: 1rem 0;
-    box-shadow: var(--shadow-sm);
+    background-color: var(--bg-navbar);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.6rem 0;
+    transition: all 0.3s ease;
 }
 
 .navbar .container {
@@ -20,33 +22,45 @@
 }
 
 .logo {
-    font-size: 1.5rem;
+    font-size: 1.15rem;
     font-weight: 800;
     color: var(--primary-color);
     text-decoration: none;
     letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
+
+
 
 .nav-links {
     display: flex;
-    gap: 2.5rem;
+    gap: 2rem;
     align-items: center;
 }
 
 .nav-links a {
     color: var(--text-muted);
     text-decoration: none;
-    transition: color 0.2s ease;
+    transition: color 0.25s ease;
     font-weight: 500;
-    font-size: 0.95rem;
+    font-size: 0.88rem;
+    letter-spacing: -0.1px;
 }
 
 .nav-links a:hover {
-    color: var(--primary-color);
+    color: var(--text-primary);
 }
 
 .nav-actions {
     display: flex;
-    gap: 1rem;
+    gap: 1.25rem;
     align-items: center;
+}
+
+.nav-actions .btn {
+    padding: 0.45rem 1rem;
+    font-size: 0.825rem;
+    border-radius: 6px;
 }

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Sidebar from '../components/Employee/Sidebar';
+import ThemeToggle from '../components/Common/ThemeToggle';
 import Dashboard from '../components/Employee/Views/Dashboard';
 import Attendance from '../components/Employee/Views/Attendance';
 import Tasks from '../components/Employee/Views/Tasks';
@@ -53,7 +54,15 @@ const EmployeeDashboard = () => {
         <div className="admin-layout">
             <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
             
-            <main className="main-content">
+            <main className="main-content" style={{ position: 'relative' }}>
+                <div className="dashboard-theme-toggle-container" style={{
+                    position: 'absolute',
+                    top: '2rem',
+                    right: '3rem',
+                    zIndex: 100
+                }}>
+                    <ThemeToggle />
+                </div>
                 <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
                     {renderView()}
                 </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const PlannerEventModal = ({ isOpen, onClose, onSubmit, eventTypeOptions }) => {
+const PlannerEventModal = ({ isOpen, onClose, onSubmit, eventTypeOptions, selectedEmployeeId, role }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -8,7 +8,8 @@ const PlannerEventModal = ({ isOpen, onClose, onSubmit, eventTypeOptions }) => {
     start_date: '',
     end_date: '',
     visibility: 'Team',
-    color_code: '#172554'
+    color_code: '#172554',
+    employee: selectedEmployeeId || ''
   });
 
   if (!isOpen) return null;
@@ -51,7 +52,9 @@ const PlannerEventModal = ({ isOpen, onClose, onSubmit, eventTypeOptions }) => {
               <option value="Private">Private</option>
               <option value="Team">Team</option>
               <option value="Department">Department</option>
-              <option value="Organization">Organization</option>
+              <option value="Organization">
+                {role === 'manager' ? 'Managed Employees' : 'Organization'}
+              </option>
             </select>
           </div>
           <div className="form-group">

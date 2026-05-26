@@ -11,12 +11,14 @@ from .models import (
     Employee, SupportQuery, Holiday, Appreciation, LeaveRequest,
     CompanyPolicy, Payroll, Offboarding, LetterHead, AdminProfile,
     Asset, Attendance, Expense, Task, CompanyDocument, ManagerProfile, OrgChart, Notification,
-    TeamLeaderProfile, PlannerEvent, PlannerHoliday, PlannerShift
+    TeamLeaderProfile, PlannerEvent, PlannerHoliday, PlannerShift, PlannerLock
 )
-from .serializers import PlannerEventSerializer, PlannerHolidaySerializer, PlannerShiftSerializer
+from .serializers import PlannerEventSerializer, PlannerHolidaySerializer, PlannerShiftSerializer, PlannerLockSerializer
 from .permissions import IsAdmin, IsManager, IsTeamLeader, IsEmployee, IsAdminOrManager
+from .planner_permissions import can_lock_dates, can_approve_events, can_view_employee
 from django.utils import timezone
 from datetime import datetime
+import uuid
 
 class TaskSerializer(serializers.ModelSerializer):
     assigned_to_username = serializers.CharField(source='assigned_to.username', read_only=True)
@@ -1671,6 +1673,45 @@ class EmployeeExpenseView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+def is_date_range_locked(employee, start_date, end_date):
+    """
+    Returns the first active PlannerLock that intersects with start_date to end_date
+    and applies to the given employee.
+    """
+    if isinstance(start_date, str):
+        start_date = datetime.strptime(start_date.split('T')[0], '%Y-%m-%d').date()
+    if isinstance(end_date, str):
+        end_date = datetime.strptime(end_date.split('T')[0], '%Y-%m-%d').date()
+    elif end_date is None:
+        end_date = start_date
+        
+    locks = PlannerLock.objects.filter(
+        is_active=True,
+        start_date__lte=end_date,
+        end_date__gte=start_date
+    )
+    
+    # Check scopes
+    employee_dept = getattr(getattr(employee, 'employee_profile', None), 'department', '')
+    if not employee_dept and employee.role == 'manager':
+        employee_dept = getattr(getattr(employee, 'manager_profile', None), 'department', '')
+    elif not employee_dept and employee.role == 'team_leader':
+        employee_dept = getattr(getattr(employee, 'team_leader_profile', None), 'department', '')
+        
+    employee_tl = getattr(getattr(employee, 'employee_profile', None), 'team_leader', None)
+    
+    for lock in locks:
+        if lock.scope == 'Global':
+            return lock
+        if lock.scope == 'Department' and lock.department == employee_dept:
+            return lock
+        if lock.scope == 'Team' and (lock.locked_by == employee_tl or lock.locked_by == employee):
+            return lock
+        if lock.scope == 'Employee' and lock.affected_employees.filter(id=employee.id).exists():
+            return lock
+            
+    return None
+
 class ManagerLeaveApprovalView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -1685,6 +1726,11 @@ class ManagerLeaveApprovalView(APIView):
 
         try:
             leave = LeaveRequest.objects.get(id=leave_id)
+            if new_status.lower() == 'approved':
+                lock = is_date_range_locked(leave.employee, leave.start_date, leave.end_date)
+                if lock:
+                    return Response({'message': f'Cannot approve leave: dates overlap with lock "{lock.title}"'}, status=status.HTTP_400_BAD_REQUEST)
+                    
             leave.status = new_status.lower()
             leave.save()
             return Response({'message': f'Leave {new_status}'}, status=status.HTTP_200_OK)
@@ -2918,12 +2964,17 @@ class PlannerDepartmentEventsView(APIView):
 
     def get(self, request):
         if request.user.role == 'manager':
-            # Simplified: Assuming manager can see all events for their department, or just all if simplified.
-            # Assuming employee profile has department
-            department = ""
-            if hasattr(request.user, 'manager_profile'):
-                department = request.user.manager_profile.department
-            events = PlannerEvent.objects.filter(employee__employee_profile__department=department).order_by('-start_date')
+            depts = []
+            mgr_dept = getattr(getattr(request.user, 'manager_profile', None), 'department', None)
+            if mgr_dept: depts.append(mgr_dept)
+            emp_dept = getattr(getattr(request.user, 'employee_profile', None), 'department', None)
+            if emp_dept and emp_dept not in depts: depts.append(emp_dept)
+                
+            events = PlannerEvent.objects.filter(
+                Q(employee__employee_profile__department__in=depts) |
+                Q(employee__team_leader_profile__department__in=depts) |
+                Q(department__in=depts)
+            ).order_by('-start_date')
         else:
             events = PlannerEvent.objects.all()
             
@@ -2952,8 +3003,16 @@ class PlannerCreateEventView(APIView):
     def post(self, request):
         serializer = PlannerEventSerializer(data=request.data)
         if serializer.is_valid():
-            # If the user doesn't pass employee, default to themselves so it's not orphaned
             employee = request.user if 'employee' not in serializer.validated_data else serializer.validated_data['employee']
+            
+            event_type = serializer.validated_data.get('event_type')
+            if event_type in ['Leave', 'WFH', 'Absent']:
+                start_date = serializer.validated_data.get('start_date')
+                end_date = serializer.validated_data.get('end_date') or start_date
+                lock = is_date_range_locked(employee, start_date, end_date)
+                if lock:
+                    return Response({'message': f'Cannot request {event_type} on locked dates: {lock.title}'}, status=status.HTTP_400_BAD_REQUEST)
+
             event = serializer.save(created_by=request.user, employee=employee)
             return Response(PlannerEventSerializer(event).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -2967,11 +3026,24 @@ class PlannerApproveEventView(APIView):
         except PlannerEvent.DoesNotExist:
             return Response({'message': 'Event not found'}, status=status.HTTP_404_NOT_FOUND)
             
-        if request.user.role == 'team_leader' and event.employee.employee_profile.team_leader != request.user:
+        if request.user.role == 'team_leader' and getattr(getattr(event.employee, 'employee_profile', None), 'team_leader', None) != request.user:
              return Response({'message': 'Not authorized to approve this event'}, status=status.HTTP_403_FORBIDDEN)
+             
+        if request.user.role == 'manager':
+             mgr_dept = getattr(getattr(request.user, 'manager_profile', None), 'department', None)
+             emp_dept = getattr(getattr(event.employee, 'employee_profile', None), 'department', getattr(getattr(event.employee, 'team_leader_profile', None), 'department', None))
+             if mgr_dept != emp_dept:
+                 return Response({'message': 'Not authorized to approve this event'}, status=status.HTTP_403_FORBIDDEN)
+        new_status = request.data.get('status', 'Approved')
+        is_approved = request.data.get('is_approved', True)
+        if new_status == 'Approved' or is_approved:
+            if event.event_type in ['Leave', 'WFH', 'Absent']:
+                lock = is_date_range_locked(event.employee, event.start_date, event.end_date)
+                if lock:
+                    return Response({'message': f'Cannot approve event on locked dates: {lock.title}'}, status=status.HTTP_400_BAD_REQUEST)
 
-        event.is_approved = request.data.get('is_approved', True)
-        event.status = request.data.get('status', 'Approved')
+        event.is_approved = is_approved
+        event.status = new_status
         event.approved_by = request.user
         event.approved_at = timezone.now()
         event.save()
@@ -2982,9 +3054,423 @@ class PlannerCalendarFeedView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     
     def get(self, request):
-        # A combined feed of all events relevant to the user for the custom calendar
         user = request.user
         holidays = PlannerHoliday.objects.all()
+        
+        filter_office = request.GET.get('office')
+        filter_department = request.GET.get('department')
+        filter_employee_id = request.GET.get('employee_id')
+        
+        if user.role == 'employee':
+            try:
+                emp_profile = user.employee_profile
+                team_leader = emp_profile.team_leader
+                department = emp_profile.department
+            except:
+                team_leader = None
+                department = None
+            
+            events = PlannerEvent.objects.filter(
+                Q(employee=user) | 
+                Q(created_by=user) |
+                Q(visibility='Organization') |
+                Q(visibility='Department', created_by__manager_profile__department=department) |
+                Q(visibility='Department', created_by__team_leader_profile__department=department) |
+                Q(visibility='Department', created_by__employee_profile__department=department) |
+                Q(visibility='Department', department=department) |
+                Q(visibility='Team', created_by=team_leader) |
+                Q(visibility='Team', employee__employee_profile__team_leader=team_leader)
+            )
+            locks = PlannerLock.objects.filter(is_active=True).filter(
+                Q(scope='Global') |
+                Q(scope='Department', department=department) |
+                Q(scope='Team', locked_by=team_leader) |
+                Q(scope='Employee', affected_employees=user)
+            )
+            shifts = PlannerShift.objects.filter(employee=user)
+            
+        elif user.role == 'team_leader':
+            depts = []
+            tl_dept = getattr(getattr(user, 'team_leader_profile', None), 'department', None)
+            if tl_dept: depts.append(tl_dept)
+            emp_dept = getattr(getattr(user, 'employee_profile', None), 'department', None)
+            if emp_dept and emp_dept not in depts: depts.append(emp_dept)
+                
+            team_members = User.objects.filter(employee_profile__team_leader=user)
+            events = PlannerEvent.objects.filter(
+                Q(employee__in=team_members) | 
+                Q(employee=user) | 
+                Q(created_by=user) | 
+                Q(visibility='Organization') |
+                Q(visibility='Department', created_by__manager_profile__department__in=depts) |
+                Q(visibility='Department', created_by__team_leader_profile__department__in=depts) |
+                Q(visibility='Department', created_by__employee_profile__department__in=depts) |
+                Q(visibility='Department', department__in=depts)
+            )
+            locks = PlannerLock.objects.filter(is_active=True).filter(
+                Q(scope='Global') |
+                Q(scope='Department', department__in=depts) |
+                Q(scope='Team', locked_by=user) |
+                Q(scope='Employee', affected_employees__in=team_members) |
+                Q(scope='Employee', affected_employees=user)
+            )
+            shifts = PlannerShift.objects.filter(Q(employee__in=team_members) | Q(employee=user))
+            
+        elif user.role == 'manager':
+            # Manager sees entire organization to align with ManagerEmployeesView
+            events = PlannerEvent.objects.all()
+            locks = PlannerLock.objects.filter(is_active=True)
+            shifts = PlannerShift.objects.all()
+            
+        else: # admin
+            events = PlannerEvent.objects.all()
+            locks = PlannerLock.objects.filter(is_active=True)
+            shifts = PlannerShift.objects.all()
+
+        if filter_office:
+            events = events.filter(employee__location=filter_office)
+            locks = locks.filter(Q(office=filter_office) | Q(scope='Global'))
+            shifts = shifts.filter(employee__location=filter_office)
+            
+        if filter_department:
+            events = events.filter(employee__employee_profile__department=filter_department)
+            locks = locks.filter(Q(department=filter_department) | Q(scope='Global'))
+            shifts = shifts.filter(employee__employee_profile__department=filter_department)
+            
+        if filter_employee_id:
+            try:
+                emp_id = int(filter_employee_id)
+                emp = User.objects.get(id=emp_id)
+                
+                # Fetch employee context
+                emp_dept = None
+                emp_tl = None
+                if hasattr(emp, 'employee_profile'):
+                    emp_dept = emp.employee_profile.department
+                    emp_tl = emp.employee_profile.team_leader
+                elif hasattr(emp, 'team_leader_profile'):
+                    emp_dept = emp.team_leader_profile.department
+                elif hasattr(emp, 'manager_profile'):
+                    emp_dept = emp.manager_profile.department
+
+                events = events.filter(
+                    Q(employee_id=emp_id) |
+                    Q(created_by_id=emp_id) |
+                    Q(visibility='Organization') |
+                    Q(visibility='Department', department=emp_dept) |
+                    Q(visibility='Department', created_by__manager_profile__department=emp_dept) |
+                    Q(visibility='Department', created_by__team_leader_profile__department=emp_dept) |
+                    Q(visibility='Department', created_by__employee_profile__department=emp_dept) |
+                    Q(visibility='Team', created_by=emp_tl) |
+                    Q(visibility='Team', employee__employee_profile__team_leader=emp_tl)
+                )
+                
+                locks = locks.filter(
+                    Q(affected_employees__id=emp_id) |
+                    Q(scope='Global') |
+                    Q(scope='Department', department=emp_dept) |
+                    Q(scope='Team', locked_by=emp_tl)
+                )
+                
+                shifts = shifts.filter(employee_id=emp_id)
+            except Exception:
+                pass
+                
+        events = events.distinct().order_by('-start_date')
+        locks = locks.distinct().order_by('-start_date')
+        shifts = shifts.distinct()
+        
+        events_serializer = PlannerEventSerializer(events, many=True)
+        holidays_serializer = PlannerHolidaySerializer(holidays, many=True)
+        locks_serializer = PlannerLockSerializer(locks, many=True)
+        shifts_serializer = PlannerShiftSerializer(shifts, many=True)
+        
+        return Response({
+            'events': events_serializer.data,
+            'holidays': holidays_serializer.data,
+            'locks': locks_serializer.data,
+            'shifts': shifts_serializer.data,
+            'feed_token': str(user.feed_token) if user.feed_token else ''
+        })
+
+class PlannerFiltersView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        role = user.role.lower() if hasattr(user, 'role') else ''
+        
+        if role in ['admin', 'super_admin']:
+            offices = list(User.objects.exclude(location__isnull=True).exclude(location='').values_list('location', flat=True).distinct())
+            departments = list(Employee.objects.exclude(department__isnull=True).exclude(department='').values_list('department', flat=True).distinct())
+            employees_query = User.objects.filter(is_active=True)
+        elif role == 'manager':
+            # Manager sees entire organization to align with ManagerEmployeesView
+            offices = list(User.objects.exclude(location__isnull=True).exclude(location='').values_list('location', flat=True).distinct())
+            departments = list(Employee.objects.exclude(department__isnull=True).exclude(department='').values_list('department', flat=True).distinct())
+            employees_query = User.objects.filter(is_active=True).filter(Q(employee_profile__isnull=False) | Q(team_leader_profile__isnull=False) | Q(manager_profile__isnull=False)).distinct()
+        elif role == 'team_leader':
+            team_members = User.objects.filter(employee_profile__team_leader=user)
+            offices = list(team_members.exclude(location__isnull=True).exclude(location='').values_list('location', flat=True).distinct())
+            
+            depts = []
+            tl_dept = getattr(getattr(user, 'team_leader_profile', None), 'department', None)
+            if tl_dept: depts.append(tl_dept)
+            emp_dept = getattr(getattr(user, 'employee_profile', None), 'department', None)
+            if emp_dept and emp_dept not in depts: depts.append(emp_dept)
+            
+            departments = depts
+            employees_query = User.objects.filter(is_active=True).filter(Q(employee_profile__team_leader=user) | Q(id=user.id))
+        else: # employee
+            dept = getattr(getattr(user, 'employee_profile', None), 'department', '')
+            offices = [user.location] if user.location else []
+            departments = [dept] if dept else []
+            employees_query = User.objects.filter(id=user.id)
+            
+        employees = []
+        for emp in employees_query:
+            emp_dept = getattr(getattr(emp, 'employee_profile', None), 'department', '')
+            if not emp_dept and emp.role == 'manager':
+                emp_dept = getattr(getattr(emp, 'manager_profile', None), 'department', '')
+            elif not emp_dept and emp.role == 'team_leader':
+                emp_dept = getattr(getattr(emp, 'team_leader_profile', None), 'department', '')
+                
+            employees.append({
+                'id': emp.id,
+                'username': emp.username,
+                'full_name': emp.get_full_name() or emp.username,
+                'office': emp.location or '',
+                'department': emp_dept or ''
+            })
+            
+        return Response({
+            'offices': offices,
+            'departments': departments,
+            'employees': employees
+        })
+
+class PlannerLockDayView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        user = request.user
+        data = request.data
+        title = data.get('title', '')
+        reason = data.get('reason', '')
+        start_date_str = data.get('start_date')
+        end_date_str = data.get('end_date')
+        scope = data.get('scope', 'Global')
+        department = data.get('department')
+        office = data.get('office')
+        affected_employee_ids = data.get('affected_employees', [])
+        
+        if not title or not start_date_str or not end_date_str:
+            return Response({'message': 'Title, start_date and end_date are required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        role = user.role.lower() if hasattr(user, 'role') else ''
+        if role == 'manager' and scope == 'Global':
+            # Resolve "Global" for manager to all employees under their purview
+            scope = 'Employee'
+            affected_employee_ids = list(User.objects.filter(is_active=True).filter(Q(employee_profile__isnull=False) | Q(team_leader_profile__isnull=False) | Q(manager_profile__isnull=False)).values_list('id', flat=True))
+            
+        try:
+            start_date = datetime.strptime(start_date_str.split('T')[0], '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date_str.split('T')[0], '%Y-%m-%d').date()
+        except ValueError:
+            return Response({'message': 'Invalid date format. Use YYYY-MM-DD'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if start_date > end_date:
+            return Response({'message': 'start_date cannot be after end_date'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if not can_lock_dates(user, scope=scope, department=department, affected_employees=affected_employee_ids):
+            return Response({'message': 'You do not have permission to lock dates under this scope or target'}, status=status.HTTP_403_FORBIDDEN)
+            
+        if scope != 'Global':
+            overlap_query = Q(is_active=True) & Q(start_date__lte=end_date) & Q(end_date__gte=start_date)
+            if scope == 'Department':
+                overlap_query &= Q(scope='Department') & Q(department=department)
+            elif scope == 'Team':
+                overlap_query &= Q(scope='Team') & Q(locked_by=user)
+            elif scope == 'Employee':
+                overlap_query &= Q(scope='Employee') & Q(affected_employees__id__in=affected_employee_ids)
+                
+            conflicting_locks = PlannerLock.objects.filter(overlap_query).distinct()
+            if conflicting_locks.exists():
+                conflict_names = ", ".join([l.title for l in conflicting_locks])
+                return Response({'message': f'Cannot lock: overlap with existing active locks: {conflict_names}'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        lock = PlannerLock.objects.create(
+            locked_by=user,
+            title=title,
+            reason=reason,
+            start_date=start_date,
+            end_date=end_date,
+            scope=scope,
+            department=department,
+            office=office,
+            is_active=True
+        )
+        
+        if affected_employee_ids:
+            lock.affected_employees.set(User.objects.filter(id__in=affected_employee_ids))
+            
+        serializer = PlannerLockSerializer(lock)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class PlannerUnlockDayView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def delete(self, request, pk):
+        try:
+            lock = PlannerLock.objects.get(pk=pk)
+        except PlannerLock.DoesNotExist:
+            return Response({'message': 'Lock not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+        user = request.user
+        role = user.role.lower() if hasattr(user, 'role') else ''
+        
+        if role not in ['admin', 'super_admin'] and lock.locked_by != user:
+            return Response({'message': 'You do not have permission to unlock this date range'}, status=status.HTTP_403_FORBIDDEN)
+            
+        lock.is_active = False
+        lock.unlocked_at = timezone.now()
+        lock.unlocked_by = user
+        lock.save()
+        
+        return Response({'message': 'Date range unlocked successfully'}, status=status.HTTP_200_OK)
+        
+    def post(self, request, pk):
+        return self.delete(request, pk)
+
+class PlannerShiftView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        role = user.role.lower() if hasattr(user, 'role') else ''
+        if role in ['admin', 'super_admin']:
+            shifts = PlannerShift.objects.all()
+        elif role == 'manager':
+            dept = getattr(getattr(user, 'manager_profile', None), 'department', '')
+            shifts = PlannerShift.objects.filter(employee__employee_profile__department=dept)
+        elif role == 'team_leader':
+            shifts = PlannerShift.objects.filter(Q(employee__employee_profile__team_leader=user) | Q(employee=user))
+        else:
+            shifts = PlannerShift.objects.filter(employee=user)
+        serializer = PlannerShiftSerializer(shifts, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        user = request.user
+        role = user.role.lower() if hasattr(user, 'role') else ''
+        if role not in ['admin', 'super_admin', 'manager', 'team_leader']:
+            return Response({'message': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+            
+        data = request.data
+        employee_id = data.get('employee')
+        try:
+            employee = User.objects.get(id=employee_id)
+        except User.DoesNotExist:
+            return Response({'message': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+        if not can_view_employee(user, employee):
+            return Response({'message': 'Not authorized to assign shift to this employee'}, status=status.HTTP_403_FORBIDDEN)
+            
+        shift_name = data.get('shift_name')
+        start_time_str = data.get('start_time')
+        end_time_str = data.get('end_time')
+        color_code = data.get('color_code', '#f59e0b')
+        recurring_pattern = data.get('recurring_pattern', 'None')
+        rotation_start_date_str = data.get('rotation_start_date')
+        rotation_cycle_days = data.get('rotation_cycle_days', 7)
+        
+        if not shift_name or not start_time_str or not end_time_str:
+            return Response({'message': 'shift_name, start_time and end_time are required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            start_time = datetime.strptime(start_time_str, '%H:%M').time()
+            end_time = datetime.strptime(end_time_str, '%H:%M').time()
+        except ValueError:
+            try:
+                start_time = datetime.strptime(start_time_str, '%H:%M:%S').time()
+                end_time = datetime.strptime(end_time_str, '%H:%M:%S').time()
+            except ValueError:
+                return Response({'message': 'Invalid time format. Use HH:MM or HH:MM:SS'}, status=status.HTTP_400_BAD_REQUEST)
+                
+        rotation_start_date = None
+        if rotation_start_date_str:
+            try:
+                rotation_start_date = datetime.strptime(rotation_start_date_str.split('T')[0], '%Y-%m-%d').date()
+            except ValueError:
+                pass
+                
+        shift, created = PlannerShift.objects.update_or_create(
+            employee=employee,
+            defaults={
+                'shift_name': shift_name,
+                'start_time': start_time,
+                'end_time': end_time,
+                'assigned_by': user,
+                'color_code': color_code,
+                'recurring_pattern': recurring_pattern,
+                'rotation_start_date': rotation_start_date,
+                'rotation_cycle_days': int(rotation_cycle_days)
+            }
+        )
+        
+        return Response(PlannerShiftSerializer(shift).data, status=status.HTTP_201_CREATED)
+
+class PlannerHolidayView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        holidays = PlannerHoliday.objects.all().order_by('holiday_date')
+        serializer = PlannerHolidaySerializer(holidays, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        if request.user.role.lower() not in ['admin', 'super_admin']:
+            return Response({'message': 'Only admins can add company holidays'}, status=status.HTTP_403_FORBIDDEN)
+            
+        data = request.data
+        title = data.get('title')
+        holiday_date_str = data.get('holiday_date')
+        description = data.get('description', '')
+        color_code = data.get('color_code', '#10b981')
+        
+        if not title or not holiday_date_str:
+            return Response({'message': 'title and holiday_date are required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            holiday_date = datetime.strptime(holiday_date_str.split('T')[0], '%Y-%m-%d').date()
+        except ValueError:
+            return Response({'message': 'Invalid date format. Use YYYY-MM-DD'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        holiday = PlannerHoliday.objects.create(
+            title=title,
+            holiday_date=holiday_date,
+            description=description,
+            created_by=request.user,
+            color_code=color_code
+        )
+        
+        return Response(PlannerHolidaySerializer(holiday).data, status=status.HTTP_201_CREATED)
+
+class PlannerIcsFeedView(APIView):
+    permission_classes = [permissions.AllowAny]
+    
+    def get(self, request, token):
+        from django.http import HttpResponse
+        try:
+            user = User.objects.filter(feed_token=token).first()
+        except Exception:
+            user = None
+            
+        if not user:
+            return HttpResponse("Unauthorized", status=401, content_type="text/plain")
+            
+        holidays = PlannerHoliday.objects.all()
+        locks = PlannerLock.objects.filter(is_active=True)
         
         if user.role == 'employee':
             team_leader = getattr(getattr(user, 'employee_profile', None), 'team_leader', None)
@@ -2995,23 +3481,184 @@ class PlannerCalendarFeedView(APIView):
                 Q(visibility='Team', created_by=team_leader) |
                 Q(visibility='Team', employee__employee_profile__team_leader=team_leader)
             ).distinct()
+            locks = locks.filter(
+                Q(scope='Global') |
+                Q(scope='Department', department=getattr(getattr(user, 'employee_profile', None), 'department', '')) |
+                Q(scope='Team', locked_by=team_leader) |
+                Q(scope='Employee', affected_employees=user)
+            ).distinct()
         elif user.role == 'team_leader':
             team_members = User.objects.filter(employee_profile__team_leader=user)
             events = PlannerEvent.objects.filter(
                 Q(employee__in=team_members) | Q(employee=user) | Q(created_by=user) | Q(visibility='Organization')
+            ).distinct()
+            locks = locks.filter(
+                Q(scope='Global') |
+                Q(scope='Department', department=getattr(getattr(user, 'employee_profile', None), 'department', '')) |
+                Q(scope='Team', locked_by=user) |
+                Q(scope='Employee', affected_employees__in=team_members)
             ).distinct()
         elif user.role == 'manager':
             department = getattr(getattr(user, 'manager_profile', None), 'department', '')
             events = PlannerEvent.objects.filter(
                 Q(employee__employee_profile__department=department) | Q(visibility='Organization') | Q(created_by=user)
             ).distinct()
+            locks = locks.filter(
+                Q(scope='Global') |
+                Q(scope='Department', department=department) |
+                Q(scope='Employee', affected_employees__employee_profile__department=department)
+            ).distinct()
         else: # admin
             events = PlannerEvent.objects.all()
             
-        events_serializer = PlannerEventSerializer(events, many=True)
-        holidays_serializer = PlannerHolidaySerializer(holidays, many=True)
+        lines = [
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//Shnoor HRM Centralized Planner System//EN",
+            "CALSCALE:GREGORIAN",
+            "METHOD:PUBLISH",
+            "X-WR-CALNAME:Shnoor HRM Planner",
+            "BEGIN:VTIMEZONE",
+            "TZID:UTC",
+            "BEGIN:STANDARD",
+            "DTSTART:19700101T000000",
+            "TZOFFSETFROM:+0000",
+            "TZOFFSETTO:+0000",
+            "TZNAME:UTC",
+            "END:STANDARD",
+            "END:VTIMEZONE"
+        ]
         
-        return Response({
-            'events': events_serializer.data,
-            'holidays': holidays_serializer.data
-        })
+        for evt in events:
+            start_dt = datetime.combine(evt.start_date, datetime.min.time())
+            end_date = evt.end_date or evt.start_date
+            end_dt = datetime.combine(end_date, datetime.max.time())
+            
+            start_str = start_dt.strftime('%Y%m%dT%H%M%SZ')
+            end_str = end_dt.strftime('%Y%m%dT%H%M%SZ')
+            stamp_str = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+            
+            lines.extend([
+                "BEGIN:VEVENT",
+                f"UID:event_{evt.id}@shnoor-hrms",
+                f"DTSTAMP:{stamp_str}",
+                f"DTSTART:{start_str}",
+                f"DTEND:{end_str}",
+                f"SUMMARY:{evt.title} ({evt.event_type})",
+                f"DESCRIPTION:{evt.description or ''} - Status: {evt.status}",
+                "END:VEVENT"
+            ])
+            
+        for hol in holidays:
+            start_dt = datetime.combine(hol.holiday_date, datetime.min.time())
+            end_dt = datetime.combine(hol.holiday_date, datetime.max.time())
+            
+            start_str = start_dt.strftime('%Y%m%dT%H%M%SZ')
+            end_str = end_dt.strftime('%Y%m%dT%H%M%SZ')
+            stamp_str = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+            
+            lines.extend([
+                "BEGIN:VEVENT",
+                f"UID:holiday_{hol.id}@shnoor-hrms",
+                f"DTSTAMP:{stamp_str}",
+                f"DTSTART:{start_str}",
+                f"DTEND:{end_str}",
+                f"SUMMARY:Holiday: {hol.title}",
+                f"DESCRIPTION:{hol.description or ''}",
+                "END:VEVENT"
+            ])
+            
+        for lk in locks:
+            start_dt = datetime.combine(lk.start_date, datetime.min.time())
+            end_dt = datetime.combine(lk.end_date, datetime.max.time())
+            
+            start_str = start_dt.strftime('%Y%m%dT%H%M%SZ')
+            end_str = end_dt.strftime('%Y%m%dT%H%M%SZ')
+            stamp_str = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+            
+            lines.extend([
+                "BEGIN:VEVENT",
+                f"UID:lock_{lk.id}@shnoor-hrms",
+                f"DTSTAMP:{stamp_str}",
+                f"DTSTART:{start_str}",
+                f"DTEND:{end_str}",
+                f"SUMMARY:Locked: {lk.title} ({lk.scope} Scope)",
+                f"DESCRIPTION:{lk.reason or ''}",
+                "END:VEVENT"
+            ])
+            
+        lines.append("END:VCALENDAR")
+        
+        ics_content = "\r\n".join(lines)
+        response = HttpResponse(ics_content, content_type="text/calendar")
+        response['Content-Disposition'] = 'attachment; filename="planner_feed.ics"'
+        return response
+
+class TeamLeaderPayrollView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role.lower() != 'team_leader':
+            return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+            
+        current_month = datetime.now().strftime('%B %Y')
+        employees = Employee.objects.filter(team_leader=request.user)
+        
+        payroll_data = []
+        for emp in employees:
+            emp_salary = float(emp.salary) if emp.salary else 0
+            if emp_salary == 0:
+                emp_salary = 55000.00
+                emp.salary = emp_salary
+                emp.save()
+
+            payroll_entry = Payroll.objects.filter(employee=emp, month_year=current_month).first()
+            if not payroll_entry:
+                payroll_entry = Payroll.objects.create(
+                    employee=emp,
+                    amount=emp_salary,
+                    month_year=current_month,
+                    status='paid'
+                )
+
+            payroll_data.append({
+                'employee_id': emp.id,
+                'name': f"{emp.user.first_name} {emp.user.last_name}",
+                'username': emp.user.username,
+                'salary': str(emp_salary),
+                'credited': True,
+                'amount_credited': str(payroll_entry.amount),
+                'month': current_month,
+                'payment_date': payroll_entry.payment_date.strftime('%Y-%m-%d')
+            })
+            
+        return Response(payroll_data)
+
+    def post(self, request):
+        if request.user.role.lower() != 'team_leader':
+            return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+            
+        employee_id = request.data.get('employee_id')
+        current_month = datetime.now().strftime('%B %Y')
+        
+        try:
+            emp = Employee.objects.get(id=employee_id, team_leader=request.user)
+        except Employee.DoesNotExist:
+            return Response({'message': 'Employee not found or not in your team.'}, status=status.HTTP_404_NOT_FOUND)
+            
+        payroll_entry = Payroll.objects.filter(employee=emp, month_year=current_month).first()
+        if payroll_entry:
+            return Response({'message': 'Salary already credited for this month.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        emp_salary = float(emp.salary) if emp.salary else 0
+        if emp_salary == 0:
+            emp_salary = 55000.00
+            
+        Payroll.objects.create(
+            employee=emp,
+            amount=emp_salary,
+            month_year=current_month,
+            status='paid'
+        )
+        
+        return Response({'message': 'Salary credited successfully.'}, status=status.HTTP_201_CREATED)

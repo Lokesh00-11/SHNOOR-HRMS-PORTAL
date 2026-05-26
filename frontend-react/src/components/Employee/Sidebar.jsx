@@ -4,6 +4,7 @@ import { useTheme } from '../../context/ThemeContext';
 
 const Sidebar = ({ currentView, setCurrentView }) => {
     const { theme } = useTheme();
+    
     const navItems = [
         { id: 'dashboard', label: 'Dashboard', icon: 'fa-gauge' },
         { id: 'attendance', label: 'Attendance', icon: 'fa-calendar-check' },
@@ -44,22 +45,7 @@ const Sidebar = ({ currentView, setCurrentView }) => {
                 ))}
             </nav>
 
-            {/* Premium Theme Mode Switcher */}
-            <div className="sidebar-theme-item" style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '0.75rem 1rem',
-                margin: '0.5rem 0.75rem',
-                borderRadius: '8px',
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid var(--glass-border)'
-            }}>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <i className="fa-solid fa-circle-half-stroke" style={{ color: 'var(--primary-color)' }}></i> Theme Mode
-                </span>
-                <ThemeToggle />
-            </div>
+
 
             <div className="nav-item logout" onClick={handleLogout} style={{ color: '#f43f5e', borderTop: '1px solid var(--bg-tertiary)', marginTop: '0.5rem', paddingTop: '1.5rem' }}>
                 <i className="fa-solid fa-right-from-bracket"></i>

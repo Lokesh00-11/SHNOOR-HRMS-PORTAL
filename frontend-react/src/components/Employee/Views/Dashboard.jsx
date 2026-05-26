@@ -82,7 +82,7 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Quick Actions or Recent Activity could go here */}
+            {/* Recent Activity */}
         </section>
     );
 };

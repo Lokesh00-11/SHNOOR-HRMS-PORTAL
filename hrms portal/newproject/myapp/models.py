@@ -1,3 +1,4 @@
+import uuid
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models.signals import post_save
@@ -14,6 +15,7 @@ class User(AbstractUser):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='employee')
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     location = models.CharField(max_length=255, blank=True, null=True)
+    feed_token = models.UUIDField(default=uuid.uuid4, unique=True, null=True, blank=True)
     
     def __str__(self):
         return f"{self.username} ({self.role})"
@@ -556,8 +558,16 @@ class PlannerEvent(models.Model):
     is_approved = models.BooleanField(default=False)
     approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_planner_events')
     approved_at = models.DateTimeField(null=True, blank=True)
+    is_locked = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['employee', 'start_date']),
+            models.Index(fields=['status', 'start_date']),
+            models.Index(fields=['is_approved', 'start_date']),
+        ]
 
     def __str__(self):
         return self.title
@@ -579,6 +589,53 @@ class PlannerShift(models.Model):
     end_time = models.TimeField()
     assigned_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_shifts')
     color_code = models.CharField(max_length=20, default='#f59e0b')
+    recurring_pattern = models.CharField(max_length=50, default='None')
+    rotation_start_date = models.DateField(null=True, blank=True)
+    rotation_cycle_days = models.IntegerField(default=7)
 
     def __str__(self):
         return f"{self.shift_name} - {self.employee.username}"
+
+class PlannerLock(models.Model):
+    DEPARTMENT_CHOICES = (
+        ('Management', 'Management'),
+        ('Development', 'Development'),
+        ('HR', 'HR'),
+        ('Finance', 'Finance'),
+        ('Sales', 'Sales'),
+        ('Marketing', 'Marketing'),
+        ('Operations', 'Operations'),
+    )
+    OFFICE_CHOICES = (
+        ('Headquarters', 'Headquarters'),
+        ('New York', 'New York'),
+        ('Chicago', 'Chicago'),
+        ('San Francisco', 'San Francisco'),
+        ('London', 'London'),
+        ('Remote', 'Remote'),
+    )
+
+    locked_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='locked_days')
+    title = models.CharField(max_length=255)
+    reason = models.TextField(blank=True, null=True)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    scope = models.CharField(max_length=50, default='Global') # Global, Department, Team, Employee
+    department = models.CharField(max_length=100, choices=DEPARTMENT_CHOICES, blank=True, null=True)
+    office = models.CharField(max_length=100, choices=OFFICE_CHOICES, blank=True, null=True)
+    affected_employees = models.ManyToManyField(User, related_name='affected_locks', blank=True)
+    is_active = models.BooleanField(default=True)
+    unlocked_at = models.DateTimeField(null=True, blank=True)
+    unlocked_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='unlocked_days')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['start_date']),
+            models.Index(fields=['end_date']),
+            models.Index(fields=['scope']),
+            models.Index(fields=['is_active']),
+        ]
+
+    def __str__(self):
+        return f"Lock: {self.title} ({self.start_date} to {self.end_date})"

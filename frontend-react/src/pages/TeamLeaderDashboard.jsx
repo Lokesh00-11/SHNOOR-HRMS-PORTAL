@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/TeamLeader/Sidebar';
+import ThemeToggle from '../components/Common/ThemeToggle';
 import Dashboard from '../components/TeamLeader/Views/Dashboard';
 import TeamMembers from '../components/TeamLeader/Views/TeamMembers';
 import Attendance from '../components/TeamLeader/Views/Attendance';
@@ -11,6 +12,9 @@ import Documents from '../components/TeamLeader/Views/Documents';
 import Notifications from '../components/TeamLeader/Views/Notifications';
 import Profile from '../components/TeamLeader/Views/Profile';
 import PlannerPage from '../components/Planner/PlannerPage';
+import Settings from '../components/TeamLeader/Views/Settings';
+import FinanceOverview from '../components/TeamLeader/Views/FinanceOverview';
+import Reports from '../components/TeamLeader/Views/Reports';
 
 import '../styles/admin.css';
 
@@ -48,6 +52,12 @@ const TeamLeaderDashboard = () => {
                 return <Profile />;
             case 'planner':
                 return <PlannerPage role="team_leader" />;
+            case 'settings':
+                return <Settings />;
+            case 'finance':
+                return <FinanceOverview />;
+            case 'reports':
+                return <Reports />;
             default:
                 return <Dashboard />;
         }
@@ -59,7 +69,15 @@ const TeamLeaderDashboard = () => {
                 currentView={currentView} 
                 setCurrentView={setCurrentView} 
             />
-            <main className="main-content" style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>
+            <main className="main-content" style={{ flex: 1, padding: '2rem', overflowY: 'auto', position: 'relative' }}>
+                <div className="dashboard-theme-toggle-container" style={{
+                    position: 'absolute',
+                    top: '2rem',
+                    right: '3rem',
+                    zIndex: 100
+                }}>
+                    <ThemeToggle />
+                </div>
                 {renderContent()}
             </main>
         </div>

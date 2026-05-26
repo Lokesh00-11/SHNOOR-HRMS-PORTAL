@@ -152,14 +152,13 @@ const Expenses = () => {
                             <th>Amount</th>
                             <th>Status</th>
                             <th>Payment</th>
-                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>Loading expenses...</td></tr>
+                            <tr><td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>Loading expenses...</td></tr>
                         ) : filteredExpenses.length === 0 ? (
-                            <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>No expense claims found.</td></tr>
+                            <tr><td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>No expense claims found.</td></tr>
                         ) : filteredExpenses.map(exp => (
                             <tr key={exp.id}>
                                 <td>{(exp.date || exp.created_at || '').split(' ')[0].split('T')[0] || new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}</td>
@@ -172,9 +171,6 @@ const Expenses = () => {
                                     </span>
                                 </td>
                                 <td>{exp.payment_status || 'Unpaid'}</td>
-                                <td>
-                                    {exp.receipt && <button className="btn btn-ghost" style={{ padding: '0.25rem 0.5rem' }}><i className="fa-solid fa-file-invoice"></i></button>}
-                                </td>
                             </tr>
                         ))}
                     </tbody>

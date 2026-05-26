@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
-import { get } from '../../../services/api';
+import { get, post } from '../../../services/api';
 
 const TeamMembers = () => {
     const [members, setMembers] = useState([]);
@@ -11,12 +11,31 @@ const TeamMembers = () => {
 
     // Modal state
     const [selectedEmp, setSelectedEmp] = useState(null);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [newEmpEmail, setNewEmpEmail] = useState('');
+    const [availableEmployees, setAvailableEmployees] = useState([]);
+
+    const handleAddMember = async (e) => {
+        e.preventDefault();
+        try {
+            await post('/teamleader/team-members/', { email: newEmpEmail });
+            alert('Employee added to your team successfully!');
+            setShowAddModal(false);
+            setNewEmpEmail('');
+            fetchMembers();
+        } catch (err) {
+            alert(err.message || 'Failed to add employee. Make sure the email is correct.');
+        }
+    };
 
     const fetchMembers = async () => {
         try {
             setLoading(true);
             const data = await get('/teamleader/team-members/');
             setMembers(data || []);
+            
+            const allEmpsData = await get('/teamleader/team-members/?available=true');
+            setAvailableEmployees(allEmpsData || []);
         } catch (err) {
             console.error('Error fetching team members:', err);
         } finally {
@@ -112,7 +131,10 @@ const TeamMembers = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <h2 className="gradient-text">Team Member Profiles</h2>
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    <button className="btn btn-primary" onClick={handleExportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
+                    <button className="btn btn-primary" onClick={() => setShowAddModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
+                        <i className="fa-solid fa-plus"></i> Add Member
+                    </button>
+                    <button className="btn btn-ghost" onClick={handleExportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.9rem', border: '1px solid var(--glass-border)' }}>
                         <i className="fa-solid fa-file-excel"></i> Export to Excel
                     </button>
                     <span className="status-badge" style={{ background: 'rgba(30,58,138,0.1)', color: 'var(--primary-color)', padding: '0.5rem 1rem', borderRadius: '8px', fontWeight: 600 }}>
@@ -226,6 +248,39 @@ const TeamMembers = () => {
                         <div style={{ textAlign: 'right' }}>
                             <button onClick={() => setSelectedEmp(null)} className="btn btn-primary" style={{ padding: '0.5rem 2rem' }}>Close Details</button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Add Member Modal */}
+            {showAddModal && (
+                <div className="modal-overlay" style={{ display: 'block', background: 'rgba(0,0,0,0.6)', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div className="glass-panel" style={{ width: '90%', maxWidth: '400px', padding: '2rem', position: 'relative' }}>
+                        <button onClick={() => setShowAddModal(false)} style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
+                        
+                        <h3 className="gradient-text" style={{ marginBottom: '1.5rem' }}>Add New Member</h3>
+                        <form onSubmit={handleAddMember} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <div className="form-group">
+                                <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.25rem', display: 'block' }}>Select Employee</label>
+                                <select 
+                                    required
+                                    value={newEmpEmail}
+                                    onChange={(e) => setNewEmpEmail(e.target.value)}
+                                    style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'var(--bg-secondary)', color: 'var(--text-main)' }}
+                                >
+                                    <option value="">-- Select an employee --</option>
+                                    {availableEmployees.map(emp => (
+                                        <option key={emp.id} value={emp.email}>
+                                            {emp.first_name} {emp.last_name} ({emp.email || 'No Email'})
+                                        </option>
+                                    ))}
+                                </select>
+                                <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.5rem', display: 'block' }}>
+                                    Select an employee from the dropdown list to add them to your team.
+                                </small>
+                            </div>
+                            <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem' }}>Add Employee</button>
+                        </form>
                     </div>
                 </div>
             )}

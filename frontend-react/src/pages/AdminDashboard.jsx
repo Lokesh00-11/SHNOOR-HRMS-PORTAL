@@ -7,7 +7,6 @@ import WebsiteSettings from '../components/Admin/Views/WebsiteSettings';
 import AdminSettings from '../components/Admin/Views/AdminSettings';
 import Subscriptions from '../components/Admin/Views/Subscriptions';
 import Transactions from '../components/Admin/Views/Transactions';
-import OfflineRequests from '../components/Admin/Views/OfflineRequests';
 import EmailQueries from '../components/Admin/Views/EmailQueries';
 import SuperAdmin from '../components/Admin/Views/SuperAdmin';
 import OrgChart from '../components/Admin/Views/OrgChart';
@@ -33,8 +32,6 @@ const AdminDashboard = () => {
                 return <Subscriptions />;
             case 'transactions': 
                 return <Transactions />;
-            case 'offline': 
-                return <OfflineRequests />;
             case 'emails': 
                 return <EmailQueries />;
             case 'superadmin': 

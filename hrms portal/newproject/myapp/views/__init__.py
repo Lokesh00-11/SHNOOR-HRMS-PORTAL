@@ -1,4 +1,4 @@
-from .auth_views import LoginView, UserProfileView
+from .auth_views import LoginView, UserProfileView, ForgotPasswordView, ResetPasswordConfirmView
 
 from .admin_views import (
     AdminStatsView, CompanyListView, CompanyDetailView, 
@@ -15,7 +15,7 @@ from .manager_views import (
     ManagerEmployeeListView, ManagerLeaveApprovalView, ManagerProfileView,
     ManagerProfileUpdateView, ManagerPerformanceView, ManagerNotificationView,
     PendingLeavesCountView, ManagerExpenseView, ManagerSubscriptionView, ManagerRenewSubscriptionView,
-    ManagerQueriesView
+    ManagerQueriesView, ManagerEmployeeCreateView, ManagerCasesView, ManagerDashboardAnalyticsView
 )
 from .attendance_views import (
     ManagerAttendanceView, EmployeeAttendanceView, EmployeeClockInView,
@@ -24,7 +24,7 @@ from .attendance_views import (
 from .team_leader_views import (
     TeamLeaderProfileView, TeamLeaderProfileUpdateView, TeamLeaderStatsView,
     TeamLeaderTeamMembersView, TeamLeaderTasksView, TeamLeaderPerformanceView,
-    TeamLeaderQueriesView
+    TeamLeaderQueriesView, TeamLeaderCasesView
 )
 from .task_views import (
     ManagerTaskCreateView, ManagerTaskListView, EmployeeTaskListView,

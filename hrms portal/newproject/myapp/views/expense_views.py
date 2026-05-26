@@ -176,7 +176,11 @@ class ManagerExpenseListView(APIView):
         if request.user.role.lower() != 'manager':
             return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
             
-        expenses = Expense.objects.all().order_by('-submitted_at')
+        company = getattr(request.user, 'company', None)
+        if company:
+            expenses = Expense.objects.filter(employee__company=company).order_by('-submitted_at')
+        else:
+            expenses = Expense.objects.all().order_by('-submitted_at')
         
         status_param = request.GET.get('status')
         payment_param = request.GET.get('payment_status')

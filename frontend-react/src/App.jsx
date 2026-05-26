@@ -6,6 +6,7 @@ import EmployeeDashboard from "./pages/EmployeeDashboard";
 import ManagerDashboard from "./pages/ManagerDashboard";
 import TeamLeaderDashboard from "./pages/TeamLeaderDashboard";
 import SubscriptionBlockedScreen from "./pages/SubscriptionBlockedScreen";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import { BadgeProvider } from "./context/BadgeContext";
 
 function App() {
@@ -37,10 +38,11 @@ function App() {
         const role = localStorage.getItem('role');
         const isExempt = role === 'admin' || role === 'super_admin';
 
-        if (isBlocked && !isExempt && path !== '/login' && path !== '/') {
+        if (isBlocked && !isExempt && path !== '/login' && path !== '/' && !path.startsWith('/reset-password')) {
             return <SubscriptionBlockedScreen onRestore={() => setIsBlocked(false)} />;
         }
         
+        if (path.startsWith('/reset-password')) return <ResetPasswordPage />;
         if (path === '/admin') return <AdminDashboard />;
         if (path === '/employee') return <EmployeeDashboard />;
         if (path === '/manager') return <ManagerDashboard />;

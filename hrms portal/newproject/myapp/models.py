@@ -72,6 +72,7 @@ class Transactions(models.Model):
 class Employee(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='employee_profile')
     team_leader = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='team_members')
+    manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='managed_employees')
     designation = models.CharField(max_length=100)
     department = models.CharField(max_length=100)
     salary = models.DecimalField(max_digits=10, decimal_places=2, default=10000.00)
@@ -144,7 +145,38 @@ class SupportQuery(models.Model):
     def __str__(self):
         return f"{self.sender.username} - {self.subject}"
 
+class EmployeeCase(models.Model):
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('investigating', 'Under Investigation'),
+        ('escalated', 'Escalated to HR'),
+        ('resolved', 'Resolved'),
+    ]
+    SEVERITY_CHOICES = [
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+        ('critical', 'Critical'),
+    ]
+    
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    case_type = models.CharField(max_length=100) # Disciplinary, Grievance, Performance, etc.
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
+    severity = models.CharField(max_length=20, choices=SEVERITY_CHOICES, default='low')
+    
+    employees = models.ManyToManyField(Employee, related_name='involved_cases')
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_cases') # Team Leader
+    
+    closing_remark = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Case: {self.title}"
+
 class Holiday(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='holidays', null=True, blank=True)
     name = models.CharField(max_length=255)
     date = models.DateField()
     description = models.TextField(blank=True, null=True)
@@ -258,6 +290,7 @@ class LeaveRequest(models.Model):
         return f"{self.employee.username} - {self.leave_type} ({self.status})"
 
 class CompanyPolicy(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='policies', null=True, blank=True)
     title = models.CharField(max_length=255)
     description = models.TextField()
     file = models.FileField(upload_to='policies/', null=True, blank=True)
@@ -305,6 +338,7 @@ class Offboarding(models.Model):
         return f"{self.action_type.capitalize()} - {self.employee.user.username}"
 
 class LetterHead(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='letterheads', null=True, blank=True)
     TYPE_CHOICES = [
         ('internship_offer', 'Internship Offer Letter'),
         ('self_declaration', 'Self Declaration Form'),
@@ -355,6 +389,7 @@ def save_admin_profile(sender, instance, **kwargs):
             AdminProfile.objects.create(user=instance)
 
 class Asset(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='assets', null=True, blank=True)
     STATUS_CHOICES = [
         ('available','Available'),
         ('assigned','Assigned'),

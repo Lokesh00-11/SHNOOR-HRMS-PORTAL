@@ -32,6 +32,7 @@ const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) =
         { id: 'orgchart', label: 'Org Chart', icon: 'fa-sitemap', visibleFor: ['manager', 'self'] },
         { id: 'notifications', label: 'Notifications', icon: 'fa-bell', visibleFor: ['manager', 'self'] },
         { id: 'queries', label: 'Queries', icon: 'fa-circle-question', visibleFor: ['manager', 'self'] },
+        { id: 'cases', label: 'Cases', icon: 'fa-briefcase', visibleFor: ['manager'] },
         { id: 'subscription', label: 'Subscription', icon: 'fa-credit-card', visibleFor: ['manager'] },
     ];
 
@@ -48,8 +49,8 @@ const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) =
 
     return (
         <aside className="sidebar">
-            <a href="#" className="logo" style={{ textDecoration: 'none' }}>
-                <i className="fa-solid fa-user-tie" style={{ color: 'var(--primary)', marginRight: '10px' }}></i> 
+            <a href="#" className="logo" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+                <img src="/logo.jpg" alt="ShnoorHR" style={{ height: '32px', marginRight: '10px', borderRadius: '4px', objectFit: 'contain' }} /> 
                 ShnoorHR
             </a>
 

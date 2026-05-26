@@ -616,22 +616,6 @@ const Attendance = ({ currentMode }) => {
         <section className="view-section active">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <h2 className="gradient-text" style={{ marginBottom: 0 }}>My Attendance</h2>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                    <button
-                        className="btn btn-primary"
-                        onClick={handleClockIn}
-                        disabled={actionLoading}
-                    >
-                        <i className="fa-solid fa-clock"></i> Clock In
-                    </button>
-                    <button
-                        className="btn btn-ghost"
-                        onClick={handleClockOut}
-                        disabled={actionLoading}
-                    >
-                        Clock Out
-                    </button>
-                </div>
             </div>
 
             {/* Attendance Monthly Dashboard Summary */}

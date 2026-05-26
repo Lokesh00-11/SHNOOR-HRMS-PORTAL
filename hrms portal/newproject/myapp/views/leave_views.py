@@ -10,7 +10,11 @@ from ..serializers import LeaveRequestSerializer
 class LeaveRequestView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
-        leaves = LeaveRequest.objects.all().order_by('-id')
+        company = getattr(request.user, 'company', None)
+        if company and request.user.role.lower() == 'manager':
+            leaves = LeaveRequest.objects.filter(employee__company=company).order_by('-id')
+        else:
+            leaves = LeaveRequest.objects.all().order_by('-id')
         serializer = LeaveRequestSerializer(leaves, many=True)
         return Response(serializer.data)
     def post(self, request):

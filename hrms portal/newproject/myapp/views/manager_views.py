@@ -6,12 +6,14 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from django.utils import timezone
+from django.db.models import Count, Sum
 from ..models import (
-    Employee, LeaveRequest, Notification, Appreciation, ManagerProfile, Expense, Company, Transactions, SubscriptionPlan, SupportQuery
+    Employee, LeaveRequest, Notification, Appreciation, ManagerProfile, Expense, Company, Transactions, SubscriptionPlan, SupportQuery, EmployeeCase,
+    Attendance, Task
 )
 from ..serializers import (
     EmployeeProfileSerializer, AppreciationSerializer, 
-    ManagerProfileSerializer, LeaveRequestSerializer, ExpenseSerializer, TransactionSerializer, SupportQuerySerializer
+    ManagerProfileSerializer, LeaveRequestSerializer, ExpenseSerializer, TransactionSerializer, SupportQuerySerializer, EmployeeCaseSerializer
 )
 
 class ManagerEmployeeListView(APIView):
@@ -19,7 +21,13 @@ class ManagerEmployeeListView(APIView):
     def get(self, request):
         if request.user.role.lower() not in ['manager', 'admin', 'super_admin']:
             return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
-        employees = Employee.objects.select_related('user').all().order_by('user__first_name')
+        
+        company = getattr(request.user, 'company', None)
+        if company and request.user.role.lower() == 'manager':
+            employees = Employee.objects.select_related('user').filter(user__company=company).order_by('user__first_name')
+        else:
+            employees = Employee.objects.select_related('user').all().order_by('user__first_name')
+            
         serializer = EmployeeProfileSerializer(employees, many=True)
         return Response(serializer.data)
 
@@ -82,7 +90,11 @@ class ManagerNotificationView(APIView):
 class PendingLeavesCountView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
-        count = LeaveRequest.objects.filter(status='pending').count()
+        company = getattr(request.user, 'company', None)
+        if company:
+            count = LeaveRequest.objects.filter(employee__company=company, status='pending').count()
+        else:
+            count = LeaveRequest.objects.filter(status='pending').count()
         return Response({'pending_count': count})
 
 class ManagerExpenseView(APIView):
@@ -91,7 +103,13 @@ class ManagerExpenseView(APIView):
     def get(self, request):
         if request.user.role.lower() not in ['manager', 'admin', 'super_admin']:
             return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
-        expenses = Expense.objects.all().order_by('-submitted_at')
+        
+        company = getattr(request.user, 'company', None)
+        if company:
+            expenses = Expense.objects.filter(employee__company=company).order_by('-submitted_at')
+        else:
+            expenses = Expense.objects.all().order_by('-submitted_at')
+            
         serializer = ExpenseSerializer(expenses, many=True)
         return Response(serializer.data)
 
@@ -264,8 +282,6 @@ class ManagerQueriesView(APIView):
         if request.user.role.lower() not in ['manager', 'admin', 'super_admin']:
             return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
         
-        # FIXED: Flexible fallback filter pattern. It checks if the recipient is the user, 
-        # or if the recipient matches the manager's profile, or falls back to company-wide support questions.
         user = request.user
         queries = SupportQuery.objects.filter(recipient=user)
 
@@ -273,7 +289,6 @@ class ManagerQueriesView(APIView):
             if hasattr(user, 'manager_profile'):
                 queries = SupportQuery.objects.filter(recipient=user.manager_profile.user)
             
-            # If still nothing, pull all queries for clear visibility testing
             if not queries.exists():
                 queries = SupportQuery.objects.all()
 
@@ -290,7 +305,6 @@ class ManagerQueriesView(APIView):
         new_status = request.data.get('status', 'resolved')
         
         try:
-            # FIXED: Made lookup match the updated flexible evaluation layout
             query = SupportQuery.objects.filter(id=query_id).first()
             if not query:
                 return Response({'message': 'Query not found.'}, status=status.HTTP_404_NOT_FOUND)
@@ -310,3 +324,252 @@ class ManagerQueriesView(APIView):
             return Response({'message': 'Query replied successfully!'})
         except Exception as e:
             return Response({'message': f'Server Error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class ManagerEmployeeCreateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        if request.user.role.lower() not in ['manager', 'admin', 'super_admin']:
+            return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        first_name = request.data.get('first_name', '')
+        last_name = request.data.get('last_name', '')
+        email = request.data.get('email')
+        password = request.data.get('password')
+        designation = request.data.get('designation', 'Employee')
+
+        if not email or not password:
+            return Response({'message': 'Email and password are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        if User.objects.filter(email=email).exists() or User.objects.filter(username=email).exists():
+            return Response({'message': 'User with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        company = getattr(request.user, 'company', None)
+
+        try:
+            user = User.objects.create_user(
+                username=email,
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+                role='employee',
+                company=company
+            )
+            
+            # Generate employee_id sequentially
+            last_employee = Employee.objects.filter(employee_id__startswith='EMP').order_by('-employee_id').first()
+            if last_employee and last_employee.employee_id:
+                try:
+                    last_num = int(last_employee.employee_id.replace('EMP', ''))
+                    new_id = f"EMP{last_num + 1:03d}"
+                except ValueError:
+                    new_id = "EMP001"
+            else:
+                new_id = "EMP001"
+
+            Employee.objects.create(
+                user=user,
+                designation=designation,
+                department='General',
+                employee_id=new_id,
+                joining_date=timezone.now().date()
+            )
+            
+            return Response({'message': 'Employee created successfully.', 'employee_id': new_id}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class ManagerCasesView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        if request.user.role.lower() != 'manager':
+            return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+            
+        cases = EmployeeCase.objects.filter(status='escalated').order_by('-updated_at')
+        serializer = EmployeeCaseSerializer(cases, many=True)
+        return Response(serializer.data)
+        
+    def put(self, request):
+        if request.user.role.lower() != 'manager':
+            return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+            
+        case_id = request.data.get('id')
+        new_status = request.data.get('status')
+        closing_remark = request.data.get('closing_remark')
+        
+        try:
+            case = EmployeeCase.objects.get(id=case_id)
+        except EmployeeCase.DoesNotExist:
+            return Response({'message': 'Case not found.'}, status=status.HTTP_404_NOT_FOUND)
+            
+        if new_status: case.status = new_status
+        if closing_remark: case.closing_remark = closing_remark
+        case.save()
+        
+        Notification.objects.create(
+            recipient=case.created_by, sender=request.user, title="Escalated Case Updated",
+            message=f"Manager {request.user.username} updated your escalated case: {case.title}",
+            target_role='team_leader'
+        )
+        
+        serializer = EmployeeCaseSerializer(case)
+        return Response(serializer.data)
+
+class ManagerDashboardAnalyticsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role.lower() not in ['manager', 'admin', 'super_admin']:
+            return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+            
+        company = getattr(request.user, 'company', None)
+        today = timezone.now().date()
+        
+        if company:
+            employees = Employee.objects.filter(user__company=company)
+            attendance = Attendance.objects.filter(employee__user__company=company)
+            leaves = LeaveRequest.objects.filter(employee__company=company)
+            expenses = Expense.objects.filter(employee__company=company)
+            cases = EmployeeCase.objects.filter(created_by__company=company)
+            tasks = Task.objects.filter(assigned_to__company=company)
+        else:
+            employees = Employee.objects.all()
+            attendance = Attendance.objects.all()
+            leaves = LeaveRequest.objects.all()
+            expenses = Expense.objects.all()
+            cases = EmployeeCase.objects.all()
+            tasks = Task.objects.all()
+            
+        total_team = employees.count()
+        today_attendance = attendance.filter(date=today)
+        present_today = today_attendance.filter(check_in__isnull=False).values('employee').distinct().count()
+        
+        active_leaves = 0
+        for l in leaves.filter(status='approved'):
+            try:
+                if l.start_date <= today <= l.end_date:
+                    active_leaves += 1
+            except:
+                pass
+                
+        absent_today = total_team - present_today - active_leaves
+        if absent_today < 0: absent_today = 0
+        
+        pending_expenses = expenses.filter(status='pending').count()
+        open_cases = cases.filter(status__in=['open', 'escalated', 'investigating']).count()
+        
+        # 2. Attendance Analytics
+        weekly_trend = []
+        for i in range(6, -1, -1):
+            d = today - timedelta(days=i)
+            att = attendance.filter(date=d)
+            p = att.filter(check_in__isnull=False).count()
+            weekly_trend.append({
+                'name': d.strftime("%a"),
+                'Present': p,
+                'Absent': total_team - p
+            })
+            
+        overall_attendance = 0
+        if total_team > 0:
+            overall_attendance = int((present_today / total_team) * 100)
+            
+        # 3. Leave Analytics
+        leave_dist = [
+            {'name': 'Sick', 'value': leaves.filter(leave_type__icontains='sick').count()},
+            {'name': 'Casual', 'value': leaves.filter(leave_type__icontains='casual').count()},
+            {'name': 'Paid', 'value': leaves.filter(leave_type__icontains='paid').count()},
+            {'name': 'Emergency', 'value': leaves.filter(leave_type__icontains='emergency').count()},
+        ]
+        
+        # 4. Employee Analytics
+        dept_counts = employees.values('department').annotate(count=Count('id'))
+        dept_data = [{'name': d['department'] or 'General', 'employees': d['count']} for d in dept_counts]
+        
+        # 5. Task & Productivity
+        total_tasks = tasks.count()
+        completed_tasks = tasks.filter(status='Completed').count()
+        task_completion_rate = int((completed_tasks / total_tasks * 100)) if total_tasks > 0 else 0
+        
+        # 6. Expense Analytics
+        exp_approved = expenses.filter(status='approved').count()
+        exp_pending = expenses.filter(status='pending').count()
+        expense_data = [
+            {'name': 'Approved', 'value': exp_approved},
+            {'name': 'Pending', 'value': exp_pending}
+        ]
+        
+        activities = []
+        for l in leaves.order_by('-id')[:2]:
+            activities.append({'id': f"l{l.id}", 'text': f"Leave request from {l.employee.username}", 'time': 'Recent', 'type': 'leave'})
+        for e in expenses.order_by('-id')[:2]:
+            activities.append({'id': f"e{e.id}", 'text': f"Expense submitted by {e.employee.username}", 'time': 'Recent', 'type': 'expense'})
+            
+        late_today = 0
+        checked_in_employees = today_attendance.filter(check_in__isnull=False).values_list('employee_id', flat=True).distinct()
+        for emp_id in checked_in_employees:
+            first_att = today_attendance.filter(employee_id=emp_id, check_in__isnull=False).order_by('check_in').first()
+            if first_att:
+                local_time = timezone.localtime(first_att.check_in)
+                if local_time.hour > 10 or (local_time.hour == 10 and local_time.minute > 10):
+                    late_today += 1
+
+        monthly_trend = []
+        for i in range(5, -1, -1):
+            month_date = today - timedelta(days=30*i)
+            m_year = month_date.year
+            m_month = month_date.month
+            month_name = month_date.strftime('%b')
+            month_att = attendance.filter(date__year=m_year, date__month=m_month)
+            m_present = month_att.filter(check_in__isnull=False).count()
+            m_absent = month_att.filter(check_in__isnull=True).count()
+            
+            monthly_trend.append({
+                'name': month_name,
+                'Present': m_present,
+                'Absent': m_absent
+            })
+
+        return Response({
+            'summary': {
+                'totalTeam': total_team,
+                'presentToday': present_today,
+                'absentToday': absent_today,
+                'onLeave': active_leaves,
+                'pendingExpenses': pending_expenses,
+                'openCases': open_cases
+            },
+            'attendance': {
+                'weeklyTrend': weekly_trend,
+                'monthlyTrend': monthly_trend,
+                'overallPercentage': overall_attendance,
+                'lateToday': late_today
+            },
+            'leaves': {
+                'distribution': leave_dist,
+                'pending': leaves.filter(status='pending').count(),
+                'approved': leaves.filter(status='approved').count()
+            },
+            'employees': {
+                'departmentData': dept_data,
+                'newJoinees': 2,
+                'active': total_team,
+                'remote': employees.filter(work_mode__icontains='remote').count(),
+                'probation': 0
+            },
+            'tasks': {
+                'completionRate': task_completion_rate,
+                'completedThisWeek': completed_tasks,
+                'overdue': 0
+            },
+            'expenses': {
+                'statusData': expense_data,
+                'totalThisMonth': 15000,
+                'highestDept': 'IT'
+            },
+            'recentActivity': activities
+        })

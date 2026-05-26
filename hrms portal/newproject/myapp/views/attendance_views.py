@@ -41,7 +41,11 @@ class ManagerAttendanceView(APIView):
                 
         search_query = request.query_params.get('search', '').strip()
         
-        employees = Employee.objects.select_related('user').all()
+        company = getattr(request.user, 'company', None)
+        if company and request.user.role.lower() == 'manager':
+            employees = Employee.objects.select_related('user').filter(user__company=company)
+        else:
+            employees = Employee.objects.select_related('user').all()
         
         is_historical = False
         
@@ -262,7 +266,7 @@ class EmployeeAttendanceView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        if request.user.role.lower() not in ['employee', 'manager', 'admin', 'super_admin']:
+        if request.user.role.lower() not in ['employee', 'team_leader', 'manager', 'admin', 'super_admin']:
             return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
         
         employee_profile, _ = Employee.objects.get_or_create(user=request.user, defaults={'designation': 'Employee', 'department': 'General'})
@@ -277,7 +281,7 @@ class EmployeeClockInView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        if request.user.role.lower() not in ['employee', 'manager', 'admin', 'super_admin']:
+        if request.user.role.lower() not in ['employee', 'team_leader', 'manager', 'admin', 'super_admin']:
             return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
         
         today = timezone.localtime(timezone.now()).date()
@@ -340,7 +344,7 @@ class EmployeeClockOutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        if request.user.role.lower() not in ['employee', 'manager', 'admin', 'super_admin']:
+        if request.user.role.lower() not in ['employee', 'team_leader', 'manager', 'admin', 'super_admin']:
             return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
         
         today = timezone.localtime(timezone.now()).date()
@@ -360,7 +364,7 @@ class EmployeeAttendanceTodayView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        if request.user.role.lower() not in ['employee', 'manager', 'admin', 'super_admin']:
+        if request.user.role.lower() not in ['employee', 'team_leader', 'manager', 'admin', 'super_admin']:
             return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
         
         today = timezone.now().date()

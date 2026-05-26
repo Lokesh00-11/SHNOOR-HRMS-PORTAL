@@ -2,11 +2,13 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from django.db import models
+from django.contrib.auth import get_user_model
+User = get_user_model()
 from ..models import (
-    TeamLeaderProfile, Employee, Task, Attendance, SupportQuery, Notification
+    TeamLeaderProfile, Employee, Task, Attendance, SupportQuery, Notification, EmployeeCase
 )
 from ..serializers import (
-    TeamLeaderProfileSerializer, EmployeeProfileSerializer, TaskSerializer, SupportQuerySerializer
+    TeamLeaderProfileSerializer, EmployeeProfileSerializer, TaskSerializer, SupportQuerySerializer, EmployeeCaseSerializer
 )
 
 class TeamLeaderProfileView(APIView):
@@ -50,18 +52,21 @@ class TeamLeaderTeamMembersView(APIView):
     def get(self, request):
         if request.user.role.lower() != 'team_leader':
             return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
-        employees = Employee.objects.filter(team_leader=request.user).order_by('user__first_name')
+        if request.query_params.get('available') == 'true':
+            employees = Employee.objects.all().order_by('user__first_name')
+        else:
+            employees = Employee.objects.filter(team_leader=request.user).order_by('user__first_name')
         serializer = EmployeeProfileSerializer(employees, many=True)
         return Response(serializer.data)
     def post(self, request):
-        employee_id = request.data.get('employee_id')
+        email = request.data.get('email')
         try:
-            employee = Employee.objects.get(id=employee_id)
+            employee = Employee.objects.get(user__email=email)
             employee.team_leader = request.user
             employee.save()
             return Response({'message': f'Employee added to team.'})
         except Employee.DoesNotExist:
-            return Response({'message': 'Employee not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'message': 'Employee not found with that email.'}, status=status.HTTP_404_NOT_FOUND)
 
 class TeamLeaderTasksView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -74,6 +79,56 @@ class TeamLeaderTasksView(APIView):
             'my_tasks': TaskSerializer(my_tasks, many=True).data,
             'team_tasks': TaskSerializer(team_tasks, many=True).data
         })
+        
+    def post(self, request):
+        if request.user.role.lower() != 'team_leader':
+            return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        email = request.data.get('assigned_to')
+        try:
+            assigned_user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'message': 'Employee not found.'}, status=status.HTTP_404_NOT_FOUND)
+            
+        task_data = {
+            'title': request.data.get('title'),
+            'description': request.data.get('description'),
+            'priority': request.data.get('priority', 'Medium'),
+            'deadline': request.data.get('deadline'),
+            'status': 'Pending'
+        }
+        
+        serializer = TaskSerializer(data=task_data)
+        if serializer.is_valid():
+            serializer.save(assigned_to=assigned_user, assigned_by_team_leader=request.user, created_by=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+    def patch(self, request):
+        if request.user.role.lower() != 'team_leader':
+            return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+            
+        task_id = request.data.get('task_id')
+        try:
+            task = Task.objects.get(id=task_id)
+            if task.assigned_to != request.user and task.assigned_by_team_leader != request.user:
+                return Response({'message': 'Access denied to this task.'}, status=status.HTTP_403_FORBIDDEN)
+        except Task.DoesNotExist:
+            return Response({'message': 'Task not found.'}, status=status.HTTP_404_NOT_FOUND)
+            
+        if 'status' in request.data:
+            task.status = request.data['status']
+        if 'employee_note' in request.data and task.assigned_to == request.user:
+            task.employee_note = request.data['employee_note']
+            
+        if task.assigned_by_team_leader == request.user:
+            if 'title' in request.data: task.title = request.data['title']
+            if 'deadline' in request.data: task.deadline = request.data['deadline']
+            if 'priority' in request.data: task.priority = request.data['priority']
+            if 'description' in request.data: task.description = request.data['description']
+            
+        task.save()
+        return Response({'message': 'Task updated successfully.'})
 
 class TeamLeaderPerformanceView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -130,3 +185,77 @@ class TeamLeaderQueriesView(APIView):
             return Response({'message': 'Query replied successfully!'})
         except SupportQuery.DoesNotExist:
             return Response({'message': 'Query not found or access denied.'}, status=status.HTTP_404_NOT_FOUND)
+
+class TeamLeaderCasesView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role.lower() != 'team_leader':
+            return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+            
+        cases = EmployeeCase.objects.filter(created_by=request.user).order_by('-created_at')
+        serializer = EmployeeCaseSerializer(cases, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        if request.user.role.lower() != 'team_leader':
+            return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+            
+        employee_ids = request.data.get('employee_ids', [])
+        if not employee_ids:
+            return Response({'message': 'At least one employee must be selected.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        employees = Employee.objects.filter(id__in=employee_ids, team_leader=request.user)
+        if not employees.exists():
+            return Response({'message': 'Employees not found in your team.'}, status=status.HTTP_404_NOT_FOUND)
+            
+        case_data = {
+            'title': request.data.get('title'),
+            'description': request.data.get('description'),
+            'case_type': request.data.get('case_type'),
+            'severity': request.data.get('severity', 'low'),
+            'status': request.data.get('status', 'open'),
+            'employees': employee_ids
+        }
+        
+        serializer = EmployeeCaseSerializer(data=case_data)
+        if serializer.is_valid():
+            case = serializer.save(created_by=request.user)
+            for emp in employees:
+                Notification.objects.create(
+                    recipient=emp.user,
+                    sender=request.user,
+                    title="New Case Filed",
+                    message=f"A new case '{case.title}' has been filed involving you by your Team Leader.",
+                    target_role='employee'
+                )
+                
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request):
+        if request.user.role.lower() != 'team_leader':
+            return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+            
+        case_id = request.data.get('id')
+        try:
+            case = EmployeeCase.objects.get(id=case_id, created_by=request.user)
+        except EmployeeCase.DoesNotExist:
+            return Response({'message': 'Case not found.'}, status=status.HTTP_404_NOT_FOUND)
+            
+        if 'status' in request.data: case.status = request.data['status']
+        if 'closing_remark' in request.data: case.closing_remark = request.data['closing_remark']
+        
+        case.save()
+        
+        if case.status == 'escalated':
+            managers = User.objects.filter(role='manager')
+            for manager in managers:
+                Notification.objects.create(
+                    recipient=manager, sender=request.user, title="Case Escalated",
+                    message=f"Team Leader {request.user.username} escalated case: {case.title}",
+                    target_role='manager'
+                )
+                
+        serializer = EmployeeCaseSerializer(case)
+        return Response(serializer.data)

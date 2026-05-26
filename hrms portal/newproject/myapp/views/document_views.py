@@ -13,7 +13,11 @@ class CompanyPolicyView(APIView):
     def post(self, request):
         serializer = CompanyPolicySerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            company = getattr(request.user, 'company', None)
+            if request.user.role.lower() != 'super_admin' and company:
+                serializer.save(company=company)
+            else:
+                serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -76,7 +80,11 @@ class LetterHeadView(APIView):
     def post(self, request):
         serializer = LetterHeadSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            company = getattr(request.user, 'company', None)
+            if request.user.role.lower() != 'super_admin' and company:
+                serializer.save(company=company)
+            else:
+                serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

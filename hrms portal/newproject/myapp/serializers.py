@@ -6,7 +6,7 @@ from .models import (
     User, SuperAdmin, SubscriptionPlan, Company, Transactions, Employee,
     SupportQuery, Holiday, Appreciation, AppreciationComment, Thanks, ThanksComment, LeaveRequest, CompanyPolicy,
     Payroll, Offboarding, LetterHead, AdminProfile, Attendance, Asset,
-    Expense, Task, CompanyDocument, ManagerProfile, TeamLeaderProfile, OrgChart, Notification
+    Expense, Task, CompanyDocument, ManagerProfile, TeamLeaderProfile, OrgChart, Notification, EmployeeCase
 )
 
 User = get_user_model()
@@ -135,6 +135,25 @@ class SupportQuerySerializer(serializers.ModelSerializer):
     def get_recipient_name(self, obj):
         return f"{obj.recipient.first_name} {obj.recipient.last_name}".strip() or obj.recipient.username if obj.recipient else "Unknown"
 
+class EmployeeCaseSerializer(serializers.ModelSerializer):
+    employee_names = serializers.SerializerMethodField()
+    created_by_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = EmployeeCase
+        fields = '__all__'
+        read_only_fields = ['created_by', 'status']
+        
+    def get_employee_names(self, obj):
+        names = []
+        for emp in obj.employees.all():
+            name = f"{emp.user.first_name} {emp.user.last_name}".strip() or emp.user.username
+            names.append(name)
+        return ", ".join(names)
+        
+    def get_created_by_name(self, obj):
+        return f"{obj.created_by.first_name} {obj.created_by.last_name}".strip() or obj.created_by.username
+
 class HolidaySerializer(serializers.ModelSerializer):
     class Meta:
         model = Holiday
@@ -261,9 +280,20 @@ class AssetSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'asset_type', 'serial_number', 'assigned_to', 'assigned_to_name', 'status', 'purchase_date']
 
 class ExpenseSerializer(serializers.ModelSerializer):
+    employee_name = serializers.SerializerMethodField()
+    submitted_at_str = serializers.SerializerMethodField()
     class Meta:
         model = Expense
         fields = '__all__'
+        
+    def get_employee_name(self, obj):
+        name = f"{obj.employee.first_name} {obj.employee.last_name}".strip()
+        return name or obj.employee.username
+        
+    def get_submitted_at_str(self, obj):
+        if obj.submitted_at:
+            return obj.submitted_at.strftime('%b %d, %Y')
+        return None
 
 class TaskSerializer(serializers.ModelSerializer):
     assigned_to_username = serializers.CharField(source='assigned_to.username', read_only=True)

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { get } from '../../../services/api';
+import { get, post } from '../../../services/api';
 
 const Dashboard = () => {
     const [stats, setStats] = useState(null);
@@ -11,6 +11,31 @@ const Dashboard = () => {
     const [offboardings, setOffboardings] = useState([]);
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [actionLoading, setActionLoading] = useState(false);
+
+    const handleClockIn = async () => {
+        try {
+            setActionLoading(true);
+            await post('/employee/attendance/clock-in/');
+            alert('Clocked In successfully');
+        } catch (err) {
+            alert('Clock in failed: ' + (err.response?.data?.error || err.message));
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleClockOut = async () => {
+        try {
+            setActionLoading(true);
+            await post('/employee/attendance/clock-out/');
+            alert('Clocked Out successfully');
+        } catch (err) {
+            alert('Clock out failed: ' + (err.response?.data?.error || err.message));
+        } finally {
+            setActionLoading(false);
+        }
+    };
 
     useEffect(() => {
         const fetchDashboardData = async () => {
@@ -79,7 +104,25 @@ const Dashboard = () => {
 
     return (
         <section className="view-section active">
-            <h2 className="gradient-text" style={{ marginBottom: '2rem' }}>My Dashboard</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                <h2 className="gradient-text" style={{ margin: 0 }}>My Dashboard</h2>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button 
+                        className="btn btn-primary"
+                        onClick={handleClockIn} 
+                        disabled={actionLoading}
+                    >
+                        <i className="fa-solid fa-clock"></i> Clock In
+                    </button>
+                    <button 
+                        className="btn btn-ghost"
+                        onClick={handleClockOut} 
+                        disabled={actionLoading}
+                    >
+                        Clock Out
+                    </button>
+                </div>
+            </div>
             
             {/* Employee Profile Card */}
             {profile && (

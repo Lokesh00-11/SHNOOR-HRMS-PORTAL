@@ -10,21 +10,39 @@ from ..serializers import (
 class HolidayView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
-        holidays = Holiday.objects.all().order_by('date')
+        company = getattr(request.user, 'company', None)
+        if request.user.role.lower() == 'super_admin':
+            holidays = Holiday.objects.all().order_by('date')
+        elif company:
+            holidays = Holiday.objects.filter(company=company).order_by('date')
+        else:
+            holidays = Holiday.objects.none()
         serializer = HolidaySerializer(holidays, many=True)
         return Response(serializer.data)
 
 class AssetView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
-        assets = Asset.objects.all().order_by('-id')
+        company = getattr(request.user, 'company', None)
+        if request.user.role.lower() == 'super_admin':
+            assets = Asset.objects.all().order_by('-id')
+        elif company:
+            assets = Asset.objects.filter(company=company).order_by('-id')
+        else:
+            assets = Asset.objects.none()
         serializer = AssetSerializer(assets, many=True)
         return Response(serializer.data)
 
 class OrgChartView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
-        nodes = OrgChart.objects.all().order_by('id')
+        company = getattr(request.user, 'company', None)
+        if request.user.role.lower() == 'super_admin':
+            nodes = OrgChart.objects.all().order_by('id')
+        elif company:
+            nodes = OrgChart.objects.filter(company_name__iexact=company.name).order_by('id')
+        else:
+            nodes = OrgChart.objects.none()
         serializer = OrgChartSerializer(nodes, many=True)
         return Response(serializer.data)
     def post(self, request):
@@ -32,7 +50,11 @@ class OrgChartView(APIView):
             return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
         serializer = OrgChartSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            company = getattr(request.user, 'company', None)
+            if request.user.role.lower() != 'super_admin' and company:
+                serializer.save(company_name=company.name)
+            else:
+                serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

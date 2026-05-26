@@ -24,6 +24,7 @@ const Sidebar = ({ currentView, setCurrentView }) => {
         { id: 'offboarding', label: 'Offboarding', icon: 'fa-user-xmark' },
         { id: 'documents', label: 'Documents', icon: 'fa-folder-open' },
         { id: 'queries', label: 'Team Queries', icon: 'fa-circle-question' },
+        { id: 'cases', label: 'Cases', icon: 'fa-briefcase' },
         { id: 'notifications', label: 'Notifications', icon: 'fa-bell' },
         { id: 'profile', label: 'Profile', icon: 'fa-user-gear' }
     ];
@@ -38,8 +39,8 @@ const Sidebar = ({ currentView, setCurrentView }) => {
 
     return (
         <aside className="sidebar">
-            <a href="#" className="logo" style={{ textDecoration: 'none', marginBottom: '2rem' }}>
-                <i className="fa-solid fa-users-gear" style={{ color: 'var(--primary)', marginRight: '10px' }}></i> 
+            <a href="#" className="logo" style={{ textDecoration: 'none', marginBottom: '2rem', display: 'flex', alignItems: 'center' }}>
+                <img src="/logo.jpg" alt="ShnoorHR" style={{ height: '32px', marginRight: '10px', borderRadius: '4px', objectFit: 'contain' }} /> 
                 ShnoorHR
             </a>
 
@@ -59,7 +60,7 @@ const Sidebar = ({ currentView, setCurrentView }) => {
                         <div><i className={`fa-solid ${item.icon}`}></i> {item.label}</div>
                         {badgeCounts[item.id] > 0 && (
                             <span style={{
-                                background: '#ef4444', color: 'white', padding: '2px 8px', 
+                                background: '#ef4444', color: 'white', padding: '2px 8px',
                                 borderRadius: '12px', fontSize: '0.7rem', fontWeight: 'bold'
                             }}>
                                 {badgeCounts[item.id]}
@@ -83,7 +84,7 @@ const Sidebar = ({ currentView, setCurrentView }) => {
                 <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <i className="fa-solid fa-circle-half-stroke" style={{ color: 'var(--primary-color)' }}></i> Theme Mode
                 </span>
-                <button 
+                <button
                     onClick={toggleTheme}
                     className="theme-toggle-btn"
                     style={{
@@ -108,14 +109,14 @@ const Sidebar = ({ currentView, setCurrentView }) => {
             </div>
 
             <div style={{ padding: '0 0.75rem 1rem' }}>
-                <button 
-                    onClick={handleLogout} 
-                    className="nav-item" 
-                    style={{ 
-                        color: '#f43f5e', 
-                        background: 'transparent', 
-                        border: 'none', 
-                        width: '100%', 
+                <button
+                    onClick={handleLogout}
+                    className="nav-item"
+                    style={{
+                        color: '#f43f5e',
+                        background: 'transparent',
+                        border: 'none',
+                        width: '100%',
                         textAlign: 'left',
                         cursor: 'pointer',
                         display: 'flex',

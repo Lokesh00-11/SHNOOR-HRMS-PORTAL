@@ -4,7 +4,7 @@ import { get, post, patch, del } from '../../../services/api';
 const Companies = () => {
     const [companies, setCompanies] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [newCompany, setNewCompany] = useState({ name: '', email: '' });
+    const [newCompany, setNewCompany] = useState({ name: '', email: '', password: '' });
     const [submitLoading, setSubmitLoading] = useState(false);
 
     const fetchCompanies = async () => {
@@ -27,12 +27,13 @@ const Companies = () => {
         e.preventDefault();
         try {
             setSubmitLoading(true);
-            await post('/admin/companies/', { 
+            await post('/admin/companies/create/', { 
                 name: newCompany.name, 
                 email: newCompany.email, 
+                password: newCompany.password,
                 is_active: true 
             });
-            setNewCompany({ name: '', email: '' });
+            setNewCompany({ name: '', email: '', password: '' });
             await fetchCompanies();
         } catch (err) {
             console.error('Error adding company:', err);
@@ -121,6 +122,16 @@ const Companies = () => {
                             value={newCompany.email}
                             onChange={(e) => setNewCompany({...newCompany, email: e.target.value})}
                             placeholder="admin@acme.com"
+                        />
+                    </div>
+                    <div className="setting-item" style={{ flex: 1, minWidth: '200px' }}>
+                        <h4>Admin Password</h4>
+                        <input 
+                            type="password" 
+                            required 
+                            value={newCompany.password}
+                            onChange={(e) => setNewCompany({...newCompany, password: e.target.value})}
+                            placeholder="Set initial password"
                         />
                     </div>
                     <button type="submit" className="btn btn-primary" style={{ height: '45px', padding: '0 2rem' }} disabled={submitLoading}>

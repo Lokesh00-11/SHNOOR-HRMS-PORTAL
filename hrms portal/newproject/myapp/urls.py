@@ -1,14 +1,14 @@
 from django.urls import path
 from .views import (
-    LoginView, AdminStatsView, CompanyListView, CompanyDetailView, AdminCompanyCreateView,
+    LoginView, ForgotPasswordView, ResetPasswordConfirmView, AdminStatsView, CompanyListView, CompanyDetailView, AdminCompanyCreateView,
     SubscriptionPlanListView, SubscriptionPlanDetailView, TransactionListView, UserManagementView, UserDetailView, SuperAdminListView,
-    SupportQueryView, SupportQueryDetailView, SupportQueryUnreadCountView, ManagerEmployeeListView,
+    SupportQueryView, SupportQueryDetailView, SupportQueryUnreadCountView, ManagerEmployeeListView, ManagerEmployeeCreateView,
     HolidayView, AppreciationView, AppreciationCommentView, ThanksView, ThanksCommentView, LeaveRequestView, LeaveRequestDetailView,
     CompanyPolicyView, CompanyPolicyDetailView, PayrollView, ManagerPaySingleEmployeeView,
     OffboardingView, OffboardingDetailView, EmployeeReportView,
     LetterHeadView, LetterHeadDetailView, UserProfileView, AdminSettingsView,
     EmployeeStatsView, CalendarDataView, AssetView, EmployeeAppreciationView,
-    ManagerAttendanceView, ManagerPerformanceView, ManagerNotificationView, ManagerExpenseView,
+    ManagerAttendanceView, ManagerPerformanceView, ManagerNotificationView, ManagerExpenseView, ManagerDashboardAnalyticsView,
     EmployeeAttendanceView, EmployeeNotificationView, EmployeeClockInView, EmployeeClockOutView,
     EmployeeLeaveApplyView, EmployeeExpenseView, EmployeeAttendanceTodayView,
     TeamLeaderAttendanceView, ManagerLeaveApprovalView, ManagerTaskCreateView, ManagerTaskListView,
@@ -23,7 +23,7 @@ from .views import (
     EmployeeExpenseListView, TeamLeaderExpenseListView, TeamLeaderExpenseUpdateView,
     ManagerExpenseListView, ManagerExpenseApproveView, ManagerExpensePayView,
     DownloadFileView, EmployeeQueriesView, ManagerQueriesView, TeamLeaderQueriesView,
-    BadgeCountsView, MarkBadgeReadView
+    BadgeCountsView, MarkBadgeReadView, TeamLeaderCasesView, ManagerCasesView
 )
 
 urlpatterns = [
@@ -35,6 +35,9 @@ urlpatterns = [
     path('api/badges/counts/', BadgeCountsView.as_view(), name='badge_counts'),
     path('api/badges/mark-read/', MarkBadgeReadView.as_view(), name='mark_badge_read'),
     path('api/auth/login/', LoginView.as_view(), name='login'),
+    path('api/auth/forgot-password/', ForgotPasswordView.as_view(), name='forgot_password'),
+    path('api/auth/reset-password-confirm/', ResetPasswordConfirmView.as_view(), name='reset_password_confirm'),
+    path('api/manager/analytics/', ManagerDashboardAnalyticsView.as_view(), name='manager_analytics'),
     path('api/manager/profile/', ManagerProfileView.as_view(), name='manager_profile'),
     path('api/manager/profile/update/', ManagerProfileUpdateView.as_view(), name='manager_profile_update'),
     path('api/manager/subscription/', ManagerSubscriptionView.as_view(), name='manager_subscription'),
@@ -55,6 +58,7 @@ urlpatterns = [
     path('api/queries/unread-count/', SupportQueryUnreadCountView.as_view(), name='support_queries_unread_count'),
     path('api/admin/settings/', AdminSettingsView.as_view(), name='admin_settings'),
     path('api/manager/employees/', ManagerEmployeeListView.as_view(), name='manager_employees'),
+    path('api/manager/employees/create/', ManagerEmployeeCreateView.as_view(), name='manager_employee_create'),
     path('api/manager/holidays/', HolidayView.as_view(), name='holidays'),
     path('api/manager/appreciations/', AppreciationView.as_view(), name='appreciations'),
     path('api/appreciations/<int:appreciation_id>/comments/', AppreciationCommentView.as_view(), name='appreciation_comments'),
@@ -129,4 +133,6 @@ urlpatterns = [
     path('api/employee/queries/', EmployeeQueriesView.as_view(), name='employee_queries'),
     path('api/manager/queries/', ManagerQueriesView.as_view(), name='manager_queries'),
     path('api/teamleader/queries/', TeamLeaderQueriesView.as_view(), name='teamleader_queries'),
+    path('api/teamleader/cases/', TeamLeaderCasesView.as_view(), name='teamleader_cases'),
+    path('api/manager/cases/', ManagerCasesView.as_view(), name='manager_cases'),
 ]

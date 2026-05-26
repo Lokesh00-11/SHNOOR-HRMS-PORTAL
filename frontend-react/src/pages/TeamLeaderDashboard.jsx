@@ -11,6 +11,7 @@ import Documents from '../components/TeamLeader/Views/Documents';
 import Notifications from '../components/TeamLeader/Views/Notifications';
 import Profile from '../components/TeamLeader/Views/Profile';
 import Queries from '../components/TeamLeader/Views/Queries';
+import Cases from '../components/TeamLeader/Views/Cases';
 
 import '../styles/admin.css';
 
@@ -44,6 +45,8 @@ const TeamLeaderDashboard = () => {
                 return <Documents />;
             case 'queries':
                 return <Queries />;
+            case 'cases':
+                return <Cases />;
             case 'notifications':
                 return <Notifications />;
             case 'profile':

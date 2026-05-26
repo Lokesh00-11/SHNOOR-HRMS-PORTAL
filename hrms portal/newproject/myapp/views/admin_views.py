@@ -107,14 +107,28 @@ class SubscriptionPlanDetailView(APIView):
 class TransactionListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
-        transactions = Transactions.objects.all().order_by('-transaction_date')
+        company = getattr(request.user, 'company', None)
+        if request.user.role.lower() == 'super_admin':
+            transactions = Transactions.objects.all().order_by('-transaction_date')
+        elif company:
+            transactions = Transactions.objects.filter(company=company).order_by('-transaction_date')
+        else:
+            transactions = Transactions.objects.none()
+            
         serializer = TransactionSerializer(transactions, many=True)
         return Response(serializer.data)
 
 class UserManagementView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
-        users = User.objects.all().order_by('-id')
+        company = getattr(request.user, 'company', None)
+        if request.user.role.lower() == 'super_admin':
+            users = User.objects.all().order_by('-id')
+        elif company:
+            users = User.objects.filter(company=company).order_by('-id')
+        else:
+            users = User.objects.filter(id=request.user.id)
+            
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
     def post(self, request):
@@ -123,7 +137,11 @@ class UserManagementView(APIView):
             data['password'] = make_password(data['password'])
         serializer = UserSerializer(data=data)
         if serializer.is_valid():
-            serializer.save()
+            user = serializer.save()
+            company = getattr(request.user, 'company', None)
+            if request.user.role.lower() != 'super_admin' and company:
+                user.company = company
+                user.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -140,9 +158,30 @@ class UserDetailView(APIView):
 class SuperAdminListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
-        super_admins = SuperAdmin.objects.all()
-        serializer = SuperAdminSerializer(super_admins, many=True)
+        role = request.user.role.lower()
+        if role not in ['admin', 'super_admin']:
+            return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+            
+        if role == 'super_admin':
+            admins = User.objects.filter(role__in=['admin', 'super_admin']).order_by('-id')
+        else:
+            admins = User.objects.filter(role='super_admin').order_by('-id')
+            
+        serializer = UserSerializer(admins, many=True)
         return Response(serializer.data)
+        
+    def patch(self, request):
+        if request.user.role.lower() != 'super_admin':
+            return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        user_id = request.data.get('user_id')
+        try:
+            admin_user = User.objects.get(id=user_id, role='admin')
+            admin_user.role = 'super_admin'
+            admin_user.save()
+            return Response({'message': 'Successfully upgraded admin to super admin.'}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({'message': 'Admin not found or already a super admin.'}, status=status.HTTP_404_NOT_FOUND)
 
 class AdminSettingsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -165,7 +204,13 @@ class AllEmployeeProfilesView(APIView):
     def get(self, request):
         if request.user.role.lower() not in ['employee', 'team_leader', 'manager', 'admin', 'super_admin']:
             return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
-        employees = Employee.objects.select_related('user').all().order_by('user__first_name')
+        company = getattr(request.user, 'company', None)
+        if request.user.role.lower() == 'super_admin':
+            employees = Employee.objects.select_related('user').all().order_by('user__first_name')
+        elif company:
+            employees = Employee.objects.select_related('user').filter(user__company=company).order_by('user__first_name')
+        else:
+            employees = Employee.objects.select_related('user').none()
         serializer = EmployeeProfileSerializer(employees, many=True)
         return Response(serializer.data)
 
@@ -206,8 +251,27 @@ class AdminCompanyCreateView(APIView):
         if not email:
             data['email'] = f"{name.lower().replace(' ', '')}_{int(time.time())}@shnoor.com"
 
+        password = data.get('password')
+        if not password:
+            return Response({'message': 'Admin password is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if User.objects.filter(email=email).exists() or User.objects.filter(username=email).exists():
+            return Response({'message': 'A user with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = CompanySerializer(data=data)
         if serializer.is_valid():
-            serializer.save()
+            company = serializer.save()
+            
+            user = User.objects.create_user(
+                username=email,
+                email=email,
+                password=password,
+                first_name=name,
+                last_name='Admin',
+                role='manager',
+                company=company
+            )
+            ManagerProfile.objects.get_or_create(user=user)
+            
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

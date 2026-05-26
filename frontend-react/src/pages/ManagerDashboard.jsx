@@ -19,6 +19,7 @@ import Notifications from '../components/Manager/Views/Notifications';
 import Subscription from '../components/Manager/Views/Subscription';
 import ManagerQueries from '../components/Manager/Views/Queries';
 import EmployeeQueries from '../components/Employee/Views/Queries';
+import Cases from '../components/Manager/Views/Cases';
 
 import '../styles/admin.css';
 
@@ -67,6 +68,8 @@ const ManagerDashboard = () => {
                 return <OrgChart />;
             case 'queries':
                 return currentMode === 'manager' ? <ManagerQueries /> : <EmployeeQueries />;
+            case 'cases':
+                return <Cases />;
             case 'notifications':
                 return <Notifications currentMode={currentMode} />;
             case 'subscription':

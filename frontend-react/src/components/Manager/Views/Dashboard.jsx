@@ -168,8 +168,91 @@ const Dashboard = ({ currentMode }) => {
         return <div style={{ padding: '2rem' }}>Loading or invalid data format received from backend.</div>;
     }
 
-    const { summary, attendance } = data;
+    const { summary, attendance, leaves, employees, tasks, expenses } = data;
 
+    const taskDoughnutData = {
+        labels: ['Completed', 'Remaining'],
+        datasets: [{
+            data: [tasks?.completionRate || 0, 100 - (tasks?.completionRate || 0)],
+            backgroundColor: ['#10b981', '#e2e8f0'],
+            borderWidth: 0,
+            cutout: '80%'
+        }]
+    };
+
+    const taskDoughnutOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    };
+
+    const taskBarData = {
+        labels: ['Completed', 'Overdue'],
+        datasets: [{
+            label: 'Tasks',
+            data: [tasks?.completedThisWeek || 0, tasks?.overdue || 0],
+            backgroundColor: ['#3b82f6', '#f43f5e'],
+            borderRadius: 4
+        }]
+    };
+
+    const expenseBarData = {
+        labels: expenses?.statusData?.map(d => d.name) || ['Approved', 'Pending'],
+        datasets: [{
+            label: 'Expenses',
+            data: expenses?.statusData?.map(d => d.value) || [0, 0],
+            backgroundColor: ['#10b981', '#f59e0b'],
+            borderRadius: 4
+        }]
+    };
+
+    const expenseBarOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { grid: { color: '#f1f5f9' }, border: { display: false } },
+            x: { grid: { display: false }, border: { display: false } }
+        }
+    };
+
+
+    const leaveDoughnutData = {
+        labels: leaves?.distribution.map(d => d.name) || ['Sick', 'Vacation', 'Casual', 'Paid', 'Emergency'],
+        datasets: [{
+            data: leaves?.distribution.map(d => d.value) || [0, 0, 0, 0, 0],
+            backgroundColor: ['#16257b', '#3b82f6', '#f59e0b', '#10b981', '#edb44b'],
+            borderWidth: 0,
+            cutout: '75%'
+        }]
+    };
+
+    const leaveDoughnutOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8 } } }
+    };
+
+    const empBarData = {
+        labels: employees?.departmentData.map(d => d.name) || [],
+        datasets: [{
+            label: 'Employees',
+            data: employees?.departmentData.map(d => d.employees) || [],
+            backgroundColor: NAVY_BLUE,
+            borderRadius: 4
+        }]
+    };
+
+    const empBarOptions = {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { grid: { color: '#f1f5f9' }, border: { display: false } },
+            y: { grid: { display: false }, border: { display: false } }
+        }
+    };
 
     const barChartDataWeekly = {
         labels: attendance.weeklyTrend.map(d => d.name),
@@ -294,6 +377,86 @@ const Dashboard = ({ currentMode }) => {
                     <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151' }}>Monthly Attendance Overview</h3>
                     <div style={{ height: 250, width: '100%' }}>
                         <Bar data={barChartDataMonthly} options={barOptionsMonthly} />
+                    </div>
+                </div>
+
+                <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', marginTop: '2.5rem', color: '#1e293b', fontWeight: 600 }}>Leave Analytics</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                    <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151' }}>Leave Distribution</h3>
+                        <div style={{ height: 250, width: '100%' }}>
+                            <Doughnut data={leaveDoughnutData} options={leaveDoughnutOptions} />
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <div className="glass-panel" style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <div style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 500, marginBottom: '0.5rem' }}>Pending Leave Requests</div>
+                            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#f59e0b' }}>{leaves?.pending || 0}</div>
+                        </div>
+                        <div className="glass-panel" style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <div style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 500, marginBottom: '0.5rem' }}>Approved Leave Requests</div>
+                            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#10b981' }}>{leaves?.approved || 0}</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Employee Analytics Section */}
+                <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', marginTop: '2.5rem', color: '#1e293b', fontWeight: 600 }}>Employee Analytics</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+                    <SummaryCard title="New Joinees (Month)" value={employees?.newJoinees || 0} color="#6366f1" />
+                    <SummaryCard title="Active Employees" value={employees?.active || 0} color={NAVY_BLUE} />
+                    <SummaryCard title="Remote Employees" value={employees?.remote || 0} color="#06b6d4" />
+                    <SummaryCard title="On Probation" value={employees?.probation || 0} color="#f59e0b" />
+                </div>
+                <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                    <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151' }}>Department-wise Employee Count</h3>
+                    <div style={{ height: 300, width: '100%' }}>
+                        <Bar data={empBarData} options={empBarOptions} />
+                    </div>
+                </div>
+
+                {/* Task & Productivity Analytics Section */}
+                <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', marginTop: '2.5rem', color: '#1e293b', fontWeight: 600 }}>Task & Productivity Analytics</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                    <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151', alignSelf: 'flex-start' }}>Completion Rate</h3>
+                        <div style={{ position: 'relative', width: '150px', height: '150px' }}>
+                            <Doughnut data={taskDoughnutData} options={taskDoughnutOptions} />
+                            <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <span style={{ fontSize: '1.8rem', fontWeight: 700, color: '#1e293b' }}>{tasks?.completionRate || 0}%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151' }}>Tasks Overview</h3>
+                        <div style={{ height: 150, width: '100%' }}>
+                            <Bar data={taskBarData} options={expenseBarOptions} />
+                        </div>
+                    </div>
+                    <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                        <div style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 500, marginBottom: '0.5rem' }}>Overdue Tasks</div>
+                        <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#ef4444' }}>{tasks?.overdue || 0}</div>
+                    </div>
+                </div>
+
+                {/* Expense Analytics Section */}
+                <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', marginTop: '2.5rem', color: '#1e293b', fontWeight: 600 }}>Expense Analytics</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                    <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151' }}>Approved vs Pending Expenses</h3>
+                        <div style={{ height: 200, width: '100%' }}>
+                            <Bar data={expenseBarData} options={expenseBarOptions} />
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <div className="glass-panel" style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <div style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 500, marginBottom: '0.5rem' }}>Total This Month</div>
+                            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#1e293b' }}>₹{expenses?.totalThisMonth?.toLocaleString('en-IN') || 0}</div>
+                        </div>
+                        <div className="glass-panel" style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <div style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 500, marginBottom: '0.5rem' }}>Highest Expense Dept</div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: NAVY_BLUE }}>{expenses?.highestDept || 'N/A'}</div>
+                        </div>
                     </div>
                 </div>
 

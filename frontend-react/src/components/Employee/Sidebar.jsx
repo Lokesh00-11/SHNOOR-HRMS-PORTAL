@@ -13,22 +13,31 @@ const Sidebar = ({ currentView, setCurrentView }) => {
     const toggleTheme = () => {
         setTheme(prev => prev === 'dark' ? 'light' : 'dark');
     };
-    const navItems = [
+    
+    const role = localStorage.getItem('role') || '';
+    const isTeamLeader = role.toLowerCase() === 'team_leader' || role.toLowerCase() === 'team leader';
+
+    let navItems = [
         { id: 'dashboard', label: 'Dashboard', icon: 'fa-gauge' },
         { id: 'attendance', label: 'Attendance', icon: 'fa-calendar-check' },
         { id: 'leaves', label: 'Leaves', icon: 'fa-umbrella-beach' },
         { id: 'tasks', label: 'Tasks', icon: 'fa-list-check' },
         { id: 'thanks', label: 'Thanks', icon: 'fa-thumbs-up' },
         { id: 'holidays', label: 'Holidays', icon: 'fa-tree' },
+        { id: 'assets', label: 'Assets', icon: 'fa-box' },
         { id: 'offboarding', label: 'Offboarding', icon: 'fa-user-xmark' },
         { id: 'orgchart', label: 'Org Chart', icon: 'fa-sitemap' },
         { id: 'documents', label: 'Documents', icon: 'fa-folder-open' },
         { id: 'expenses', label: 'Expenses', icon: 'fa-wallet' },
         { id: 'payroll', label: 'Payroll', icon: 'fa-file-invoice-dollar' },
         { id: 'queries', label: 'Queries', icon: 'fa-circle-question' },
-        { id: 'notifications', label: 'Notifications', icon: 'fa-bell' },
+        { id: 'my-requests', label: 'My Requests', icon: 'fa-timeline' },
         { id: 'profile', label: 'Profile', icon: 'fa-user' },
     ];
+
+    if (isTeamLeader) {
+        navItems.splice(2, 0, { id: 'authorizations', label: 'Team Authorizations', icon: 'fa-clipboard-check' });
+    }
 
     const handleLogout = () => {
         localStorage.clear();
@@ -37,8 +46,8 @@ const Sidebar = ({ currentView, setCurrentView }) => {
 
     return (
         <aside className="sidebar">
-            <div className="logo" onClick={() => window.location.href = '/'} style={{ cursor: 'pointer' }}>
-                <i className="fa-solid fa-layer-group"></i>
+            <div className="logo" onClick={() => window.location.href = '/'} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <img src="/logo.jpg" alt="Shnoor Logo" style={{ width: '35px', height: '35px', borderRadius: '5px', objectFit: 'cover' }} />
                 ShnoorHR
             </div>
 

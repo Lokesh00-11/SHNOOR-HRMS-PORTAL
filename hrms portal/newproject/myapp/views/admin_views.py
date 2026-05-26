@@ -1,5 +1,9 @@
-from rest_framework.views import APIView
 import time
+import uuid
+from datetime import date, timedelta
+from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from django.db import models
@@ -37,11 +41,15 @@ class AdminStatsView(APIView):
 class CompanyListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
+        if request.user.role.lower() not in ['admin', 'super_admin']:
+            return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
         companies = Company.objects.all().order_by('-created_at')
         serializer = CompanySerializer(companies, many=True)
         return Response(serializer.data)
 
     def post(self, request):
+        if request.user.role.lower() != 'super_admin':
+            return Response({'message': 'Access denied. Only super admin can add companies.'}, status=status.HTTP_403_FORBIDDEN)
         serializer = CompanySerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -61,9 +69,24 @@ class CompanyDetailView(APIView):
     def patch(self, request, pk):
         try:
             company = Company.objects.get(pk=pk)
+            
+            # Keep track of old status to detect a toggle
+            old_is_active = company.is_active
+            new_is_active = request.data.get('is_active')
+            
             serializer = CompanySerializer(company, data=request.data, partial=True)
             if serializer.is_valid():
-                serializer.save()
+                company_instance = serializer.save()
+                
+                # If company active status is being toggled, cascade it to all users
+                if new_is_active is not None and str(new_is_active).lower() in ['true', 'false']:
+                    # Convert to strict boolean
+                    is_active_bool = str(new_is_active).lower() == 'true'
+                    if old_is_active != is_active_bool:
+                        User = get_user_model()
+                        # Physically deactivate/reactivate all admin/manager/employee accounts linked to this company
+                        User.objects.filter(company=company_instance).update(is_active=is_active_bool)
+                
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Company.DoesNotExist:
@@ -206,13 +229,59 @@ class AllEmployeeProfilesView(APIView):
             return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
         company = getattr(request.user, 'company', None)
         if request.user.role.lower() == 'super_admin':
-            employees = Employee.objects.select_related('user').all().order_by('user__first_name')
+            users = User.objects.all().order_by('first_name')
         elif company:
-            employees = Employee.objects.select_related('user').filter(user__company=company).order_by('user__first_name')
+            users = User.objects.filter(company=company).order_by('first_name')
         else:
-            employees = Employee.objects.select_related('user').none()
-        serializer = EmployeeProfileSerializer(employees, many=True)
-        return Response(serializer.data)
+            users = User.objects.none()
+            
+        data = []
+        for u in users:
+            profile_data = {
+                'id': u.id, 'user_id': u.id, 'first_name': u.first_name, 
+                'last_name': u.last_name, 'username': u.username, 'email': u.email,
+                'role': u.role, 'is_active': u.is_active,
+            }
+            p = None
+            if u.role == 'employee' and hasattr(u, 'employee_profile'):
+                p = u.employee_profile
+            elif u.role == 'team_leader' and hasattr(u, 'teamleaderprofile'):
+                p = u.teamleaderprofile
+            elif hasattr(u, 'managerprofile'):
+                p = u.managerprofile
+                
+            if p:
+                profile_data.update({
+                    'employee_pk': p.id if u.role == 'employee' else None,
+                    'designation': getattr(p, 'designation', ''),
+                    'department': getattr(p, 'department', ''),
+                    'employee_id': getattr(p, 'employee_id', ''),
+                    'gender': getattr(p, 'gender', ''),
+                    'date_of_birth': getattr(p, 'date_of_birth', ''),
+                    'phone_number': getattr(p, 'phone', ''),
+                    'address': getattr(p, 'address', ''),
+                    'permanent_address': getattr(p, 'permanent_address', ''),
+                    'blood_group': getattr(p, 'blood_group', ''),
+                    'nationality': getattr(p, 'nationality', ''),
+                    'marital_status': getattr(p, 'marital_status', ''),
+                    'aadhaar_number': getattr(p, 'aadhaar_number', ''),
+                    'pan_number': getattr(p, 'pan_number', ''),
+                    'bank_name': getattr(p, 'bank_name', ''),
+                    'account_number': getattr(p, 'account_number', ''),
+                    'ifsc_code': getattr(p, 'ifsc_code', ''),
+                    'branch_name': getattr(p, 'branch', ''),
+                    'emergency_contact_name': getattr(p, 'emergency_contact_name', ''),
+                    'emergency_contact_phone': getattr(p, 'emergency_contact_phone', ''),
+                    'emergency_contact_relation': getattr(p, 'emergency_contact_relation', ''),
+                    'sick_leaves': getattr(p, 'sick_leaves', 7),
+                    'casual_leaves': getattr(p, 'casual_leaves', 7),
+                    'vacation_leaves': getattr(p, 'vacation_leaves', 7),
+                    'paid_leaves': getattr(p, 'paid_leaves', 0),
+                    'date_of_joining': getattr(p, 'joining_date', getattr(p, 'date_of_joining', ''))
+                })
+            data.append(profile_data)
+            
+        return Response(data)
 
 class SystemDataSetupView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -239,8 +308,8 @@ class AdminCompanyCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        if request.user.role.lower() != 'admin':
-            return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+        if request.user.role.lower() != 'super_admin':
+            return Response({'message': 'Access denied. Only super admin can create companies.'}, status=status.HTTP_403_FORBIDDEN)
         
         data = request.data.copy()
         name = data.get('name')
@@ -262,6 +331,27 @@ class AdminCompanyCreateView(APIView):
         if serializer.is_valid():
             company = serializer.save()
             
+            max_users = int(data.get('max_users', 50))
+            base_plan, _ = SubscriptionPlan.objects.get_or_create(
+                name='Base Plan', 
+                defaults={'price': 0.00, 'duration_months': 1, 'features': 'Base Plan Trial'}
+            )
+            company.max_users = max_users
+            company.subscription_plan = base_plan
+            company.license_expiry_date = date.today() + timedelta(days=30)
+            company.save()
+            
+            # Record the trial subscription as a transaction
+            Transactions.objects.create(
+                company=company,
+                subscription_plan=base_plan,
+                amount=0.00,
+                status='Success',
+                payment_method='Free Trial',
+                transaction_id=str(uuid.uuid4()).split('-')[0].upper(),
+                transaction_date=date.today()
+            )
+            
             user = User.objects.create_user(
                 username=email,
                 email=email,
@@ -272,6 +362,16 @@ class AdminCompanyCreateView(APIView):
                 company=company
             )
             ManagerProfile.objects.get_or_create(user=user)
+            
+            current_email = data.get('current_email')
+            
+            subject = f"Welcome to ShnoorHR - {name} Admin Credentials"
+            message = f"Hello,\n\nYour company '{name}' has been successfully registered.\nYou have been granted a free 1-month trial on the Base Plan.\nYour total allowed users (capacity): {max_users}.\n\nYour Admin Login Credentials:\nEmail: {email}\nPassword: {password}\n\nPlease login to get started."
+            try:
+                if current_email:
+                    send_mail(subject, message, None, [current_email], fail_silently=True)
+            except Exception as e:
+                print(f"Failed to send company creation email: {e}")
             
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

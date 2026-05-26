@@ -63,30 +63,33 @@
 .react-calendar__month-view__days {
     display: grid !important;
     grid-template-columns: repeat(7, 1fr);
-    gap: 0.75rem;
+    gap: 4px;
 }
 
 .react-calendar__tile {
     background: var(--bg-main) !important;
-    border: 2px solid var(--border-subtle) !important;
-    border-radius: 8px;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: 4px;
     color: var(--text-main) !important;
-    min-height: 120px;
-    padding: 0.75rem !important;
+    min-height: 130px;
+    padding: 0.5rem !important;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    justify-content: space-between;
+    justify-content: flex-start;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .react-calendar__tile abbr {
-    font-size: 1.5rem !important;
-    font-weight: 700 !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
     color: var(--text-main) !important;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     text-decoration: none !important;
+    align-self: flex-end;
+    padding: 2px 6px;
+    border-radius: 12px;
 }
 
 .react-calendar__tile:enabled:hover,
@@ -97,11 +100,12 @@
 
 .react-calendar__tile--now {
     background: var(--bg-main) !important;
-    border: 2px solid var(--border-subtle) !important;
+    border: 1px solid var(--primary-color) !important;
 }
 
 .react-calendar__tile--now abbr {
-    color: var(--text-main) !important;
+    color: var(--primary-color) !important;
+    background: transparent !important;
     font-weight: 700 !important;
 }
 
@@ -140,18 +144,20 @@
 }
 
 .react-calendar__tile--active {
-    background: var(--primary-color) !important;
+    background: var(--bg-main) !important;
     border-color: var(--primary-color) !important;
-    color: #ffffff !important;
+    box-shadow: 0 0 0 1px var(--primary-color) inset;
+    color: var(--text-main) !important;
 }
 
 .react-calendar__tile--active abbr {
-    color: #ffffff !important;
+    color: var(--primary-color) !important;
+    font-weight: 700 !important;
 }
 
 .react-calendar__tile--active .tile-attendance-info span {
-    color: rgba(255, 255, 255, 0.9) !important;
-    background: rgba(255, 255, 255, 0.15) !important;
+    color: inherit !important;
+    background: transparent !important;
 }
 
 .react-calendar__tile--active .tile-attendance-info i {

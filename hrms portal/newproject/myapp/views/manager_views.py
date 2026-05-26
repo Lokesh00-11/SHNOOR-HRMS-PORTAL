@@ -7,8 +7,11 @@ from rest_framework.response import Response
 from rest_framework import status, permissions
 from django.utils import timezone
 from django.db.models import Count, Sum
+from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
+from django.conf import settings
 from ..models import (
-    Employee, LeaveRequest, Notification, Appreciation, ManagerProfile, Expense, Company, Transactions, SubscriptionPlan, SupportQuery, EmployeeCase,
+    Employee, LeaveRequest, Notification, Appreciation, ManagerProfile, TeamLeaderProfile, Expense, Company, Transactions, SubscriptionPlan, SupportQuery, EmployeeCase,
     Attendance, Task
 )
 from ..serializers import (
@@ -23,13 +26,35 @@ class ManagerEmployeeListView(APIView):
             return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
         
         company = getattr(request.user, 'company', None)
-        if company and request.user.role.lower() == 'manager':
-            employees = Employee.objects.select_related('user').filter(user__company=company).order_by('user__first_name')
+        if company and request.user.role.lower() in ['manager', 'admin']:
+            User = get_user_model()
+            users = User.objects.filter(company=company).order_by('first_name')
         else:
-            employees = Employee.objects.select_related('user').all().order_by('user__first_name')
+            User = get_user_model()
+            users = User.objects.all().order_by('first_name')
             
-        serializer = EmployeeProfileSerializer(employees, many=True)
-        return Response(serializer.data)
+        data = []
+        for u in users:
+            designation = 'Team Member'
+            if u.role == 'employee' and hasattr(u, 'employee_profile'):
+                designation = u.employee_profile.designation
+            elif u.role == 'team_leader' and hasattr(u, 'teamleaderprofile'):
+                designation = u.teamleaderprofile.designation
+            elif u.role == 'manager' and hasattr(u, 'managerprofile'):
+                designation = u.managerprofile.designation
+            
+            data.append({
+                'user_id': u.id,
+                'first_name': u.first_name,
+                'last_name': u.last_name,
+                'username': u.username,
+                'email': u.email,
+                'role': u.role,
+                'designation': designation,
+                'is_active': u.is_active
+            })
+            
+        return Response(data)
 
 class ManagerLeaveApprovalView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -335,16 +360,20 @@ class ManagerEmployeeCreateView(APIView):
         first_name = request.data.get('first_name', '')
         last_name = request.data.get('last_name', '')
         email = request.data.get('email')
+        personal_email = request.data.get('personal_email')
         password = request.data.get('password')
         designation = request.data.get('designation', 'Employee')
 
         if not email or not password:
             return Response({'message': 'Email and password are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        from django.contrib.auth import get_user_model
         User = get_user_model()
         if User.objects.filter(email=email).exists() or User.objects.filter(username=email).exists():
             return Response({'message': 'User with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        target_role = request.data.get('role', 'employee').lower()
+        if target_role not in ['employee', 'team_leader', 'manager']:
+            target_role = 'employee'
 
         company = getattr(request.user, 'company', None)
 
@@ -355,11 +384,11 @@ class ManagerEmployeeCreateView(APIView):
                 password=password,
                 first_name=first_name,
                 last_name=last_name,
-                role='employee',
+                role=target_role,
                 company=company
             )
             
-            # Generate employee_id sequentially
+            # Generate sequential employee_id
             last_employee = Employee.objects.filter(employee_id__startswith='EMP').order_by('-employee_id').first()
             if last_employee and last_employee.employee_id:
                 try:
@@ -370,13 +399,45 @@ class ManagerEmployeeCreateView(APIView):
             else:
                 new_id = "EMP001"
 
-            Employee.objects.create(
-                user=user,
-                designation=designation,
-                department='General',
-                employee_id=new_id,
-                joining_date=timezone.now().date()
-            )
+            if target_role == 'manager':
+                ManagerProfile.objects.create(
+                    user=user,
+                    designation=designation,
+                    department='Management',
+                    employee_id=new_id,
+                    joining_date=timezone.now().date()
+                )
+            elif target_role == 'team_leader':
+                TeamLeaderProfile.objects.create(
+                    user=user,
+                    designation=designation,
+                    department='Leadership',
+                    employee_id=new_id,
+                    joining_date=timezone.now().date()
+                )
+            else:
+                Employee.objects.create(
+                    user=user,
+                    designation=designation,
+                    department='General',
+                    employee_id=new_id,
+                    joining_date=timezone.now().date()
+                )
+            
+            if personal_email:
+                subject = 'Welcome to Shnoor! Your Login Credentials'
+                message = f"Hello {first_name},\n\nWelcome to the team! Your account has been created on the Shnoor HRMS Portal.\n\nHere are your login credentials:\nOfficial Email: {email}\nPassword: {password}\n\nPlease log in and change your password immediately."
+                
+                try:
+                    send_mail(
+                        subject=subject,
+                        message=message,
+                        from_email=settings.EMAIL_HOST_USER if hasattr(settings, 'EMAIL_HOST_USER') else 'no-reply@hrms.com',
+                        recipient_list=[personal_email],
+                        fail_silently=True,
+                    )
+                except Exception as e:
+                    pass
             
             return Response({'message': 'Employee created successfully.', 'employee_id': new_id}, status=status.HTTP_201_CREATED)
         except Exception as e:
@@ -478,30 +539,47 @@ class ManagerDashboardAnalyticsView(APIView):
         if total_team > 0:
             overall_attendance = int((present_today / total_team) * 100)
             
-        # 3. Leave Analytics
         leave_dist = [
             {'name': 'Sick', 'value': leaves.filter(leave_type__icontains='sick').count()},
+            {'name': 'Vacation', 'value': leaves.filter(leave_type__icontains='vacation').count()},
             {'name': 'Casual', 'value': leaves.filter(leave_type__icontains='casual').count()},
             {'name': 'Paid', 'value': leaves.filter(leave_type__icontains='paid').count()},
             {'name': 'Emergency', 'value': leaves.filter(leave_type__icontains='emergency').count()},
         ]
         
-        # 4. Employee Analytics
         dept_counts = employees.values('department').annotate(count=Count('id'))
         dept_data = [{'name': d['department'] or 'General', 'employees': d['count']} for d in dept_counts]
         
-        # 5. Task & Productivity
         total_tasks = tasks.count()
         completed_tasks = tasks.filter(status='Completed').count()
         task_completion_rate = int((completed_tasks / total_tasks * 100)) if total_tasks > 0 else 0
         
-        # 6. Expense Analytics
-        exp_approved = expenses.filter(status='approved').count()
-        exp_pending = expenses.filter(status='pending').count()
+        exp_approved = expenses.filter(status__iexact='approved').count()
+        exp_pending = expenses.filter(status__iexact='pending').count()
         expense_data = [
             {'name': 'Approved', 'value': exp_approved},
             {'name': 'Pending', 'value': exp_pending}
         ]
+        
+        current_month = today.month
+        current_year = today.year
+        monthly_expenses = expenses.filter(submitted_at__year=current_year, submitted_at__month=current_month)
+        total_this_month = float(monthly_expenses.aggregate(total=Sum('amount'))['total'] or 0)
+        
+        dept_sums = {}
+        for exp in monthly_expenses:
+            dept = 'General'
+            u = exp.employee
+            if hasattr(u, 'employee_profile') and u.employee_profile.department:
+                dept = u.employee_profile.department
+            elif hasattr(u, 'team_leader_profile') and u.team_leader_profile.department:
+                dept = u.team_leader_profile.department
+            elif hasattr(u, 'manager_profile') and hasattr(u.manager_profile, 'department') and u.manager_profile.department:
+                dept = u.manager_profile.department
+            
+            dept_sums[dept] = float(dept_sums.get(dept, 0)) + float(exp.amount)
+
+        highest_dept = max(dept_sums, key=dept_sums.get) if dept_sums else 'N/A'
         
         activities = []
         for l in leaves.order_by('-id')[:2]:
@@ -568,8 +646,62 @@ class ManagerDashboardAnalyticsView(APIView):
             },
             'expenses': {
                 'statusData': expense_data,
-                'totalThisMonth': 15000,
-                'highestDept': 'IT'
+                'totalThisMonth': total_this_month,
+                'highestDept': highest_dept
             },
             'recentActivity': activities
         })
+
+class ManagerEmployeePromoteView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        if request.user.role.lower() not in ['manager', 'admin']:
+            return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        user_id = request.data.get('user_id')
+        new_role = request.data.get('new_role')
+        
+        if not user_id or new_role not in ['manager', 'team_leader', 'employee']:
+            return Response({'message': 'Invalid input.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        User = get_user_model()
+        
+        try:
+            target_user = User.objects.get(id=user_id, company=request.user.company)
+            
+            if target_user.role == new_role:
+                return Response({'message': 'User already has this role.'})
+                
+            designation = 'Promoted'
+            emp_id = f"EMP{target_user.id:03d}"
+            
+            if target_user.role == 'employee' and hasattr(target_user, 'employee_profile'):
+                designation = target_user.employee_profile.designation
+                emp_id = target_user.employee_profile.employee_id
+                target_user.employee_profile.delete()
+            elif target_user.role == 'team_leader' and hasattr(target_user, 'teamleaderprofile'):
+                designation = target_user.teamleaderprofile.designation
+                emp_id = target_user.teamleaderprofile.employee_id
+                target_user.teamleaderprofile.delete()
+            elif target_user.role == 'manager' and hasattr(target_user, 'managerprofile'):
+                designation = target_user.managerprofile.designation
+                emp_id = target_user.managerprofile.employee_id
+                target_user.managerprofile.delete()
+                
+            target_user.role = new_role
+            target_user.save()
+            
+            if new_role == 'manager':
+                ManagerProfile.objects.create(user=target_user, designation=designation, employee_id=emp_id)
+            elif new_role == 'team_leader':
+                TeamLeaderProfile.objects.create(user=target_user, designation=designation, employee_id=emp_id)
+            else:
+                Employee.objects.create(user=target_user, designation=designation, employee_id=emp_id)
+                
+            return Response({'message': f'User successfully promoted to {new_role}.'})
+            
+        except User.DoesNotExist:
+            return Response({'message': 'User not found in your company.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

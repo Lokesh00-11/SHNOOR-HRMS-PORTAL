@@ -155,6 +155,7 @@ const Leaves = ({ currentMode }) => {
                                 <option value="Sick">Sick</option>
                                 <option value="Casual">Casual</option>
                                 <option value="Vacation">Vacation</option>
+                                <option value="Emergency">Emergency</option>
                             </select>
                         </div>
                         <div className="setting-item" style={{ flex: 1, minWidth: '150px' }}>

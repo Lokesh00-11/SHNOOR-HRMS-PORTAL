@@ -12,8 +12,11 @@ import Holidays from '../components/Employee/Views/Holidays';
 import Expenses from '../components/Employee/Views/Expenses';
 import Offboarding from '../components/Employee/Views/Offboarding';
 import OrgChart from '../components/Employee/Views/OrgChart';
+import Assets from '../components/Employee/Views/Assets';
 import Queries from '../components/Employee/Views/Queries';
 import Payroll from '../components/Employee/Views/Payroll';
+import MyRequests from '../components/Employee/Views/MyRequests';
+import Authorizations from '../components/Employee/Views/Authorizations';
 
 import '../styles/admin.css';
 
@@ -24,6 +27,10 @@ const EmployeeDashboard = () => {
         switch (currentView) {
             case 'dashboard':
                 return <Dashboard />;
+            case 'my-requests':
+                return <MyRequests />;
+            case 'authorizations':
+                return <Authorizations />;
             case 'attendance':
                 return <Attendance />;
             case 'leaves':
@@ -34,6 +41,8 @@ const EmployeeDashboard = () => {
                 return <Thanks />;
             case 'holidays':
                 return <Holidays />;
+            case 'assets':
+                return <Assets />;
             case 'offboarding':
                 return <Offboarding />;
             case 'orgchart':

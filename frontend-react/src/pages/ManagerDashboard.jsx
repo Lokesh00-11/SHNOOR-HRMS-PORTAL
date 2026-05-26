@@ -20,6 +20,8 @@ import Subscription from '../components/Manager/Views/Subscription';
 import ManagerQueries from '../components/Manager/Views/Queries';
 import EmployeeQueries from '../components/Employee/Views/Queries';
 import Cases from '../components/Manager/Views/Cases';
+import Assets from '../components/Manager/Views/Assets';
+import Authorizations from '../components/Manager/Views/Authorizations';
 
 import '../styles/admin.css';
 
@@ -48,6 +50,10 @@ const ManagerDashboard = () => {
                 return <Leaves currentMode={currentMode} />;
             case 'tasks':
                 return <Tasks currentMode={currentMode} />;
+            case 'assets':
+                return <Assets currentMode={currentMode} />;
+            case 'authorizations':
+                return <Authorizations />;
             case 'thanks':
                 return <Thanks currentMode={currentMode} />;
             case 'documents':

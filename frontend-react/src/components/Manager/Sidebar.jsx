@@ -21,6 +21,8 @@ const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) =
         { id: 'attendance', label: 'Attendance', icon: 'fa-calendar-check', visibleFor: ['manager', 'self'] },
         { id: 'leaves', label: 'Leaves', icon: 'fa-umbrella-beach', visibleFor: ['manager', 'self'] },
         { id: 'tasks', label: 'Tasks', icon: 'fa-list-check', visibleFor: ['manager'] },
+        { id: 'authorizations', label: 'Authorizations', icon: 'fa-clipboard-check', visibleFor: ['manager'] },
+        { id: 'assets', label: 'Assets', icon: 'fa-box', visibleFor: ['manager', 'self'] },
         { id: 'thanks', label: 'Thanks', icon: 'fa-thumbs-up', visibleFor: ['manager', 'self'] },
         { id: 'documents', label: 'Documents', icon: 'fa-folder-open', visibleFor: ['self'] },
         { id: 'profile', label: 'Profile', icon: 'fa-user', visibleFor: ['self'] },

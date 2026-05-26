@@ -29,6 +29,9 @@ class LoginView(APIView):
 
         user = authenticate(username=username, password=password)
         if user:
+            if user.role != 'super_admin' and user.company and not user.company.is_active:
+                return Response({'message': 'Your company account has been deactivated by the administrator. Please contact support.'}, status=status.HTTP_403_FORBIDDEN)
+
             token, _ = Token.objects.get_or_create(user=user)
             return Response({
                 'token': token.key,

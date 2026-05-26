@@ -59,7 +59,7 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
 class CompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
-        fields = ['id', 'name', 'email', 'members_count', 'is_active', 'license_expired', 'license_expiry_date', 'created_at']
+        fields = ['id', 'name', 'email', 'members_count', 'is_active', 'license_expired', 'license_expiry_date', 'created_at', 'max_users', 'subscription_plan']
 
 class TransactionSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source='company.name', read_only=True)

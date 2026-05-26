@@ -15,7 +15,8 @@ from .manager_views import (
     ManagerEmployeeListView, ManagerLeaveApprovalView, ManagerProfileView,
     ManagerProfileUpdateView, ManagerPerformanceView, ManagerNotificationView,
     PendingLeavesCountView, ManagerExpenseView, ManagerSubscriptionView, ManagerRenewSubscriptionView,
-    ManagerQueriesView, ManagerEmployeeCreateView, ManagerCasesView, ManagerDashboardAnalyticsView
+    ManagerQueriesView, ManagerEmployeeCreateView, ManagerCasesView, ManagerDashboardAnalyticsView,
+    ManagerEmployeePromoteView
 )
 from .attendance_views import (
     ManagerAttendanceView, EmployeeAttendanceView, EmployeeClockInView,
@@ -41,7 +42,7 @@ from .notification_views import (
     EmployeeNotificationView, BadgeCountsView, MarkBadgeReadView
 )
 from .off_views import (
-    HolidayView, AssetView, OrgChartView, OrgChartDetailView,
+    HolidayView, AssetView, AssetDetailView, OrgChartView, OrgChartDetailView,
     SupportQueryView, SupportQueryDetailView, SupportQueryUnreadCountView,
     OffboardingView, OffboardingDetailView, CalendarDataView
 )

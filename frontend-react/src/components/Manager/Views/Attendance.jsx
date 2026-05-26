@@ -222,33 +222,40 @@ const Attendance = ({ currentMode }) => {
                 return logDate === targetDate && (log.status || '').toLowerCase() === 'present';
             });
 
-            if (dailyRecords.length > 0) {
+            const uniqueRecords = [];
+            const seenEmployees = new Set();
+            for (const rec of dailyRecords) {
+                const key = rec.employee_id || rec.employee_name;
+                if (!seenEmployees.has(key)) {
+                    seenEmployees.add(key);
+                    uniqueRecords.push(rec);
+                }
+            }
+
+            if (uniqueRecords.length > 0) {
                 return (
-                    <div className="tile-attendance-info" style={{ display: 'flex', flexDirection: 'column', fontSize: '0.65rem', gap: '3px', width: '100%' }}>
-                        <span style={{
-                            color: 'var(--success-color)',
-                            fontWeight: 600,
+                    <div className="tile-attendance-info" style={{ display: 'flex', justifyContent: 'center', marginTop: 'auto', paddingBottom: '4px', width: '100%' }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
                             background: 'rgba(16, 185, 129, 0.1)',
-                            padding: '0.1rem 0.3rem',
-                            borderRadius: '4px',
-                            alignSelf: 'stretch',
-                            textAlign: 'center',
-                            marginBottom: '4px'
+                            padding: '4px 10px',
+                            borderRadius: '12px',
                         }}>
-                            {dailyRecords.length} Present
-                        </span>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', maxHeight: '45px', overflowY: 'auto' }}>
-                            {dailyRecords.map((rec, i) => (
-                                <span key={i} style={{ 
-                                    color: 'var(--text-muted)', 
-                                    fontSize: '0.6rem', 
-                                    whiteSpace: 'nowrap', 
-                                    overflow: 'hidden', 
-                                    textOverflow: 'ellipsis' 
-                                }} title={rec.employee_name}>
-                                    • {rec.employee_name}
-                                </span>
-                            ))}
+                            <span style={{ 
+                                width: '6px', 
+                                height: '6px', 
+                                borderRadius: '50%', 
+                                backgroundColor: 'var(--success-color)' 
+                            }}></span>
+                            <span style={{
+                                color: 'var(--success-color)',
+                                fontWeight: 600,
+                                fontSize: '0.75rem'
+                            }}>
+                                {uniqueRecords.length} Present
+                            </span>
                         </div>
                     </div>
                 );
@@ -388,7 +395,7 @@ const Attendance = ({ currentMode }) => {
             <section className="view-section active">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                     <h2 className="gradient-text" style={{ marginBottom: 0 }}>Team Attendance</h2>
-                    <button 
+                    <button
                         className="btn btn-primary"
                         onClick={handleAddClick}
                     >
@@ -425,7 +432,7 @@ const Attendance = ({ currentMode }) => {
                 </div>
 
                 {/* Calendar Component Wrapper */}
-                <div className="custom-calendar-card team-calendar">
+                <div className="custom-calendar-card team-calendar" style={{ marginBottom: '2rem' }}>
                     {loading && attendance.length === 0 ? (
                         <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '3rem' }}>
                             <i className="fa-solid fa-spinner fa-spin fa-2x" style={{ marginBottom: '1rem', color: 'var(--primary-color)' }}></i>
@@ -447,22 +454,22 @@ const Attendance = ({ currentMode }) => {
                 </div>
 
                 {selectedDate && (
-                    <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center', 
-                        background: 'var(--primary-light)', 
-                        border: '1px solid var(--border-subtle)', 
-                        padding: '0.75rem 1.5rem', 
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        background: 'var(--primary-light)',
+                        border: '1px solid var(--border-subtle)',
+                        padding: '0.75rem 1.5rem',
                         borderRadius: '12px',
                         marginBottom: '1.5rem',
                         color: 'var(--primary-color)',
                         fontWeight: 600
                     }}>
                         <span>Showing records for date: {selectedDate}</span>
-                        <button 
-                            className="btn btn-ghost" 
-                            style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }} 
+                        <button
+                            className="btn btn-ghost"
+                            style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}
                             onClick={() => setSelectedDate(null)}
                         >
                             Show All Days
@@ -502,7 +509,7 @@ const Attendance = ({ currentMode }) => {
                                                 </span>
                                             </td>
                                             <td>
-                                                <button 
+                                                <button
                                                     className="btn btn-ghost"
                                                     style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', display: 'inline-flex', gap: '0.5rem', alignItems: 'center' }}
                                                     onClick={() => handleEditClick(log)}
@@ -530,17 +537,17 @@ const Attendance = ({ currentMode }) => {
                                 <div className="form-group">
                                     <label>Employee Name</label>
                                     {editingRecord ? (
-                                        <input 
-                                            type="text" 
-                                            className="form-control" 
-                                            value={formData.employee_name} 
-                                            disabled 
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            value={formData.employee_name}
+                                            disabled
                                         />
                                     ) : (
-                                        <select 
+                                        <select
                                             className="form-control"
                                             value={formData.employee_id}
-                                            onChange={(e) => setFormData({...formData, employee_id: e.target.value})}
+                                            onChange={(e) => setFormData({ ...formData, employee_id: e.target.value })}
                                             required
                                         >
                                             <option value="">Select Employee...</option>
@@ -555,11 +562,11 @@ const Attendance = ({ currentMode }) => {
 
                                 <div className="form-group">
                                     <label>Date</label>
-                                    <input 
-                                        type="date" 
-                                        className="form-control" 
-                                        value={formData.date} 
-                                        onChange={(e) => setFormData({...formData, date: e.target.value})}
+                                    <input
+                                        type="date"
+                                        className="form-control"
+                                        value={formData.date}
+                                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                                         disabled={!!editingRecord}
                                         required
                                     />
@@ -567,37 +574,37 @@ const Attendance = ({ currentMode }) => {
 
                                 <div className="form-group">
                                     <label>Check In Time</label>
-                                    <input 
-                                        type="time" 
-                                        className="form-control" 
-                                        value={formData.check_in} 
-                                        onChange={(e) => setFormData({...formData, check_in: e.target.value})}
+                                    <input
+                                        type="time"
+                                        className="form-control"
+                                        value={formData.check_in}
+                                        onChange={(e) => setFormData({ ...formData, check_in: e.target.value })}
                                         required
                                     />
                                 </div>
 
                                 <div className="form-group">
                                     <label>Check Out Time</label>
-                                    <input 
-                                        type="time" 
-                                        className="form-control" 
-                                        value={formData.check_out} 
-                                        onChange={(e) => setFormData({...formData, check_out: e.target.value})}
+                                    <input
+                                        type="time"
+                                        className="form-control"
+                                        value={formData.check_out}
+                                        onChange={(e) => setFormData({ ...formData, check_out: e.target.value })}
                                         required
                                     />
                                 </div>
 
                                 <div className="modal-footer">
-                                    <button 
-                                        type="button" 
-                                        className="btn btn-ghost" 
+                                    <button
+                                        type="button"
+                                        className="btn btn-ghost"
                                         onClick={() => setShowModal(false)}
                                         disabled={actionLoading}
                                     >
                                         Cancel
                                     </button>
-                                    <button 
-                                        type="submit" 
+                                    <button
+                                        type="submit"
                                         className="btn btn-primary"
                                         disabled={actionLoading}
                                     >
@@ -635,7 +642,7 @@ const Attendance = ({ currentMode }) => {
             </div>
 
             {/* Calendar Component Wrapper */}
-            <div className="custom-calendar-card self-calendar">
+            <div className="custom-calendar-card self-calendar" style={{ marginBottom: '2rem' }}>
                 {loading && attendance.length === 0 ? (
                     <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '3rem' }}>
                         <i className="fa-solid fa-spinner fa-spin fa-2x" style={{ marginBottom: '1rem', color: 'var(--primary-color)' }}></i>

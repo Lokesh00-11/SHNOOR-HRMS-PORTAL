@@ -1,3 +1,4 @@
+from datetime import datetime
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
@@ -41,7 +42,7 @@ class ManagerPaySingleEmployeeView(APIView):
         if not employee_id:
             return Response({'message': 'Employee ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
             
-        from datetime import datetime
+
         now = datetime.now()
         month_year = now.strftime('%B %Y') # e.g., "May 2026"
         

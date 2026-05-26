@@ -46,10 +46,19 @@ const Holidays = () => {
         return days;
     };
 
+    const parseDateStr = (dateStr) => {
+        if (!dateStr) return new Date();
+        const parts = dateStr.split('-');
+        if (parts.length === 3 && parts[0].length !== 4) {
+            return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+        }
+        return new Date(dateStr);
+    };
+
     const isHoliday = (monthIndex, day) => {
         if (!day) return null;
         const holiday = holidays.find(h => {
-            const hDate = new Date(h.date);
+            const hDate = parseDateStr(h.date);
             return hDate.getMonth() === monthIndex && hDate.getDate() === day;
         });
         return holiday;

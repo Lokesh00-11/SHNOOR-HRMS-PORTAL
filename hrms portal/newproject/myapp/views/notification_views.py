@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
@@ -59,7 +60,7 @@ class BadgeCountsView(APIView):
         user = request.user
         role = user.role.lower()
         
-        from django.db.models import Q
+
         base_qs = Notification.objects.filter(
             Q(recipient=user) | Q(recipient__isnull=True, target_role__iexact=role),
             is_read=False
@@ -88,7 +89,7 @@ class MarkBadgeReadView(APIView):
         role = user.role.lower()
         badge_type = request.data.get('type')
         
-        from django.db.models import Q
+
         qs = Notification.objects.filter(
             Q(recipient=user) | Q(recipient__isnull=True, target_role__iexact=role),
             is_read=False
@@ -103,19 +104,15 @@ class MarkBadgeReadView(APIView):
         elif badge_type == 'tasks':
             qs.filter(title__icontains='task').update(is_read=True)
         elif badge_type == 'payroll':
-            from django.db.models import Q as Q2
-            qs.filter(Q2(title__icontains='payroll') | Q2(title__icontains='salary') | Q2(title__icontains='payslip')).update(is_read=True)
+            qs.filter(Q(title__icontains='payroll') | Q(title__icontains='salary') | Q(title__icontains='payslip')).update(is_read=True)
         elif badge_type == 'thanks':
-            from django.db.models import Q as Q3
-            qs.filter(Q3(title__icontains='thank') | Q3(title__icontains='appreciation')).update(is_read=True)
+            qs.filter(Q(title__icontains='thank') | Q(title__icontains='appreciation')).update(is_read=True)
         elif badge_type == 'offboarding':
-            from django.db.models import Q as Q4
-            qs.filter(Q4(title__icontains='offboard') | Q4(title__icontains='resign')).update(is_read=True)
+            qs.filter(Q(title__icontains='offboard') | Q(title__icontains='resign')).update(is_read=True)
         elif badge_type == 'transactions':
-            from django.db.models import Q as Q5
-            qs.filter(Q5(title__icontains='transaction') | Q5(title__icontains='payment')).update(is_read=True)
+            qs.filter(Q(title__icontains='transaction') | Q(title__icontains='payment')).update(is_read=True)
         elif badge_type == 'notifications':
-            from django.db.models import Q as Q6
+
             qs.exclude(title__icontains='leave').exclude(title__icontains='expense').exclude(title__icontains='query').exclude(title__icontains='task').exclude(title__icontains='payroll').exclude(title__icontains='salary').exclude(title__icontains='payslip').exclude(title__icontains='thank').exclude(title__icontains='appreciation').exclude(title__icontains='offboard').exclude(title__icontains='resign').exclude(title__icontains='transaction').exclude(title__icontains='payment').update(is_read=True)
             
         return Response({'status': 'ok'})

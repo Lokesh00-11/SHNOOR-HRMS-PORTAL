@@ -57,9 +57,18 @@ const Leaves = () => {
     let approvedDays = 0;
     let pendingDays = 0;
 
+    const parseDateStr = (dateStr) => {
+        if (!dateStr) return new Date();
+        const parts = dateStr.split('-');
+        if (parts.length === 3 && parts[0].length !== 4) {
+            return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+        }
+        return new Date(dateStr);
+    };
+
     leaves.forEach(item => {
-        const start = new Date(item.start_date);
-        const end = new Date(item.end_date);
+        const start = parseDateStr(item.start_date);
+        const end = parseDateStr(item.end_date);
         const days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
 
         if (!isNaN(days)) {
@@ -140,6 +149,7 @@ const Leaves = () => {
                                 <option value="Sick">Sick</option>
                                 <option value="Casual">Casual</option>
                                 <option value="Vacation">Vacation</option>
+                                <option value="Emergency">Emergency</option>
                             </select>
                         </div>
                         <div className="setting-item" style={{ flex: 1, minWidth: '150px' }}>
@@ -194,7 +204,13 @@ const Leaves = () => {
                             leaves.map((l, index) => (
                                 <tr key={index}>
                                     <td>{l.leave_type}</td>
-                                    <td>{new Date(l.start_date).toLocaleDateString()} - {new Date(l.end_date).toLocaleDateString()}</td>
+                                    <td>{(() => {
+                                        const parts = l.start_date?.split('-');
+                                        const formattedStart = parts?.length === 3 && parts[0].length !== 4 ? l.start_date : new Date(l.start_date).toLocaleDateString();
+                                        const partsEnd = l.end_date?.split('-');
+                                        const formattedEnd = partsEnd?.length === 3 && partsEnd[0].length !== 4 ? l.end_date : new Date(l.end_date).toLocaleDateString();
+                                        return `${formattedStart} - ${formattedEnd}`;
+                                    })()}</td>
                                     <td>{l.reason}</td>
                                     <td>
                                         <span className={`status-badge ${l.status.toLowerCase()}`}>

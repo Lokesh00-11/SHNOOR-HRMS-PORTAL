@@ -1,7 +1,8 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
-from ..models import Holiday, Asset, OrgChart, SupportQuery, Offboarding, LeaveRequest
+from django.contrib.auth import get_user_model
+from ..models import Holiday, Asset, OrgChart, SupportQuery, Offboarding, LeaveRequest, Notification
 from ..serializers import (
     HolidaySerializer, AssetSerializer, OrgChartSerializer, 
     SupportQuerySerializer, OffboardingSerializer, LeaveRequestSerializer
@@ -26,12 +27,66 @@ class AssetView(APIView):
         company = getattr(request.user, 'company', None)
         if request.user.role.lower() == 'super_admin':
             assets = Asset.objects.all().order_by('-id')
+        elif request.user.role.lower() == 'employee':
+            if hasattr(request.user, 'employee_profile'):
+                assets = Asset.objects.filter(assigned_to=request.user.employee_profile).order_by('-id')
+            else:
+                assets = Asset.objects.none()
         elif company:
             assets = Asset.objects.filter(company=company).order_by('-id')
         else:
             assets = Asset.objects.none()
         serializer = AssetSerializer(assets, many=True)
         return Response(serializer.data)
+
+    def post(self, request):
+        if request.user.role.lower() not in ['manager', 'admin', 'super_admin']:
+            return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+        serializer = AssetSerializer(data=request.data)
+        if serializer.is_valid():
+            company = getattr(request.user, 'company', None)
+            if request.user.role.lower() != 'super_admin' and company:
+                serializer.save(company=company)
+            else:
+                serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AssetDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def patch(self, request, pk):
+        if request.user.role.lower() not in ['manager', 'admin', 'super_admin']:
+            return Response({'message': 'Access Denied'}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            asset = Asset.objects.get(pk=pk)
+            # Make sure they have permission to edit this asset
+            company = getattr(request.user, 'company', None)
+            if request.user.role.lower() != 'super_admin':
+                if not company or asset.company != company:
+                    return Response({'message': 'Access Denied'}, status=status.HTTP_403_FORBIDDEN)
+            
+            serializer = AssetSerializer(asset, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Asset.DoesNotExist:
+            return Response({'message': 'Asset not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request, pk):
+        if request.user.role.lower() not in ['manager', 'admin', 'super_admin']:
+            return Response({'message': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            asset = Asset.objects.get(pk=pk)
+            company = getattr(request.user, 'company', None)
+            if request.user.role.lower() != 'super_admin':
+                if not company or asset.company != company:
+                    return Response({'message': 'Access Denied'}, status=status.HTTP_403_FORBIDDEN)
+            
+            asset.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Asset.DoesNotExist:
+            return Response({'message': 'Asset not found'}, status=status.HTTP_404_NOT_FOUND)
 
 class OrgChartView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -176,7 +231,7 @@ class OffboardingView(APIView):
             offboarding = serializer.save()
             # Send notification
             try:
-                from ..models import Notification
+
                 if role != 'employee':
                     Notification.objects.create(
                         title=f"New Offboarding Record: {offboarding.action_type.capitalize()}",
@@ -187,7 +242,7 @@ class OffboardingView(APIView):
                     )
                 else:
                     # Notify manager / admins
-                    from django.contrib.auth import get_user_model
+
                     UserModel = get_user_model()
                     managers = UserModel.objects.filter(role__in=['manager', 'admin'])
                     for mgr in managers:

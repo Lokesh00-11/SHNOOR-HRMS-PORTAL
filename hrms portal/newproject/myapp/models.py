@@ -45,12 +45,14 @@ class Company(models.Model):
     is_active = models.BooleanField(default=True)
     license_expired = models.BooleanField(default=False)
     license_expiry_date = models.DateField(null=True, blank=True)
+    max_users = models.IntegerField(default=50)
+    subscription_plan = models.ForeignKey('SubscriptionPlan', on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
         if not self.license_expiry_date:
             from datetime import date, timedelta
-            self.license_expiry_date = date.today() + timedelta(days=7)
+            self.license_expiry_date = date.today() + timedelta(days=30)
         super().save(*args, **kwargs)
 
     def __str__(self):

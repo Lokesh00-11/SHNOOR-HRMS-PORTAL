@@ -20,7 +20,8 @@ const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) =
         { id: 'notifications', label: 'Notifications', icon: 'fa-bell' },
         { id: 'profile', label: 'Profile', icon: 'fa-user-gear' },
         { id: 'planner', label: 'Planner', icon: 'fa-calendar-days' },
-        { id : 'settings', label: 'Settings', icon: 'fa-gear' }
+        { id : 'settings', label: 'Settings', icon: 'fa-gear' },
+        { id: 'helpdesk', label: 'Helpdesk', icon: 'fa-headset' },
     ];
 
     const handleLogout = () => {
@@ -78,3 +79,5 @@ const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) =
 };
 
 export default Sidebar;
+
+

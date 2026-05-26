@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import HelpdeskHub from '../components/Shared/Helpdesk/HelpdeskHub';
 import Sidebar from '../components/Admin/Sidebar';
 import ThemeToggle from '../components/Common/ThemeToggle';
 import SystemOverview from '../components/Admin/Views/SystemOverview';
@@ -42,6 +43,8 @@ const AdminDashboard = () => {
                 return <OrgChart />;
             case 'planner':
                 return <PlannerPage role="admin" />;
+            case 'helpdesk':
+                return <HelpdeskHub role="admin" />;
             default:
                 return <SystemOverview />;
         }
@@ -70,3 +73,4 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+

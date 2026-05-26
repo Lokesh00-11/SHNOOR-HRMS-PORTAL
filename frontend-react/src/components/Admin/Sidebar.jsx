@@ -20,6 +20,7 @@ const Sidebar = ({ currentView, setCurrentView }) => {
         { id: 'planner', icon: 'fa-calendar-days', label: 'Planner' },
         { id: 'notifications', icon: 'fa-bell', label: 'Notifications' },
         { id: 'system_settings', icon: 'fa-server', label: 'Settings' },
+        { id: 'helpdesk', label: 'Helpdesk', icon: 'fa-headset' },
     ];
 
     return (
@@ -52,3 +53,5 @@ const Sidebar = ({ currentView, setCurrentView }) => {
 };
 
 export default Sidebar;
+
+

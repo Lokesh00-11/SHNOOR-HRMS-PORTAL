@@ -639,3 +639,67 @@ class PlannerLock(models.Model):
 
     def __str__(self):
         return f"Lock: {self.title} ({self.start_date} to {self.end_date})"
+# ========================================================
+# HELPDESK MODULE MODELS
+# ========================================================
+
+class HelpdeskCategory(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return self.name
+
+class HelpdeskTicket(models.Model):
+    PRIORITY_CHOICES = (
+        ('Low', 'Low'),
+        ('Medium', 'Medium'),
+        ('High', 'High'),
+        ('Critical', 'Critical')
+    )
+    STATUS_CHOICES = (
+        ('Open', 'Open'),
+        ('In Progress', 'In Progress'),
+        ('Pending', 'Pending'),
+        ('Resolved', 'Resolved'),
+        ('Closed', 'Closed'),
+        ('Escalated', 'Escalated')
+    )
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    category = models.ForeignKey(HelpdeskCategory, on_delete=models.SET_NULL, null=True)
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='Medium')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Open')
+    
+    created_by = models.ForeignKey(User, related_name='created_tickets', on_delete=models.CASCADE)
+    assigned_to = models.ForeignKey(User, related_name='assigned_tickets', on_delete=models.SET_NULL, null=True, blank=True)
+    department_scope = models.CharField(max_length=100, blank=True, null=True) # Used for manager scoping
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"Ticket #{self.id} - {self.title}"
+
+class HelpdeskReply(models.Model):
+    ticket = models.ForeignKey(HelpdeskTicket, related_name='replies', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    message = models.TextField()
+    is_internal_note = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class HelpdeskAttachment(models.Model):
+    ticket = models.ForeignKey(HelpdeskTicket, related_name='attachments', on_delete=models.CASCADE, null=True, blank=True)
+    reply = models.ForeignKey(HelpdeskReply, related_name='attachments', on_delete=models.CASCADE, null=True, blank=True)
+    file = models.FileField(upload_to='helpdesk_attachments/')
+    uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+class HelpdeskEscalation(models.Model):
+    ticket = models.ForeignKey(HelpdeskTicket, related_name='escalations', on_delete=models.CASCADE)
+    escalated_by = models.ForeignKey(User, related_name='initiated_escalations', on_delete=models.CASCADE)
+    escalated_to_role = models.CharField(max_length=50) # 'Manager', 'Admin'
+    reason = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)

@@ -17,13 +17,16 @@ const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) =
         { id: 'profile', label: 'Profile', icon: 'fa-user', visibleFor: ['self'] },
         { id: 'payroll', label: 'Payroll', icon: 'fa-file-invoice-dollar', visibleFor: ['manager'] },
         { id: 'expenses', label: 'Expenses', icon: 'fa-wallet', visibleFor: ['manager'] },
+        { id: 'finance', label: 'Finance Overview', icon: 'fa-money-bill-trend-up', visibleFor: ['manager'] },
         { id: 'policies', label: 'Company Policies', icon: 'fa-file-shield', visibleFor: ['manager', 'self'] },
+        { id: 'reports', label: 'Reports & Insights', icon: 'fa-chart-line', visibleFor: ['manager'] },
         { id: 'offboarding', label: 'Offboarding', icon: 'fa-user-xmark', visibleFor: ['manager'] },
         { id: 'letterheads', label: 'Letter Heads', icon: 'fa-file-signature', visibleFor: ['manager'] },
         { id: 'orgchart', label: 'Org Chart', icon: 'fa-sitemap', visibleFor: ['manager', 'self'] },
         { id: 'planner', label: 'Planner', icon: 'fa-calendar-days', visibleFor: ['manager', 'self'] },
         { id: 'notifications', label: 'Notifications', icon: 'fa-bell', visibleFor: ['manager', 'self'] },
         { id: 'settings', label: 'Settings', icon: 'fa-gear', visibleFor: ['manager', 'self'] },
+        { id: 'helpdesk', label: 'Helpdesk', icon: 'fa-headset', visibleFor: ['manager', 'self'] },
     ];
 
     const handleLogout = () => {
@@ -117,3 +120,5 @@ const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) =
 };
 
 export default Sidebar;
+
+

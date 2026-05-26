@@ -133,3 +133,19 @@ urlpatterns = [
     path('api/planner/holidays/create/', PlannerHolidayView.as_view(), name='planner_create_holiday'),
     path('api/planner/ics/<str:token>/', PlannerIcsFeedView.as_view(), name='planner_ics_feed'),
 ]
+# ========================================================
+# HELPDESK MODULE URLS
+# ========================================================
+from .views import (
+    HelpdeskCategoryListView, HelpdeskTicketListView, 
+    HelpdeskTicketDetailView, HelpdeskReplyView, HelpdeskAnalyticsView, HelpdeskEscalateView
+)
+
+urlpatterns += [
+    path('api/helpdesk/categories/', HelpdeskCategoryListView.as_view(), name='helpdesk_categories'),
+    path('api/helpdesk/tickets/', HelpdeskTicketListView.as_view(), name='helpdesk_tickets'),
+    path('api/helpdesk/tickets/<int:pk>/', HelpdeskTicketDetailView.as_view(), name='helpdesk_ticket_detail'),
+    path('api/helpdesk/tickets/<int:pk>/reply/', HelpdeskReplyView.as_view(), name='helpdesk_reply'),
+    path('api/helpdesk/tickets/<int:pk>/escalate/', HelpdeskEscalateView.as_view(), name='helpdesk_escalate'),
+    path('api/helpdesk/analytics/', HelpdeskAnalyticsView.as_view(), name='helpdesk_analytics'),
+]

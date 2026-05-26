@@ -3662,3 +3662,303 @@ class TeamLeaderPayrollView(APIView):
         )
         
         return Response({'message': 'Salary credited successfully.'}, status=status.HTTP_201_CREATED)
+
+# ========================================================
+# HELPDESK MODULE VIEWS
+# ========================================================
+
+from .models import HelpdeskCategory, HelpdeskTicket, HelpdeskReply, HelpdeskAttachment, HelpdeskEscalation
+from .serializers import HelpdeskCategorySerializer, HelpdeskTicketSerializer, HelpdeskReplySerializer, HelpdeskAttachmentSerializer, HelpdeskEscalationSerializer
+from django.db.models import Count, Avg, F
+from django.utils import timezone
+
+class HelpdeskCategoryListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        categories = HelpdeskCategory.objects.filter(is_active=True)
+        serializer = HelpdeskCategorySerializer(categories, many=True)
+        return Response(serializer.data)
+
+class HelpdeskTicketListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        role = user.role.lower()
+
+        if role == 'employee':
+            tickets = HelpdeskTicket.objects.filter(created_by=user).order_by('-created_at')
+        elif role == 'team_leader':
+            team_members = Employee.objects.filter(team_leader=user).values_list('user_id', flat=True)
+            tickets = HelpdeskTicket.objects.filter(
+                models.Q(created_by=user) | 
+                models.Q(created_by__in=team_members) |
+                models.Q(assigned_to=user)
+            ).distinct().order_by('-created_at')
+        elif role == 'manager':
+            try:
+                manager_dept = Employee.objects.get(user=user).department
+                dept_users = Employee.objects.filter(department=manager_dept).values_list('user_id', flat=True)
+                tickets = HelpdeskTicket.objects.filter(
+                    models.Q(created_by=user) | 
+                    models.Q(created_by__in=dept_users) |
+                    models.Q(assigned_to=user) |
+                    models.Q(department_scope=manager_dept, priority__in=['High', 'Critical']) |
+                    models.Q(escalations__escalated_to_role='Manager')
+                ).distinct().order_by('-created_at')
+            except Employee.DoesNotExist:
+                tickets = HelpdeskTicket.objects.filter(assigned_to=user).order_by('-created_at')
+        else: # Admin / Super Admin
+            tickets = HelpdeskTicket.objects.all().order_by('-created_at')
+            
+        serializer = HelpdeskTicketSerializer(tickets, many=True, context={'request': request})
+        
+        # Filter internal notes for non-manager/admins
+        data = serializer.data
+        if role in ['employee', 'team_leader']:
+            for ticket in data:
+                ticket['replies'] = [r for r in ticket.get('replies', []) if not r.get('is_internal_note')]
+                
+        return Response(data)
+
+    def post(self, request):
+        data = request.data.copy()
+        
+        # Optionally set department_scope based on creator's department
+        try:
+            emp = Employee.objects.get(user=request.user)
+            data['department_scope'] = emp.department
+        except Employee.DoesNotExist:
+            emp = None
+
+        serializer = HelpdeskTicketSerializer(data=data, context={'request': request})
+        if serializer.is_valid():
+            ticket = serializer.save(created_by=request.user)
+            
+            # Priority-based auto-assignment
+            if ticket.priority in ['Low', 'Medium']:
+                if emp and emp.team_leader:
+                    ticket.assigned_to = emp.team_leader
+            # High and Critical rely on department_scope and global visibility respectively
+            ticket.save()
+            
+            # Handle initial attachment if any
+            if 'attachment' in request.FILES:
+                HelpdeskAttachment.objects.create(
+                    ticket=ticket,
+                    file=request.FILES['attachment'],
+                    uploaded_by=request.user
+                )
+                
+            # Re-serialize to include attachment
+            return Response(HelpdeskTicketSerializer(ticket, context={'request': request}).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class HelpdeskTicketDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self, pk, user):
+        try:
+            ticket = HelpdeskTicket.objects.get(pk=pk)
+            role = user.role.lower()
+            if role in ['admin', 'super_admin']:
+                return ticket
+            if ticket.created_by == user or ticket.assigned_to == user:
+                return ticket
+            if role == 'team_leader':
+                if Employee.objects.filter(user=ticket.created_by, team_leader=user).exists():
+                    return ticket
+            if role == 'manager':
+                try:
+                    manager_dept = Employee.objects.get(user=user).department
+                    if Employee.objects.filter(user=ticket.created_by, department=manager_dept).exists() or ticket.department_scope == manager_dept or ticket.escalations.filter(escalated_to_role='Manager').exists():
+                        return ticket
+                except Employee.DoesNotExist:
+                    pass
+            return None
+        except HelpdeskTicket.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        ticket = self.get_object(pk, request.user)
+        if not ticket:
+            return Response({'message': 'Not found or access denied'}, status=status.HTTP_404_NOT_FOUND)
+            
+        serializer = HelpdeskTicketSerializer(ticket, context={'request': request})
+        data = serializer.data
+        if request.user.role.lower() in ['employee', 'team_leader']:
+            data['replies'] = [r for r in data.get('replies', []) if not r.get('is_internal_note')]
+        return Response(data)
+
+    def patch(self, request, pk):
+        ticket = self.get_object(pk, request.user)
+        if not ticket:
+            return Response({'message': 'Not found or access denied'}, status=status.HTTP_404_NOT_FOUND)
+            
+        role = request.user.role.lower()
+        if role == 'employee' and 'status' in request.data and request.data['status'] not in ['Closed', 'Resolved']:
+            # Employees can only close/resolve their tickets, they can't change to other statuses or reassign
+            return Response({'message': 'Access denied to these fields'}, status=status.HTTP_403_FORBIDDEN)
+            
+        serializer = HelpdeskTicketSerializer(ticket, data=request.data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            if serializer.validated_data.get('status') in ['Resolved', 'Closed'] and not ticket.resolved_at:
+                serializer.validated_data['resolved_at'] = timezone.now()
+            
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class HelpdeskEscalateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            ticket = HelpdeskTicket.objects.get(pk=pk)
+            role = request.user.role.lower()
+            
+            # Check if user can escalate
+            if role == 'employee':
+                return Response({'message': 'Employees cannot escalate directly.'}, status=status.HTTP_403_FORBIDDEN)
+                
+            if role == 'team_leader':
+                team_members = Employee.objects.filter(team_leader=request.user).values_list('user_id', flat=True)
+                if not (ticket.created_by == request.user or ticket.created_by.id in team_members or ticket.assigned_to == request.user):
+                    return Response({'message': 'Access denied to escalate this ticket.'}, status=status.HTTP_403_FORBIDDEN)
+                escalated_to_role = 'Manager'
+                
+            elif role == 'manager':
+                try:
+                    manager_dept = Employee.objects.get(user=request.user).department
+                    dept_users = Employee.objects.filter(department=manager_dept).values_list('user_id', flat=True)
+                    if not (ticket.created_by == request.user or ticket.created_by.id in dept_users or ticket.assigned_to == request.user or ticket.department_scope == manager_dept):
+                        return Response({'message': 'Access denied to escalate this ticket.'}, status=status.HTTP_403_FORBIDDEN)
+                except Employee.DoesNotExist:
+                    if not (ticket.created_by == request.user or ticket.assigned_to == request.user):
+                        return Response({'message': 'Access denied to escalate this ticket.'}, status=status.HTTP_403_FORBIDDEN)
+                escalated_to_role = 'Admin'
+                
+            elif role in ['admin', 'super_admin']:
+                return Response({'message': 'Admins cannot escalate further.'}, status=status.HTTP_400_BAD_REQUEST)
+                
+            reason = request.data.get('reason')
+            if not reason:
+                return Response({'message': 'Escalation reason is required.'}, status=status.HTTP_400_BAD_REQUEST)
+                
+            HelpdeskEscalation.objects.create(
+                ticket=ticket,
+                escalated_by=request.user,
+                escalated_to_role=escalated_to_role,
+                reason=reason
+            )
+            
+            ticket.status = 'Escalated'
+            ticket.assigned_to = None
+            ticket.save()
+            
+            HelpdeskReply.objects.create(
+                ticket=ticket,
+                user=request.user,
+                message=f"[SYSTEM: ESCALATED to {escalated_to_role}] Reason: {reason}",
+                is_internal_note=True
+            )
+            
+            serializer = HelpdeskTicketSerializer(ticket, context={'request': request})
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+        except HelpdeskTicket.DoesNotExist:
+            return Response({'message': 'Ticket not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+class HelpdeskReplyView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            ticket = HelpdeskTicket.objects.get(pk=pk)
+            # Basic access check
+            role = request.user.role.lower()
+            if role not in ['admin', 'super_admin', 'manager', 'team_leader']:
+                if ticket.created_by != request.user and ticket.assigned_to != request.user:
+                    return Response({'message': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+            
+            message = request.data.get('message')
+            is_internal_note = request.data.get('is_internal_note', False)
+            
+            if is_internal_note and role in ['employee']:
+                return Response({'message': 'Employees cannot create internal notes'}, status=status.HTTP_403_FORBIDDEN)
+                
+            reply = HelpdeskReply.objects.create(
+                ticket=ticket,
+                user=request.user,
+                message=message,
+                is_internal_note=is_internal_note
+            )
+            
+            if 'attachment' in request.FILES:
+                HelpdeskAttachment.objects.create(
+                    ticket=ticket,
+                    reply=reply,
+                    file=request.FILES['attachment'],
+                    uploaded_by=request.user
+                )
+                
+            serializer = HelpdeskReplySerializer(reply, context={'request': request})
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+        except HelpdeskTicket.DoesNotExist:
+            return Response({'message': 'Ticket not found'}, status=status.HTTP_404_NOT_FOUND)
+
+class HelpdeskAnalyticsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        role = request.user.role.lower()
+        if role == 'employee':
+            return Response({'message': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+            
+        queryset = HelpdeskTicket.objects.all()
+        if role == 'team_leader':
+            team_members = Employee.objects.filter(team_leader=request.user).values_list('user_id', flat=True)
+            queryset = queryset.filter(models.Q(created_by__in=team_members) | models.Q(assigned_to=request.user))
+        elif role == 'manager':
+            try:
+                manager_dept = Employee.objects.get(user=request.user).department
+                dept_users = Employee.objects.filter(department=manager_dept).values_list('user_id', flat=True)
+                queryset = queryset.filter(
+                    models.Q(created_by__in=dept_users) | 
+                    models.Q(assigned_to=request.user) |
+                    models.Q(department_scope=manager_dept, priority__in=['High', 'Critical']) |
+                    models.Q(escalations__escalated_to_role='Manager')
+                ).distinct()
+            except Employee.DoesNotExist:
+                queryset = queryset.filter(assigned_to=request.user)
+
+        open_tickets = queryset.filter(status='Open').count()
+        pending_tickets = queryset.filter(status='Pending').count()
+        resolved_today = queryset.filter(status__in=['Resolved', 'Closed'], resolved_at__date=timezone.now().date()).count()
+        escalated_tickets = queryset.filter(status='Escalated').count()
+        critical_tickets = queryset.filter(priority='Critical', status__in=['Open', 'In Progress', 'Pending']).count()
+        
+        # Calculate Avg Resolution Time (in hours)
+        resolved_tickets = queryset.filter(status__in=['Resolved', 'Closed'], resolved_at__isnull=False)
+        avg_resolution_time = 0
+        if resolved_tickets.exists():
+            avg_diff = resolved_tickets.aggregate(avg=Avg(F('resolved_at') - F('created_at')))['avg']
+            if avg_diff:
+                avg_resolution_time = round(avg_diff.total_seconds() / 3600, 1)
+
+        # By Category
+        by_category = list(queryset.values('category__name').annotate(count=Count('id')).order_by('-count'))
+        
+        return Response({
+            'kpis': {
+                'open_tickets': open_tickets,
+                'pending_tickets': pending_tickets,
+                'resolved_today': resolved_today,
+                'escalated_tickets': escalated_tickets,
+                'critical_tickets': critical_tickets,
+                'avg_resolution_time_hrs': avg_resolution_time
+            },
+            'by_category': by_category
+        })

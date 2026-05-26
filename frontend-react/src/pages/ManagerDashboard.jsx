@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import HelpdeskHub from '../components/Shared/Helpdesk/HelpdeskHub';
 import Sidebar from '../components/Manager/Sidebar';
 import ThemeToggle from '../components/Common/ThemeToggle';
 import Dashboard from '../components/Manager/Views/Dashboard';
@@ -18,6 +19,8 @@ import OrgChart from '../components/Manager/Views/OrgChart';
 import Notifications from '../components/Manager/Views/Notifications';
 import PlannerPage from '../components/Planner/PlannerPage';
 import Settings from '../components/Manager/Views/Settings';
+import FinanceOverview from '../components/Manager/Views/FinanceOverview';
+import Reports from '../components/Manager/Views/Reports';
 
 import '../styles/admin.css';
 
@@ -66,8 +69,14 @@ const ManagerDashboard = () => {
                 return <PlannerPage role={currentMode} />;
             case 'notifications':
                 return <Notifications currentMode={currentMode} />;
+            case 'finance':
+                return <FinanceOverview />;
+            case 'reports':
+                return <Reports />;
             case 'settings':
                 return <Settings />;
+            case 'helpdesk':
+                return <HelpdeskHub role="manager" />;
             default:
                 return <Dashboard currentMode={currentMode} />;
         }
@@ -97,3 +106,4 @@ const ManagerDashboard = () => {
 };
 
 export default ManagerDashboard;
+

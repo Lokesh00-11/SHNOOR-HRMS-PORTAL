@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import HelpdeskHub from '../components/Shared/Helpdesk/HelpdeskHub';
 import Sidebar from '../components/TeamLeader/Sidebar';
 import ThemeToggle from '../components/Common/ThemeToggle';
 import Dashboard from '../components/TeamLeader/Views/Dashboard';
@@ -58,6 +59,8 @@ const TeamLeaderDashboard = () => {
                 return <FinanceOverview />;
             case 'reports':
                 return <Reports />;
+            case 'helpdesk':
+                return <HelpdeskHub role="team_leader" />;
             default:
                 return <Dashboard />;
         }
@@ -85,3 +88,4 @@ const TeamLeaderDashboard = () => {
 };
 
 export default TeamLeaderDashboard;
+

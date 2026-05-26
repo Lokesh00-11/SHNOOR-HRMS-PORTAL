@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import HelpdeskHub from '../components/Shared/Helpdesk/HelpdeskHub';
 import Sidebar from '../components/Employee/Sidebar';
 import ThemeToggle from '../components/Common/ThemeToggle';
 import Dashboard from '../components/Employee/Views/Dashboard';
@@ -45,6 +46,8 @@ const EmployeeDashboard = () => {
                 return <Profile />;
             case 'planner':
                 return <PlannerPage role="employee" />;
+            case 'helpdesk':
+                return <HelpdeskHub role="employee" />;
             default:
                 return <Dashboard />;
         }
@@ -72,3 +75,4 @@ const EmployeeDashboard = () => {
 };
 
 export default EmployeeDashboard;
+

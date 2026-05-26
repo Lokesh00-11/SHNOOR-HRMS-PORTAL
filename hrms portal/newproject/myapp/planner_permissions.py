@@ -4,13 +4,7 @@ from django.db.models import Q
 logger = logging.getLogger(__name__)
 
 def can_lock_dates(user, scope='Global', department=None, affected_employees=None):
-    """
-    Checks if a user has permission to lock dates under the given scope and targets.
-    Admin: Any scope.
-    Manager: Only their own department or employees within their department.
-    Team Leader: Only their own team scope or employees within their team.
-    Employee: Cannot lock dates.
-    """
+    
     role = user.role.lower() if hasattr(user, 'role') else ''
 
     if role in ['admin', 'super_admin']:

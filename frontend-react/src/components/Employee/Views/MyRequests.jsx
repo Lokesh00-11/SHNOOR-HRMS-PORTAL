@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { get } from '../../../services/api';
 
+const parseDateString = (dateStr) => {
+    if (!dateStr) return new Date();
+    const str = String(dateStr).trim();
+    if (str.includes('-') && str.split('-')[0].length === 2) {
+        const parts = str.split(' ');
+        const datePart = parts[0];
+        const timePart = parts[1] || '00:00:00';
+        const [day, month, year] = datePart.split('-');
+        return new Date(`${year}-${month}-${day}T${timePart}`);
+    }
+    return new Date(str);
+};
+
 const MyRequests = () => {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -35,7 +48,7 @@ const MyRequests = () => {
                     raw: e
                 }));
 
-            const combined = [...leaves, ...expenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const combined = [...leaves, ...expenses].sort((a, b) => parseDateString(b.date) - parseDateString(a.date));
             setRequests(combined);
         } catch (error) {
             console.error("Error fetching requests:", error);
@@ -96,7 +109,7 @@ const MyRequests = () => {
                                             <div style={{ fontWeight: 500 }}>{req.title}</div>
                                             <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', whiteSpace: 'pre-wrap' }}>{req.description}</div>
                                         </td>
-                                        <td>{new Date(req.date).toLocaleDateString()}</td>
+                                        <td>{parseDateString(req.date).toLocaleDateString()}</td>
                                         <td>{getStatusBadge(req.status)}</td>
                                     </tr>
                                 ))

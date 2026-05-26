@@ -70,7 +70,6 @@ class CompanyDetailView(APIView):
         try:
             company = Company.objects.get(pk=pk)
             
-            # Keep track of old status to detect a toggle
             old_is_active = company.is_active
             new_is_active = request.data.get('is_active')
             
@@ -78,13 +77,10 @@ class CompanyDetailView(APIView):
             if serializer.is_valid():
                 company_instance = serializer.save()
                 
-                # If company active status is being toggled, cascade it to all users
                 if new_is_active is not None and str(new_is_active).lower() in ['true', 'false']:
-                    # Convert to strict boolean
                     is_active_bool = str(new_is_active).lower() == 'true'
                     if old_is_active != is_active_bool:
                         User = get_user_model()
-                        # Physically deactivate/reactivate all admin/manager/employee accounts linked to this company
                         User.objects.filter(company=company_instance).update(is_active=is_active_bool)
                 
                 return Response(serializer.data)

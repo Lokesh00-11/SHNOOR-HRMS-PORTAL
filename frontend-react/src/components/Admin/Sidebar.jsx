@@ -13,8 +13,6 @@ const Sidebar = ({ currentView, setCurrentView }) => {
         { id: 'companies', icon: 'fa-building', label: 'Companies' },
         { id: 'subscriptions', icon: 'fa-receipt', label: 'Subscriptions' },
         { id: 'transactions', icon: 'fa-money-bill-transfer', label: 'Transactions' },
-        { id: 'offline', icon: 'fa-file-invoice', label: 'Offline Requests' },
-        { id: 'emails', icon: 'fa-envelope', label: 'Email Queries' },
         { id: 'superadmin', icon: 'fa-user-shield', label: 'Super Admin' },
         { id: 'orgchart', icon: 'fa-sitemap', label: 'Org Chart' },
         { id: 'planner', icon: 'fa-calendar-days', label: 'Planner' },

@@ -7,7 +7,6 @@ const Payroll = () => {
     const [loading, setLoading] = useState(true);
     const [payLoading, setPayLoading] = useState(false);
     
-    // Payment Card State
     const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
     const [salaryInput, setSalaryInput] = useState('');
     const [showPaymentCard, setShowPaymentCard] = useState(false);
@@ -45,7 +44,6 @@ const Payroll = () => {
                 salary_amount: salaryInput
             });
             alert(res.message === 'completed' ? 'completed' : res.message);
-            // Reset selection and refresh history
             setSelectedEmployeeId('');
             setSalaryInput('');
             fetchData();
@@ -57,10 +55,8 @@ const Payroll = () => {
         }
     };
 
-    // Calculate details for selected employee
     const selectedEmployee = employees.find(e => e.id.toString() === selectedEmployeeId);
     
-    // Get current month/year
     const currentDate = new Date();
     const currentMonthYear = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
     
@@ -69,7 +65,6 @@ const Payroll = () => {
     let isNightShift = false;
     
     if (selectedEmployee) {
-        // We calculate base on salaryInput if provided, else employee's salary
         baseSalary = parseFloat(salaryInput !== '' ? salaryInput : (selectedEmployee.salary || 0));
         isNightShift = (selectedEmployee.shift || '').toLowerCase() === 'night';
         finalSalary = isNightShift ? baseSalary * 1.10 : baseSalary;
@@ -79,7 +74,6 @@ const Payroll = () => {
         const empId = e.target.value;
         setSelectedEmployeeId(empId);
         
-        // Auto-fill salary input
         const emp = employees.find(e => e.id.toString() === empId);
         if (emp && emp.salary) {
             setSalaryInput(emp.salary);
@@ -100,7 +94,6 @@ const Payroll = () => {
                 </button>
             </div>
 
-            {/* Payment Card */}
             {showPaymentCard && (
                 <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem', maxWidth: '600px' }}>
                     <h3 style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.5rem' }}>Issue Payroll</h3>

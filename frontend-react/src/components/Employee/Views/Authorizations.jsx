@@ -105,7 +105,7 @@ const Authorizations = () => {
                                         <td>
                                             <button className="btn btn-ghost" onClick={() => handleApprove(req)} style={{ color: '#10b981', marginRight: '8px', padding: '6px 12px', border: '1px solid #10b98140' }}>
                                                 Approve
-                                            </button>
+                                            </button> 
                                             <button className="btn btn-ghost" onClick={() => handleReject(req)} style={{ color: '#ef4444', padding: '6px 12px', border: '1px solid #ef444440' }}>
                                                 Reject
                                             </button>

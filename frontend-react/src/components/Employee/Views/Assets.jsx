@@ -31,7 +31,7 @@ const Assets = () => {
     };
 
     return (
-        <section className="view-section active">
+        <section className="view-section active"> 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <h2 className="gradient-text">My Assigned Assets</h2>
             </div>

@@ -5,11 +5,9 @@ const OrgChart = () => {
     const [nodes, setNodes] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Authorization check
     const userRole = (localStorage.getItem('role') || '').toLowerCase();
     const isManagerOrAdmin = userRole === 'manager' || userRole === 'admin' || userRole === 'super_admin';
 
-    // Add Member Modal State
     const [showAddModal, setShowAddModal] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
@@ -80,7 +78,6 @@ const OrgChart = () => {
         }
     };
 
-    // Recursive component to render node and its children
     const TreeNode = ({ node, allNodes }) => {
         const children = allNodes.filter(item => item.manager === node.id);
         const profilePic = node.profile_picture ? (node.profile_picture.startsWith('http') ? node.profile_picture : `http://127.0.0.1:8000${node.profile_picture}`) : null;
@@ -159,7 +156,6 @@ const OrgChart = () => {
                 )}
             </div>
 
-            {/* Add Node Modal */}
             {showAddModal && (
                 <div className="modal-overlay" style={{ display: 'flex', background: 'rgba(0,0,0,0.6)', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, alignItems: 'center', justifyContent: 'center' }}>
                     <div className="glass-panel" style={{ width: '90%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto', padding: '2rem', position: 'relative', borderRadius: '16px' }}>

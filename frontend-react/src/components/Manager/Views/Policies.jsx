@@ -28,12 +28,10 @@ const Policies = ({ currentMode }) => {
     const [policies, setPolicies] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Filters
     const [searchQuery, setSearchQuery] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('ALL');
     const [locationFilter, setLocationFilter] = useState('ALL');
 
-    // Create Form State
     const [showUploadForm, setShowUploadForm] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
@@ -241,7 +239,6 @@ const Policies = ({ currentMode }) => {
                 </div>
             )}
 
-            {/* Filter Panel */}
             <div className="glass-panel" style={{ padding: '1rem 1.5rem', marginBottom: '2rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
                 <input 
                     type="text" 
@@ -280,7 +277,6 @@ const Policies = ({ currentMode }) => {
                 </div>
             </div>
 
-            {/* List */}
             <div className="table-container">
                 <table>
                     <thead>

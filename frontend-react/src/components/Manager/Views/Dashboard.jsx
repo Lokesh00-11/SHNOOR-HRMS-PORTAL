@@ -43,9 +43,9 @@ class DashboardErrorBoundary extends React.Component {
         return this.props.children;
     }
 }
-const COLORS = ['#1e40af', '#cbd5e1'];
-const NAVY_BLUE = '#1e40af';
-const YELLOW_ORANGE = '#f59e0b';
+const COLORS = ['#6366f1', '#94a3b8'];
+const NAVY_BLUE = '#3b82f6'; // Bright blue that works in both modes
+const YELLOW_ORANGE = '#f59e0b'; // Amber
 
 const Dashboard = ({ currentMode }) => {
     const [data, setData] = useState(null);
@@ -149,15 +149,15 @@ const Dashboard = ({ currentMode }) => {
                     </div>
                     <div className="glass-panel-no-hover" style={{ padding: '1.5rem' }}>
                         <h4 style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Pending Tasks</h4>
-                        <h1 style={{ fontSize: '2rem', color: '#10b981', marginTop: '0.5rem' }}>{selfStats?.pending_tasks || 0}</h1>
+                        <h1 style={{ fontSize: '2rem', color: 'var(--success-color)', marginTop: '0.5rem' }}>{selfStats?.pending_tasks || 0}</h1>
                     </div>
                     <div className="glass-panel-no-hover" style={{ padding: '1.5rem' }}>
                         <h4 style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Appreciations</h4>
-                        <h1 style={{ fontSize: '2rem', color: '#f59e0b', marginTop: '0.5rem' }}>{selfStats?.appreciations_count || 0}</h1>
+                        <h1 style={{ fontSize: '2rem', color: 'var(--warning-color)', marginTop: '0.5rem' }}>{selfStats?.appreciations_count || 0}</h1>
                     </div>
                     <div className="glass-panel-no-hover" style={{ padding: '1.5rem' }}>
                         <h4 style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Active Warnings</h4>
-                        <h1 style={{ fontSize: '2rem', color: '#f43f5e', marginTop: '0.5rem' }}>{selfStats?.warnings_count || 0}</h1>
+                        <h1 style={{ fontSize: '2rem', color: 'var(--danger-color)', marginTop: '0.5rem' }}>{selfStats?.warnings_count || 0}</h1>
                     </div>
                 </div>
             </section>
@@ -211,8 +211,8 @@ const Dashboard = ({ currentMode }) => {
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-            y: { grid: { color: '#f1f5f9' }, border: { display: false } },
-            x: { grid: { display: false }, border: { display: false } }
+            y: { grid: { color: 'rgba(148, 163, 184, 0.2)' }, border: { display: false }, ticks: { color: '#94a3b8' } },
+            x: { grid: { display: false }, border: { display: false }, ticks: { color: '#94a3b8' } }
         }
     };
 
@@ -230,7 +230,7 @@ const Dashboard = ({ currentMode }) => {
     const leaveDoughnutOptions = {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8 } } }
+        plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8, color: '#94a3b8' } } }
     };
 
     const empBarData = {
@@ -249,8 +249,8 @@ const Dashboard = ({ currentMode }) => {
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-            x: { grid: { color: '#f1f5f9' }, border: { display: false } },
-            y: { grid: { display: false }, border: { display: false } }
+            x: { grid: { color: 'rgba(148, 163, 184, 0.2)' }, border: { display: false }, ticks: { color: '#94a3b8' } },
+            y: { grid: { display: false }, border: { display: false }, ticks: { color: '#94a3b8' } }
         }
     };
 
@@ -277,8 +277,8 @@ const Dashboard = ({ currentMode }) => {
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-            y: { stacked: true, grid: { color: '#f1f5f9' }, border: { display: false } },
-            x: { stacked: true, grid: { display: false }, border: { display: false } }
+            y: { stacked: true, grid: { color: 'rgba(148, 163, 184, 0.2)' }, border: { display: false }, ticks: { color: '#94a3b8' } },
+            x: { stacked: true, grid: { display: false }, border: { display: false }, ticks: { color: '#94a3b8' } }
         }
     };
 
@@ -323,8 +323,8 @@ const Dashboard = ({ currentMode }) => {
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-            y: { grid: { color: '#f1f5f9' }, border: { display: false } },
-            x: { grid: { display: false }, border: { display: false } }
+            y: { grid: { color: 'rgba(148, 163, 184, 0.2)' }, border: { display: false }, ticks: { color: '#94a3b8' } },
+            x: { grid: { display: false }, border: { display: false }, ticks: { color: '#94a3b8' } }
         }
     };
 
@@ -343,18 +343,18 @@ const Dashboard = ({ currentMode }) => {
                 </div>
 
                 {/* Attendance Analytics Section */}
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: '#1e293b', fontWeight: 600 }}>Attendance Analytics</h3>
+                <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: 'var(--text-primary)', fontWeight: 600 }}>Attendance Analytics</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
 
                     <div className="glass-panel" style={{ padding: '1.5rem' }}>
-                        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151' }}>Weekly Attendance Trend</h3>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--text-primary)' }}>Weekly Attendance Trend</h3>
                         <div style={{ height: 250, width: '100%' }}>
                             <Bar data={barChartDataWeekly} options={barOptionsWeekly} />
                         </div>
                     </div>
 
                     <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151', alignSelf: 'flex-start' }}>Overall Attendance</h3>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--text-primary)', alignSelf: 'flex-start' }}>Overall Attendance</h3>
                         <div style={{ height: 180, width: '100%', position: 'relative' }}>
                             <Doughnut data={doughnutData} options={doughnutOptions} />
                             <div style={{
@@ -362,46 +362,46 @@ const Dashboard = ({ currentMode }) => {
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 flexDirection: 'column', pointerEvents: 'none'
                             }}>
-                                <span style={{ fontSize: '2rem', fontWeight: 700, color: '#1e293b' }}>{attendance.overallPercentage}%</span>
+                                <span style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)' }}>{attendance.overallPercentage}%</span>
                             </div>
                         </div>
 
-                        <div style={{ width: '100%', marginTop: '1rem', background: '#fffbeb', padding: '1rem', borderRadius: '8px', border: '1px solid #fef3c7' }}>
-                            <div style={{ fontSize: '0.85rem', color: '#b45309', fontWeight: 600 }}>EMPLOYEES LATE TODAY</div>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#92400e' }}>{attendance.lateToday || 0}</div>
+                        <div style={{ width: '100%', marginTop: '1rem', background: 'var(--warning-color)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--warning-color)', color: '#fff' }}>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 600 }}>EMPLOYEES LATE TODAY</div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--danger-color)' }}>{attendance.lateToday || 0}</div>
                         </div>
                     </div>
                 </div>
 
                 <div className="glass-panel" style={{ padding: '1.5rem' }}>
-                    <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151' }}>Monthly Attendance Overview</h3>
+                    <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--text-primary)' }}>Monthly Attendance Overview</h3>
                     <div style={{ height: 250, width: '100%' }}>
                         <Bar data={barChartDataMonthly} options={barOptionsMonthly} />
                     </div>
                 </div>
 
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', marginTop: '2.5rem', color: '#1e293b', fontWeight: 600 }}>Leave Analytics</h3>
+                <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', marginTop: '2.5rem', color: 'var(--text-primary)', fontWeight: 600 }}>Leave Analytics</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
                     <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
-                        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151' }}>Leave Distribution</h3>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--text-primary)' }}>Leave Distribution</h3>
                         <div style={{ height: 250, width: '100%' }}>
                             <Doughnut data={leaveDoughnutData} options={leaveDoughnutOptions} />
                         </div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         <div className="glass-panel" style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                            <div style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 500, marginBottom: '0.5rem' }}>Pending Leave Requests</div>
-                            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#f59e0b' }}>{leaves?.pending || 0}</div>
+                            <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '0.5rem' }}>Pending Leave Requests</div>
+                            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--warning-color)' }}>{leaves?.pending || 0}</div>
                         </div>
                         <div className="glass-panel" style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                            <div style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 500, marginBottom: '0.5rem' }}>Approved Leave Requests</div>
-                            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#10b981' }}>{leaves?.approved || 0}</div>
+                            <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '0.5rem' }}>Approved Leave Requests</div>
+                            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--success-color)' }}>{leaves?.approved || 0}</div>
                         </div>
                     </div>
                 </div>
 
                 {/* Employee Analytics Section */}
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', marginTop: '2.5rem', color: '#1e293b', fontWeight: 600 }}>Employee Analytics</h3>
+                <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', marginTop: '2.5rem', color: 'var(--text-primary)', fontWeight: 600 }}>Employee Analytics</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
                     <SummaryCard title="New Joinees (Month)" value={employees?.newJoinees || 0} color="#6366f1" />
                     <SummaryCard title="Active Employees" value={employees?.active || 0} color={NAVY_BLUE} />
@@ -409,52 +409,52 @@ const Dashboard = ({ currentMode }) => {
                     <SummaryCard title="On Probation" value={employees?.probation || 0} color="#f59e0b" />
                 </div>
                 <div className="glass-panel" style={{ padding: '1.5rem' }}>
-                    <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151' }}>Department-wise Employee Count</h3>
+                    <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--text-primary)' }}>Department-wise Employee Count</h3>
                     <div style={{ height: 300, width: '100%' }}>
                         <Bar data={empBarData} options={empBarOptions} />
                     </div>
                 </div>
 
                 {/* Task & Productivity Analytics Section */}
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', marginTop: '2.5rem', color: '#1e293b', fontWeight: 600 }}>Task & Productivity Analytics</h3>
+                <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', marginTop: '2.5rem', color: 'var(--text-primary)', fontWeight: 600 }}>Task & Productivity Analytics</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
                     <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151', alignSelf: 'flex-start' }}>Completion Rate</h3>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--text-primary)', alignSelf: 'flex-start' }}>Completion Rate</h3>
                         <div style={{ position: 'relative', width: '150px', height: '150px' }}>
                             <Doughnut data={taskDoughnutData} options={taskDoughnutOptions} />
                             <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <span style={{ fontSize: '1.8rem', fontWeight: 700, color: '#1e293b' }}>{tasks?.completionRate || 0}%</span>
+                                <span style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>{tasks?.completionRate || 0}%</span>
                             </div>
                         </div>
                     </div>
                     <div className="glass-panel" style={{ padding: '1.5rem' }}>
-                        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151' }}>Tasks Overview</h3>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--text-primary)' }}>Tasks Overview</h3>
                         <div style={{ height: 150, width: '100%' }}>
                             <Bar data={taskBarData} options={expenseBarOptions} />
                         </div>
                     </div>
                     <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                        <div style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 500, marginBottom: '0.5rem' }}>Overdue Tasks</div>
-                        <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#ef4444' }}>{tasks?.overdue || 0}</div>
+                        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '0.5rem' }}>Overdue Tasks</div>
+                        <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--danger-color)' }}>{tasks?.overdue || 0}</div>
                     </div>
                 </div>
 
                 {/* Expense Analytics Section */}
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', marginTop: '2.5rem', color: '#1e293b', fontWeight: 600 }}>Expense Analytics</h3>
+                <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', marginTop: '2.5rem', color: 'var(--text-primary)', fontWeight: 600 }}>Expense Analytics</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
                     <div className="glass-panel" style={{ padding: '1.5rem' }}>
-                        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#374151' }}>Approved vs Pending Expenses</h3>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--text-primary)' }}>Approved vs Pending Expenses</h3>
                         <div style={{ height: 200, width: '100%' }}>
                             <Bar data={expenseBarData} options={expenseBarOptions} />
                         </div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         <div className="glass-panel" style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                            <div style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 500, marginBottom: '0.5rem' }}>Total This Month</div>
-                            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#1e293b' }}>₹{expenses?.totalThisMonth?.toLocaleString('en-IN') || 0}</div>
+                            <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '0.5rem' }}>Total This Month</div>
+                            <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)' }}>₹{expenses?.totalThisMonth?.toLocaleString('en-IN') || 0}</div>
                         </div>
                         <div className="glass-panel" style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                            <div style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 500, marginBottom: '0.5rem' }}>Highest Expense Dept</div>
+                            <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '0.5rem' }}>Highest Expense Dept</div>
                             <div style={{ fontSize: '1.5rem', fontWeight: 700, color: NAVY_BLUE }}>{expenses?.highestDept || 'N/A'}</div>
                         </div>
                     </div>
@@ -467,12 +467,12 @@ const Dashboard = ({ currentMode }) => {
 
 const SummaryCard = ({ title, value, color, trend }) => (
     <div style={{
-        background: '#fff', borderRadius: '12px', padding: '1.25rem',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03)',
-        border: '1px solid #f1f5f9', position: 'relative', overflow: 'hidden'
+        background: 'var(--bg-card)', borderRadius: '12px', padding: '1.25rem',
+        boxShadow: 'var(--shadow-md)',
+        border: '1px solid var(--border-color)', position: 'relative', overflow: 'hidden'
     }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-            <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 500 }}>{title}</div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>{title}</div>
         </div>
         <div style={{ fontSize: '2rem', fontWeight: 600, color: color, lineHeight: 1 }}>{value}</div>
         {trend && <div style={{ fontSize: '0.75rem', color: NAVY_BLUE, marginTop: '0.5rem', fontWeight: 500 }}>↑ {trend}</div>}

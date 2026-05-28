@@ -302,7 +302,7 @@ const Policies = ({ currentMode }) => {
                                         <td style={{ fontWeight: 600 }}>{policy.title}</td>
                                         <td>{policy.desc || 'No description'}</td>
                                         <td>
-                                            <span className="status-badge" style={{ background: 'rgba(30,58,138,0.1)', color: 'var(--primary-color)', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
+                                            <span className="status-badge" style={{ background: 'var(--primary-light)', color: 'var(--primary-color)', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
                                                 {policy.category}
                                             </span>
                                         </td>

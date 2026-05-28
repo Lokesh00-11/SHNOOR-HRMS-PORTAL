@@ -73,6 +73,7 @@ class OffboardingAdmin(admin.ModelAdmin):
 class LetterHeadAdmin(admin.ModelAdmin):
     list_display = ('title', 'document_type', 'created_at')
     list_filter = ('document_type',)
+    
 @admin.register(AdminProfile)
 class AdminProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'created_at', 'updated_at')

@@ -57,3 +57,14 @@ from .expense_views import (
 from myapp.views.employee_views import EmployeeQueriesView
 from myapp.views.manager_views import ManagerQueriesView
 from myapp.views.team_leader_views import TeamLeaderQueriesView
+
+from myapp.bhanu_views import (
+    PlannerMyEventsView, PlannerTeamEventsView, PlannerDepartmentEventsView,
+    PlannerAllEventsView, PlannerHolidaysView, PlannerCreateEventView,
+    PlannerApproveEventView, PlannerCalendarFeedView,
+    PlannerFiltersView, PlannerLockDayView, PlannerUnlockDayView,
+    PlannerShiftView, PlannerHolidayView, PlannerIcsFeedView,
+    TeamLeaderPayrollView,
+    HelpdeskCategoryListView, HelpdeskTicketListView, 
+    HelpdeskTicketDetailView, HelpdeskReplyView, HelpdeskAnalyticsView, HelpdeskEscalateView
+)

@@ -21,9 +21,15 @@ from .views import (
     TeamLeaderTeamMembersView, TeamLeaderTasksView, TeamLeaderPerformanceView,
     SystemDataSetupView, PendingLeavesCountView, MarkNotificationsReadView,
     EmployeeExpenseListView, TeamLeaderExpenseListView, TeamLeaderExpenseUpdateView,
+    TeamLeaderPayrollView,
     ManagerExpenseListView, ManagerExpenseApproveView, ManagerExpensePayView,
     DownloadFileView, EmployeeQueriesView, ManagerQueriesView, TeamLeaderQueriesView,
-    BadgeCountsView, MarkBadgeReadView, TeamLeaderCasesView, ManagerCasesView
+    BadgeCountsView, MarkBadgeReadView, TeamLeaderCasesView, ManagerCasesView,
+    PlannerMyEventsView, PlannerTeamEventsView, PlannerDepartmentEventsView,
+    PlannerAllEventsView, PlannerHolidaysView, PlannerCreateEventView,
+    PlannerApproveEventView, PlannerCalendarFeedView,
+    PlannerFiltersView, PlannerLockDayView, PlannerUnlockDayView,
+    PlannerShiftView, PlannerHolidayView, PlannerIcsFeedView
 )
 
 urlpatterns = [
@@ -137,4 +143,38 @@ urlpatterns = [
     path('api/teamleader/queries/', TeamLeaderQueriesView.as_view(), name='teamleader_queries'),
     path('api/teamleader/cases/', TeamLeaderCasesView.as_view(), name='teamleader_cases'),
     path('api/manager/cases/', ManagerCasesView.as_view(), name='manager_cases'),
+    
+    path('api/teamleader/payroll/', TeamLeaderPayrollView.as_view(), name='tl_payroll'),
+    
+    # Planner URLs
+    path('api/planner/my-events/', PlannerMyEventsView.as_view(), name='planner_my_events'),
+    path('api/planner/team-events/', PlannerTeamEventsView.as_view(), name='planner_team_events'),
+    path('api/planner/department-events/', PlannerDepartmentEventsView.as_view(), name='planner_department_events'),
+    path('api/planner/all-events/', PlannerAllEventsView.as_view(), name='planner_all_events'),
+    path('api/planner/holidays/', PlannerHolidaysView.as_view(), name='planner_holidays'),
+    path('api/planner/calendar-feed/', PlannerCalendarFeedView.as_view(), name='planner_calendar_feed'),
+    path('api/planner/create-event/', PlannerCreateEventView.as_view(), name='planner_create_event'),
+    path('api/planner/approve-event/<int:pk>/', PlannerApproveEventView.as_view(), name='planner_approve_event'),
+    path('api/planner/filters/', PlannerFiltersView.as_view(), name='planner_filters'),
+    path('api/planner/lock/', PlannerLockDayView.as_view(), name='planner_lock_day'),
+    path('api/planner/unlock/<int:pk>/', PlannerUnlockDayView.as_view(), name='planner_unlock_day'),
+    path('api/planner/shifts/', PlannerShiftView.as_view(), name='planner_shifts'),
+    path('api/planner/holidays/create/', PlannerHolidayView.as_view(), name='planner_create_holiday'),
+    path('api/planner/ics/<str:token>/', PlannerIcsFeedView.as_view(), name='planner_ics_feed'),
+]
+# ========================================================
+# HELPDESK MODULE URLS
+# ========================================================
+from .views import (
+    HelpdeskCategoryListView, HelpdeskTicketListView, 
+    HelpdeskTicketDetailView, HelpdeskReplyView, HelpdeskAnalyticsView, HelpdeskEscalateView
+)
+
+urlpatterns += [
+    path('api/helpdesk/categories/', HelpdeskCategoryListView.as_view(), name='helpdesk_categories'),
+    path('api/helpdesk/tickets/', HelpdeskTicketListView.as_view(), name='helpdesk_tickets'),
+    path('api/helpdesk/tickets/<int:pk>/', HelpdeskTicketDetailView.as_view(), name='helpdesk_ticket_detail'),
+    path('api/helpdesk/tickets/<int:pk>/reply/', HelpdeskReplyView.as_view(), name='helpdesk_reply'),
+    path('api/helpdesk/tickets/<int:pk>/escalate/', HelpdeskEscalateView.as_view(), name='helpdesk_escalate'),
+    path('api/helpdesk/analytics/', HelpdeskAnalyticsView.as_view(), name='helpdesk_analytics'),
 ]

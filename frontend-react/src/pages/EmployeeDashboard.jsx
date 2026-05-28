@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import HelpdeskHub from '../components/Shared/Helpdesk/HelpdeskHub';
 import Sidebar from '../components/Employee/Sidebar';
+import ThemeToggle from '../components/Common/ThemeToggle';
 import Dashboard from '../components/Employee/Views/Dashboard';
 import Attendance from '../components/Employee/Views/Attendance';
 import Tasks from '../components/Employee/Views/Tasks';
@@ -17,6 +19,7 @@ import Queries from '../components/Employee/Views/Queries';
 import Payroll from '../components/Employee/Views/Payroll';
 import MyRequests from '../components/Employee/Views/MyRequests';
 import Authorizations from '../components/Employee/Views/Authorizations';
+import PlannerPage from '../components/Planner/PlannerPage';
 
 import '../styles/admin.css';
 
@@ -59,6 +62,10 @@ const EmployeeDashboard = () => {
                 return <Notifications />;
             case 'profile':
                 return <Profile />;
+            case 'planner':
+                return <PlannerPage role="employee" />;
+            case 'helpdesk':
+                return <HelpdeskHub role="employee" />;
             default:
                 return <Dashboard />;
         }
@@ -68,7 +75,15 @@ const EmployeeDashboard = () => {
         <div className="admin-layout">
             <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
             
-            <main className="main-content">
+            <main className="main-content" style={{ position: 'relative' }}>
+                <div className="dashboard-theme-toggle-container" style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    marginBottom: '1rem',
+                    zIndex: 100
+                }}>
+                    <ThemeToggle />
+                </div>
                 <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
                     {renderView()}
                 </div>
@@ -78,3 +93,4 @@ const EmployeeDashboard = () => {
 };
 
 export default EmployeeDashboard;
+

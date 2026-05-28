@@ -5,5 +5,6 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/settings/', include('settings_module.urls')),
     path('', include('myapp.urls')), # This will now include all our new links automatically
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

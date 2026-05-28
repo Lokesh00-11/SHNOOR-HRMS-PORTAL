@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import HelpdeskHub from '../components/Shared/Helpdesk/HelpdeskHub';
 import Sidebar from '../components/Manager/Sidebar';
+import ThemeToggle from '../components/Common/ThemeToggle';
 import Dashboard from '../components/Manager/Views/Dashboard';
 import Employees from '../components/Manager/Views/Employees';
 import ManageProfiles from '../components/Manager/Views/ManageProfiles';
@@ -22,6 +24,10 @@ import EmployeeQueries from '../components/Employee/Views/Queries';
 import Cases from '../components/Manager/Views/Cases';
 import Assets from '../components/Manager/Views/Assets';
 import Authorizations from '../components/Manager/Views/Authorizations';
+import PlannerPage from '../components/Planner/PlannerPage';
+import Settings from '../components/Manager/Views/Settings';
+import FinanceOverview from '../components/Manager/Views/FinanceOverview';
+import Reports from '../components/Manager/Views/Reports';
 
 import '../styles/admin.css';
 
@@ -80,6 +86,16 @@ const ManagerDashboard = () => {
                 return <Notifications currentMode={currentMode} />;
             case 'subscription':
                 return <Subscription />;
+            case 'planner':
+                return <PlannerPage role={currentMode} />;
+            case 'finance':
+                return <FinanceOverview />;
+            case 'reports':
+                return <Reports />;
+            case 'settings':
+                return <Settings />;
+            case 'helpdesk':
+                return <HelpdeskHub role="manager" />;
             default:
                 return <Dashboard currentMode={currentMode} />;
         }
@@ -93,7 +109,15 @@ const ManagerDashboard = () => {
                 currentMode={currentMode} 
                 setCurrentMode={setCurrentMode} 
             />
-            <main className="main-content" style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>
+            <main className="main-content" style={{ flex: 1, padding: '2rem', overflowY: 'auto', position: 'relative' }}>
+                <div className="dashboard-theme-toggle-container" style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    marginBottom: '1rem',
+                    zIndex: 100
+                }}>
+                    <ThemeToggle />
+                </div>
                 {renderContent()}
             </main>
         </div>
@@ -101,3 +125,4 @@ const ManagerDashboard = () => {
 };
 
 export default ManagerDashboard;
+

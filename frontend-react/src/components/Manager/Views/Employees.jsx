@@ -204,6 +204,7 @@ const Employees = () => {
                                     >
                                         <option value="employee">Employee</option>
                                         <option value="team_leader">Team Leader</option>
+                                        <option value="manager">Manager</option>
                                     </select>
                                 </div>
                             </div>
@@ -260,6 +261,7 @@ const Employees = () => {
                                                 <div style={{ position: 'absolute', right: '50%', transform: 'translateX(50%)', top: '100%', zIndex: 10, background: 'var(--bg-secondary)', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: '130px', boxShadow: '0 4px 6px rgba(0,0,0,0.3)' }}>
                                                     <button className="btn btn-ghost" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', textAlign: 'left', width: '100%' }} onClick={() => handlePromote(emp.user_id, 'employee', emp.role || 'employee')}>Employee</button>
                                                     <button className="btn btn-ghost" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', textAlign: 'left', width: '100%' }} onClick={() => handlePromote(emp.user_id, 'team_leader', emp.role || 'employee')}>Team Leader</button>
+                                                    <button className="btn btn-ghost" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', textAlign: 'left', width: '100%' }} onClick={() => handlePromote(emp.user_id, 'manager', emp.role || 'employee')}>Manager</button>
                                                 </div>
                                             )}
                                         </td>

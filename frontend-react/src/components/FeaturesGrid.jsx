@@ -31,7 +31,12 @@ function FeaturesGrid() {
             desc: "Generate official documents and certificates instantly.",
             icon: "📄",
             large: true
-        }
+        },
+        {
+            title: "Powerful Tracking for HRM",
+            desc: "Continuous monitoring and analytics to optimize workforce management.",
+            icon: "⭐"
+        },
     ];
 
     return (

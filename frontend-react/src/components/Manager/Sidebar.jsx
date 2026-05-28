@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useBadges } from '../../context/BadgeContext';
+import ThemeToggle from '../Common/ThemeToggle';
+import { useTheme } from '../../context/ThemeContext';
 
 const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) => {
     const { badgeCounts, markAsRead } = useBadges();
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+    const { theme: contextTheme, toggleTheme: contextToggleTheme } = useTheme();
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
@@ -12,6 +15,7 @@ const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) =
 
     const toggleTheme = () => {
         setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+        if (contextToggleTheme) contextToggleTheme();
     };
     // visibility properties
     const menuItems = [
@@ -28,14 +32,19 @@ const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) =
         { id: 'profile', label: 'Profile', icon: 'fa-user', visibleFor: ['self'] },
         { id: 'payroll', label: 'Payroll', icon: 'fa-file-invoice-dollar', visibleFor: ['manager'] },
         { id: 'expenses', label: 'Expenses', icon: 'fa-wallet', visibleFor: ['manager'] },
+        { id: 'finance', label: 'Finance Overview', icon: 'fa-money-bill-trend-up', visibleFor: ['manager'] },
         { id: 'policies', label: 'Company Policies', icon: 'fa-file-shield', visibleFor: ['manager', 'self'] },
+        { id: 'reports', label: 'Reports & Insights', icon: 'fa-chart-line', visibleFor: ['manager'] },
         { id: 'offboarding', label: 'Offboarding', icon: 'fa-user-xmark', visibleFor: ['manager'] },
         { id: 'letterheads', label: 'Letter Heads', icon: 'fa-file-signature', visibleFor: ['manager'] },
         { id: 'orgchart', label: 'Org Chart', icon: 'fa-sitemap', visibleFor: ['manager', 'self'] },
+        { id: 'planner', label: 'Planner', icon: 'fa-calendar-days', visibleFor: ['manager', 'self'] },
         { id: 'notifications', label: 'Notifications', icon: 'fa-bell', visibleFor: ['manager', 'self'] },
         { id: 'queries', label: 'Queries', icon: 'fa-circle-question', visibleFor: ['manager', 'self'] },
         { id: 'cases', label: 'Cases', icon: 'fa-briefcase', visibleFor: ['manager'] },
         { id: 'subscription', label: 'Subscription', icon: 'fa-credit-card', visibleFor: ['manager'] },
+        { id: 'settings', label: 'Settings', icon: 'fa-gear', visibleFor: ['manager', 'self'] },
+        { id: 'helpdesk', label: 'Helpdesk', icon: 'fa-headset', visibleFor: ['manager', 'self'] },
     ];
 
     const handleLogout = () => {
@@ -56,7 +65,7 @@ const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) =
                 ShnoorHR
             </a>
 
-            {/* Mode Switcher Toggle inside Sidebar */}
+            {/* Toggle inside Sidebar */}
             <div style={{
                 display: 'flex', 
                 gap: '0.25rem', 
@@ -115,43 +124,7 @@ const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) =
                 ))}
             </div>
 
-            {/* Premium Theme Mode Switcher */}
-            <div className="sidebar-theme-item" style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '0.75rem 1rem',
-                margin: '0.5rem 0.75rem',
-                borderRadius: '8px',
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid var(--glass-border)'
-            }}>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <i className="fa-solid fa-circle-half-stroke" style={{ color: 'var(--primary-color)' }}></i> Theme Mode
-                </span>
-                <button 
-                    onClick={toggleTheme}
-                    className="theme-toggle-btn"
-                    style={{
-                        background: 'rgba(255,255,255,0.08)',
-                        border: '1px solid var(--glass-border)',
-                        color: 'var(--text-main)',
-                        padding: '0.35rem 0.75rem',
-                        borderRadius: '20px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        transition: 'all 0.3s ease'
-                    }}
-                >
-                    {theme === 'dark' ? (
-                        <i className="fa-solid fa-sun" style={{ color: '#f59e0b' }}></i>
-                    ) : (
-                        <i className="fa-solid fa-moon" style={{ color: '#6366f1' }}></i>
-                    )}
-                </button>
-            </div>
+
 
             <div style={{ padding: '0 0.75rem 1rem' }}>
                 <button 
@@ -178,3 +151,5 @@ const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) =
 };
 
 export default Sidebar;
+
+

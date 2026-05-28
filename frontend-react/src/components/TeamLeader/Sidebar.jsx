@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useBadges } from '../../context/BadgeContext';
+import ThemeToggle from '../Common/ThemeToggle';
+import { useTheme } from '../../context/ThemeContext';
 
-const Sidebar = ({ currentView, setCurrentView }) => {
+const Sidebar = ({ currentView, setCurrentView, currentMode, setCurrentMode }) => {
     const { badgeCounts, markAsRead } = useBadges();
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+    const { theme: contextTheme, toggleTheme: contextToggleTheme } = useTheme();
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
@@ -12,6 +15,7 @@ const Sidebar = ({ currentView, setCurrentView }) => {
 
     const toggleTheme = () => {
         setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+        if (contextToggleTheme) contextToggleTheme();
     };
 
     const menuItems = [
@@ -21,12 +25,17 @@ const Sidebar = ({ currentView, setCurrentView }) => {
         { id: 'tasks', label: 'Team Tasks', icon: 'fa-list-check' },
         { id: 'performance', label: 'Performance', icon: 'fa-chart-line' },
         { id: 'expenses', label: 'Team Expenses', icon: 'fa-wallet' },
+        { id: 'finance', label: 'Finance', icon: 'fa-file-invoice-dollar' },
+        { id: 'reports', label: 'Reports', icon: 'fa-chart-simple' },
         { id: 'offboarding', label: 'Offboarding', icon: 'fa-user-xmark' },
         { id: 'documents', label: 'Documents', icon: 'fa-folder-open' },
         { id: 'queries', label: 'Team Queries', icon: 'fa-circle-question' },
         { id: 'cases', label: 'Cases', icon: 'fa-briefcase' },
         { id: 'notifications', label: 'Notifications', icon: 'fa-bell' },
-        { id: 'profile', label: 'Profile', icon: 'fa-user-gear' }
+        { id: 'profile', label: 'Profile', icon: 'fa-user-gear' },
+        { id: 'planner', label: 'Planner', icon: 'fa-calendar-days' },
+        { id : 'settings', label: 'Settings', icon: 'fa-gear' },
+        { id: 'helpdesk', label: 'Helpdesk', icon: 'fa-headset' },
     ];
 
     const handleLogout = () => {
@@ -40,6 +49,7 @@ const Sidebar = ({ currentView, setCurrentView }) => {
     return (
         <aside className="sidebar">
             <a href="#" className="logo" style={{ textDecoration: 'none', marginBottom: '2rem', display: 'flex', alignItems: 'center' }}>
+                <i className="fa-solid fa-users" style={{ color: 'var(--primary)', marginRight: '10px', display: 'none' }}></i> 
                 <img src="/logo.jpg" alt="ShnoorHR" style={{ height: '32px', marginRight: '10px', borderRadius: '4px', objectFit: 'contain' }} /> 
                 ShnoorHR
             </a>
@@ -133,3 +143,5 @@ const Sidebar = ({ currentView, setCurrentView }) => {
 };
 
 export default Sidebar;
+
+

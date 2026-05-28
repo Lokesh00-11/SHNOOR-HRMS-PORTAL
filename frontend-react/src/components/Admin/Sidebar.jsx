@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useBadges } from '../../context/BadgeContext';
+import ThemeToggle from '../Common/ThemeToggle';
+import { useTheme } from '../../context/ThemeContext';
+// Note: You may want to use a Link component if you switch to react-router-dom later.
+// For now, we are using state-based navigation as requested.
 
 const Sidebar = ({ currentView, setCurrentView }) => {
     const { badgeCounts, markAsRead } = useBadges();
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+    const { theme: contextTheme, toggleTheme: contextToggleTheme } = useTheme();
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
@@ -12,8 +17,8 @@ const Sidebar = ({ currentView, setCurrentView }) => {
 
     const toggleTheme = () => {
         setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+        if (contextToggleTheme) contextToggleTheme();
     };
-
     const menuItems = [
         { id: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard' },
         { id: 'companies', icon: 'fa-building', label: 'Companies' },
@@ -22,9 +27,10 @@ const Sidebar = ({ currentView, setCurrentView }) => {
         { id: 'emails', icon: 'fa-envelope', label: 'Email Queries' },
         { id: 'superadmin', icon: 'fa-user-shield', label: 'Super Admin' },
         { id: 'orgchart', icon: 'fa-sitemap', label: 'Org Chart' },
-        { id: 'website', icon: 'fa-globe', label: 'Website Settings' },
+        { id: 'planner', icon: 'fa-calendar-days', label: 'Planner' },
         { id: 'notifications', icon: 'fa-bell', label: 'Notifications' },
-        { id: 'settings', icon: 'fa-gear', label: 'Settings' },
+        { id: 'system_settings', icon: 'fa-server', label: 'Settings' },
+        { id: 'helpdesk', label: 'Helpdesk', icon: 'fa-headset' },
     ];
 
     return (
@@ -105,3 +111,5 @@ const Sidebar = ({ currentView, setCurrentView }) => {
 };
 
 export default Sidebar;
+
+

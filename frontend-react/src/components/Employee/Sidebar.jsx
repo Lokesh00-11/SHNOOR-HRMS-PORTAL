@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useBadges } from '../../context/BadgeContext';
+import ThemeToggle from '../Common/ThemeToggle';
+import { useTheme } from '../../context/ThemeContext';
 
 const Sidebar = ({ currentView, setCurrentView }) => {
     const { badgeCounts, markAsRead } = useBadges();
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+    const { theme: contextTheme, toggleTheme: contextToggleTheme } = useTheme();
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
@@ -12,6 +15,7 @@ const Sidebar = ({ currentView, setCurrentView }) => {
 
     const toggleTheme = () => {
         setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+        if (contextToggleTheme) contextToggleTheme();
     };
     
     const role = localStorage.getItem('role') || '';
@@ -33,6 +37,8 @@ const Sidebar = ({ currentView, setCurrentView }) => {
         { id: 'queries', label: 'Queries', icon: 'fa-circle-question' },
         { id: 'my-requests', label: 'My Requests', icon: 'fa-timeline' },
         { id: 'profile', label: 'Profile', icon: 'fa-user' },
+        { id: 'planner', label: 'Planner', icon: 'fa-calendar-days' },
+        { id: 'helpdesk', label: 'Helpdesk', icon: 'fa-headset' },
     ];
 
     if (isTeamLeader) {
@@ -124,3 +130,5 @@ const Sidebar = ({ currentView, setCurrentView }) => {
 };
 
 export default Sidebar;
+
+

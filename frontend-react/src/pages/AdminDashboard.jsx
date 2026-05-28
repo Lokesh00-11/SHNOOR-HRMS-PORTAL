@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
+import HelpdeskHub from '../components/Shared/Helpdesk/HelpdeskHub';
 import Sidebar from '../components/Admin/Sidebar';
+import ThemeToggle from '../components/Common/ThemeToggle';
 import SystemOverview from '../components/Admin/Views/SystemOverview';
 import Companies from '../components/Admin/Views/Companies';
 import Notifications from '../components/Admin/Views/Notifications';
-import WebsiteSettings from '../components/Admin/Views/WebsiteSettings';
-import AdminSettings from '../components/Admin/Views/AdminSettings';
+import AdminSettingsLayout from '../components/Admin/Views/Settings/AdminSettingsLayout';
 import Subscriptions from '../components/Admin/Views/Subscriptions';
 import Transactions from '../components/Admin/Views/Transactions';
 import EmailQueries from '../components/Admin/Views/EmailQueries';
 import SuperAdmin from '../components/Admin/Views/SuperAdmin';
 import OrgChart from '../components/Admin/Views/OrgChart';
+import PlannerPage from '../components/Planner/PlannerPage';
 
 import '../styles/admin.css';
 
@@ -24,10 +26,8 @@ const AdminDashboard = () => {
                 return <Companies />;
             case 'notifications':
                 return <Notifications />;
-            case 'website':
-                return <WebsiteSettings />;
-            case 'settings':
-                return <AdminSettings />;
+            case 'system_settings':
+                return <AdminSettingsLayout />;
             case 'subscriptions': 
                 return <Subscriptions />;
             case 'transactions': 
@@ -38,6 +38,10 @@ const AdminDashboard = () => {
                 return <SuperAdmin />;
             case 'orgchart': 
                 return <OrgChart />;
+            case 'planner':
+                return <PlannerPage role="admin" />;
+            case 'helpdesk':
+                return <HelpdeskHub role="admin" />;
             default:
                 return <SystemOverview />;
         }
@@ -50,7 +54,15 @@ const AdminDashboard = () => {
             
             <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
             
-            <main className="main-content">
+            <main className="main-content" style={{ position: 'relative' }}>
+                <div className="dashboard-theme-toggle-container" style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    marginBottom: '1rem',
+                    zIndex: 100
+                }}>
+                    <ThemeToggle />
+                </div>
                 {renderView()}
             </main>
         </div>
@@ -58,3 +70,4 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+

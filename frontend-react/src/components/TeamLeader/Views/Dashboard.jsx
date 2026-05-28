@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { get } from '../../../services/api';
+import { get, post } from '../../../services/api';
 
 const Dashboard = () => {
     const [stats, setStats] = useState({
@@ -9,6 +9,31 @@ const Dashboard = () => {
         attendance_percentage: 0
     });
     const [loading, setLoading] = useState(true);
+    const [actionLoading, setActionLoading] = useState(false);
+
+    const handleClockIn = async () => {
+        try {
+            setActionLoading(true);
+            await post('/employee/attendance/clock-in/');
+            alert('Clocked In successfully');
+        } catch (err) {
+            alert('Clock in failed: ' + (err.response?.data?.error || err.message));
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleClockOut = async () => {
+        try {
+            setActionLoading(true);
+            await post('/employee/attendance/clock-out/');
+            alert('Clocked Out successfully');
+        } catch (err) {
+            alert('Clock out failed: ' + (err.response?.data?.error || err.message));
+        } finally {
+            setActionLoading(false);
+        }
+    };
 
     const fetchStats = async () => {
         try {
@@ -33,6 +58,27 @@ const Dashboard = () => {
 
     return (
         <section className="view-section active">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                <h2 className="gradient-text" style={{ margin: 0 }}>My Dashboard</h2>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button
+                        className="btn btn-primary"
+                        onClick={handleClockIn}
+                        disabled={actionLoading}
+                    >
+                        <i className="fa-solid fa-clock"></i> Clock In
+                    </button>
+                    <button
+                        className="btn btn-ghost"
+                        onClick={handleClockOut}
+                        disabled={actionLoading}
+                        style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                    >
+                        Clock Out
+                    </button>
+                </div>
+            </div>
+
             {/* Header section with credentials info */}
             <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
@@ -57,7 +103,7 @@ const Dashboard = () => {
                                 {loading ? '...' : stats.total_team_members}
                             </h1>
                         </div>
-                        <div className="card-icon" style={{ background: 'rgba(30, 58, 138, 0.1)', color: 'var(--primary-color)', padding: '0.75rem', borderRadius: '50%' }}>
+                        <div className="card-icon" style={{ background: 'var(--primary-light)', color: 'var(--primary-color)', padding: '0.75rem', borderRadius: '50%' }}>
                             <i className="fa-solid fa-users" style={{ fontSize: '1.5rem' }}></i>
                         </div>
                     </div>

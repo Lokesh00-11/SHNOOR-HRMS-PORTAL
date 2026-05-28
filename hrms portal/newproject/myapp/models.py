@@ -1,3 +1,4 @@
+import uuid
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models.signals import post_save
@@ -16,6 +17,7 @@ class User(AbstractUser):
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     location = models.CharField(max_length=255, blank=True, null=True)
     company = models.ForeignKey('Company', on_delete=models.SET_NULL, null=True, blank=True, related_name='users')
+    feed_token = models.UUIDField(default=uuid.uuid4, unique=True, null=True, blank=True)
     
     def __str__(self):
         return f"{self.username} ({self.role})"
@@ -668,3 +670,191 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.recipient.username if self.recipient else self.target_role}"
+
+class PlannerEvent(models.Model):
+    EVENT_TYPES = [
+        ('Leave', 'Leave'),
+        ('WFH', 'WFH'),
+        ('Holiday', 'Holiday'),
+        ('Meeting', 'Meeting'),
+        ('Shift', 'Shift'),
+        ('Task Deadline', 'Task Deadline'),
+        ('Attendance Issue', 'Attendance Issue'),
+        ('Training', 'Training'),
+        ('Company Event', 'Company Event'),
+        ('Late Mark', 'Late Mark'),
+        ('Absent', 'Absent'),
+    ]
+    VISIBILITY_CHOICES = [
+        ('Private', 'Private'),
+        ('Team', 'Team'),
+        ('Department', 'Department'),
+        ('Organization', 'Organization'),
+    ]
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Approved', 'Approved'),
+        ('Rejected', 'Rejected'),
+        ('Completed', 'Completed'),
+    ]
+
+    employee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='planner_events', null=True, blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_planner_events')
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    event_type = models.CharField(max_length=50, choices=EVENT_TYPES)
+    start_date = models.DateField()
+    end_date = models.DateField(blank=True, null=True)
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pending')
+    visibility = models.CharField(max_length=50, choices=VISIBILITY_CHOICES, default='Private')
+    department = models.CharField(max_length=100, blank=True, null=True)
+    office = models.CharField(max_length=100, blank=True, null=True)
+    color_code = models.CharField(max_length=20, default='#3b82f6')
+    is_approved = models.BooleanField(default=False)
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_planner_events')
+    approved_at = models.DateTimeField(null=True, blank=True)
+    is_locked = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['employee', 'start_date']),
+            models.Index(fields=['status', 'start_date']),
+            models.Index(fields=['is_approved', 'start_date']),
+        ]
+
+    def __str__(self):
+        return self.title
+
+class PlannerHoliday(models.Model):
+    title = models.CharField(max_length=255)
+    holiday_date = models.DateField()
+    description = models.TextField(blank=True, null=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    color_code = models.CharField(max_length=20, default='#10b981')
+
+    def __str__(self):
+        return f"{self.title} - {self.holiday_date}"
+
+class PlannerShift(models.Model):
+    employee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='planner_shifts')
+    shift_name = models.CharField(max_length=100)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    assigned_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_shifts')
+    color_code = models.CharField(max_length=20, default='#f59e0b')
+    recurring_pattern = models.CharField(max_length=50, default='None')
+    rotation_start_date = models.DateField(null=True, blank=True)
+    rotation_cycle_days = models.IntegerField(default=7)
+
+    def __str__(self):
+        return f"{self.shift_name} - {self.employee.username}"
+
+class PlannerLock(models.Model):
+    DEPARTMENT_CHOICES = (
+        ('Management', 'Management'),
+        ('Development', 'Development'),
+        ('HR', 'HR'),
+        ('Finance', 'Finance'),
+        ('Sales', 'Sales'),
+        ('Marketing', 'Marketing'),
+        ('Operations', 'Operations'),
+    )
+    OFFICE_CHOICES = (
+        ('Headquarters', 'Headquarters'),
+        ('New York', 'New York'),
+        ('Chicago', 'Chicago'),
+        ('San Francisco', 'San Francisco'),
+        ('London', 'London'),
+        ('Remote', 'Remote'),
+    )
+
+    locked_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='locked_days')
+    title = models.CharField(max_length=255)
+    reason = models.TextField(blank=True, null=True)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    scope = models.CharField(max_length=50, default='Global') # Global, Department, Team, Employee
+    department = models.CharField(max_length=100, choices=DEPARTMENT_CHOICES, blank=True, null=True)
+    office = models.CharField(max_length=100, choices=OFFICE_CHOICES, blank=True, null=True)
+    affected_employees = models.ManyToManyField(User, related_name='affected_locks', blank=True)
+    is_active = models.BooleanField(default=True)
+    unlocked_at = models.DateTimeField(null=True, blank=True)
+    unlocked_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='unlocked_days')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['start_date']),
+            models.Index(fields=['end_date']),
+            models.Index(fields=['scope']),
+            models.Index(fields=['is_active']),
+        ]
+
+    def __str__(self):
+        return f"Lock: {self.title} ({self.start_date} to {self.end_date})"
+# ========================================================
+# HELPDESK MODULE MODELS
+# ========================================================
+
+class HelpdeskCategory(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return self.name
+
+class HelpdeskTicket(models.Model):
+    PRIORITY_CHOICES = (
+        ('Low', 'Low'),
+        ('Medium', 'Medium'),
+        ('High', 'High'),
+        ('Critical', 'Critical')
+    )
+    STATUS_CHOICES = (
+        ('Open', 'Open'),
+        ('In Progress', 'In Progress'),
+        ('Pending', 'Pending'),
+        ('Resolved', 'Resolved'),
+        ('Closed', 'Closed'),
+        ('Escalated', 'Escalated')
+    )
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    category = models.ForeignKey(HelpdeskCategory, on_delete=models.SET_NULL, null=True)
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='Medium')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Open')
+    
+    created_by = models.ForeignKey(User, related_name='created_tickets', on_delete=models.CASCADE)
+    assigned_to = models.ForeignKey(User, related_name='assigned_tickets', on_delete=models.SET_NULL, null=True, blank=True)
+    department_scope = models.CharField(max_length=100, blank=True, null=True) # Used for manager scoping
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"Ticket #{self.id} - {self.title}"
+
+class HelpdeskReply(models.Model):
+    ticket = models.ForeignKey(HelpdeskTicket, related_name='replies', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    message = models.TextField()
+    is_internal_note = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class HelpdeskAttachment(models.Model):
+    ticket = models.ForeignKey(HelpdeskTicket, related_name='attachments', on_delete=models.CASCADE, null=True, blank=True)
+    reply = models.ForeignKey(HelpdeskReply, related_name='attachments', on_delete=models.CASCADE, null=True, blank=True)
+    file = models.FileField(upload_to='helpdesk_attachments/')
+    uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+class HelpdeskEscalation(models.Model):
+    ticket = models.ForeignKey(HelpdeskTicket, related_name='escalations', on_delete=models.CASCADE)
+    escalated_by = models.ForeignKey(User, related_name='initiated_escalations', on_delete=models.CASCADE)
+    escalated_to_role = models.CharField(max_length=50) # 'Manager', 'Admin'
+    reason = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)

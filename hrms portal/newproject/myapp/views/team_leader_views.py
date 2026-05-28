@@ -53,9 +53,9 @@ class TeamLeaderTeamMembersView(APIView):
         if request.user.role.lower() != 'team_leader':
             return Response({'message': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
         if request.query_params.get('available') == 'true':
-            employees = Employee.objects.all().order_by('user__first_name')
+            employees = Employee.objects.filter(user__company=request.user.company).order_by('user__first_name')
         else:
-            employees = Employee.objects.filter(team_leader=request.user).order_by('user__first_name')
+            employees = Employee.objects.filter(team_leader=request.user, user__company=request.user.company).order_by('user__first_name')
         serializer = EmployeeProfileSerializer(employees, many=True)
         return Response(serializer.data)
     def post(self, request):

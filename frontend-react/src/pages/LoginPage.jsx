@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { post } from "../services/api";
 import "../styles/login.css";
+import hrIllustration from "../assets/hr-illustration.png";
 
 function LoginPage() {
     const [email, setEmail] = useState("");
@@ -43,7 +44,6 @@ function LoginPage() {
         try {
             setLoading(true);
             const data = await post("/auth/login/", { email, password });
-
             // Expected backend response: { token, role, email, name }
             if (data.token) {
                 localStorage.setItem("token", data.token);
@@ -83,72 +83,97 @@ function LoginPage() {
 
     return (
         <div className="login-wrapper">
-            <a href="/" className="back-home-btn">
-                <i className="fa-solid fa-arrow-left"></i>
-                <span>Back to Home</span>
-            </a>
-            <div className="login-card">
-                <div className="login-logo">
-                    Shnoor HRM
+            <div className="login-split-container">
+                <div className="login-right-panel">
+                    <div className="login-right-overlay"></div>
+                    <div className="login-right-content">
+                        <div className="login-right-badge">
+                            <span>Shnoor HRMS Enterprise</span>
+                        </div>
+                        <h1 className="login-right-title">
+                            Smart Workforce <br />
+                            <span className="login-right-highlight">Management</span>
+                        </h1>
+                        <p className="login-right-subtitle">
+                            Manage Teams. Organize Work. Scale Faster.
+                        </p>
+                        
+                        <div className="login-artwork">
+                            <img src={hrIllustration} alt="Workforce Illustration" className="hr-vector-illustration" />
+                        </div>
+                    </div>
                 </div>
 
-                <h2 className="login-title">
-                    Welcome Back
-                </h2>
+                <div className="login-left-panel">
+                    <a href="/" className="back-home-btn">
+                        <i className="fa-solid fa-arrow-left"></i>
+                        <span>Back to Home</span>
+                    </a>
+                    
+                    <div className="login-card">
+                        <div className="login-logo">
+                            Shnoor HRM
+                        </div>
 
-                <p className="login-subtitle">
-                    Sign in to your account to continue
-                </p>
+                        <h2 className="login-title">
+                            Welcome Back
+                        </h2>
 
-                {error && (
-                    <div style={{ color: '#f43f5e', background: 'rgba(244, 63, 94, 0.1)', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.875rem', border: '1px solid rgba(244, 63, 94, 0.2)' }}>
-                        {error}
+                        <p className="login-subtitle">
+                            Sign in to your account to continue
+                        </p>
+
+                        {error && (
+                            <div style={{ color: '#f43f5e', background: 'rgba(244, 63, 94, 0.1)', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.875rem', border: '1px solid rgba(244, 63, 94, 0.2)' }}>
+                                {error}
+                            </div>
+                        )}
+
+                        <form className="login-form" onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label>
+                                    Email Address
+                                </label>
+                                <input
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    autoComplete="email"
+                                    placeholder="admin@shnoor.com"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    disabled={loading}
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>
+                                    Password
+                                </label>
+                                <input
+                                    type="password"
+                                    id="password"
+                                    name="password"
+                                    autoComplete="current-password"
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    disabled={loading}
+                                />
+                            </div>
+
+                            <div style={{ textAlign: 'right', marginBottom: '1.5rem', marginTop: '-0.5rem' }}>
+                                <a href="#" onClick={(e) => { e.preventDefault(); setShowForgotModal(true); setForgotMessage(""); }} style={{ color: 'var(--primary-color, #6366f1)', fontSize: '0.85rem', textDecoration: 'none' }}>
+                                    Forgot Password?
+                                </a>
+                            </div>
+
+                            <button className="login-btn" type="submit" disabled={loading}>
+                                {loading ? "Signing in..." : "Sign In"}
+                            </button>
+                        </form>
                     </div>
-                )}
-
-                <form className="login-form" onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label>
-                            Email Address
-                        </label>
-                        <input
-                            type="email"
-                            id="email"
-                            name="email"
-                            autoComplete="email"
-                            placeholder="admin@shnoor.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            disabled={loading}
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label>
-                            Password
-                        </label>
-                        <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            autoComplete="current-password"
-                            placeholder="••••••••"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            disabled={loading}
-                        />
-                    </div>
-
-                    <div style={{ textAlign: 'right', marginBottom: '1.5rem', marginTop: '-0.5rem' }}>
-                        <a href="#" onClick={(e) => { e.preventDefault(); setShowForgotModal(true); setForgotMessage(""); }} style={{ color: 'var(--primary-color, #6366f1)', fontSize: '0.85rem', textDecoration: 'none' }}>
-                            Forgot Password?
-                        </a>
-                    </div>
-
-                    <button className="login-btn" type="submit" disabled={loading}>
-                        {loading ? "Signing in..." : "Sign In"}
-                    </button>
-                </form>
+                </div>
             </div>
 
             {showForgotModal && (
